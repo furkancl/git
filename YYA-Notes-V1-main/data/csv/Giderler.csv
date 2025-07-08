@@ -1,0 +1,801 @@
+﻿# İşletme Yönetim Platformu - Product Requirements Document (PRD);Gider Türü;Gider Çeşidi;Ödeme Şekli;Harcama Tutarı;Açıklama
+1.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;560,00 TRY;Abdullah hoca yemek - pizza
+1.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;750,00 TRY;Rumeli İşkembecisi
+2.01.2025;İş;Kira;Ziraat Bankası;29.004,43 TRY;İş yeri Kira
+2.01.2025;İş;Aidat;Ziraat Bankası;1.002,43 TRY;Aidat
+2.01.2025;İş;Maaş;Ziraat Bankası;17.010,86 TRY;Betül maaş ödeme - asgari
+2.01.2025;İş;Maaş;Ziraat Bankası;17.006,43 TRY;Onur Maaş Ödeme - asgari
+2.01.2025;İş;Maaş;Ziraat Bankası;17.010,86 TRY;Öykü Maaş Ödeme - asgari
+2.01.2025;İş;Maaş;Ziraat Bankası;17.010,86 TRY;Öznur Maaş Ödeme - asgari
+2.01.2025;İş;Maaş;Ziraat Bankası;17.010,86 TRY;Tuğba Maaş Ödeme - asgari
+2.01.2025;İş;Maaş;Nakit;13.000,00 TRY;Betül Maaş Ödeme
+2.01.2025;İş;Maaş;Nakit;1.500,00 TRY;Betül Yol ödeme
+2.01.2025;İş;Maaş;Nakit;13.000,00 TRY;Öykü maaş Ödeme
+2.01.2025;İş;Maaş;Nakit;13.000,00 TRY;Tuğba maaş ödeme
+2.01.2025;İş;Maaş;Nakit;22.000,00 TRY;Öznur maaş ödeme
+2.01.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;187,89 TRY;Pritt siparişi
+2.01.2025;İş;Diğer;Nakit;2.500,00 TRY;Fazilet hanuım terapi ödemesi
+2.01.2025;İş;Market;Nakit;765,80 TRY;Torku market
+2.01.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;324,40 TRY;Berkay eczanesi - abdullah hoca takviye
+2.01.2025;İş;Sarf Malzemesi;Nakit;505,00 TRY;broşür + kasa defteri
+2.01.2025;Kişisel;Abdullah;Nakit;237,00 TRY;sigara
+3.01.2025;İş;Market;Ziraat Kredi Kartı;1.300,00 TRY;güneydoğu yöresel ürünler
+3.01.2025;İş;Abdullah;Nakit;1.000,00 TRY;Abdullah hoca takviye fazilet hanıma verildi
+3.01.2025;İş;Market;Ziraat Kredi Kartı;917,82 TRY;Şok market
+4.01.2025;İş;Sarf Malzemesi;Nakit;610,00 TRY;Kartvizit + broşür
+4.01.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;455,00 TRY;Priz
+4.01.2025;Kişisel;Abdullah;Nakit;474,00 TRY;abdullah hoca sigara
+5.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;393,74 TRY;Abdullah hoca yemek
+5.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;270,00 TRY;Çorbacı hasan usta - abdullah hoca yemek
+6.01.2025;İş;Market;Ziraat Kredi Kartı;1.157,00 TRY;Seğmenler market
+6.01.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;13.313,07 TRY;Ziraat bankası güncel borç ödeme
+6.01.2025;İş;Fatura;Ziraat Bankası;352,20 TRY;internet superonline ödemesi
+6.01.2025;İş;Market;Nakit;450,00 TRY;bardak su
+7.01.2025;İş;Market;Ziraat Kredi Kartı;1.185,00 TRY;Deniz Balıkçılık
+7.01.2025;İş;Market;Ziraat Kredi Kartı;65,00 TRY;Şok Market
+7.01.2025;İş;Market;Ziraat Kredi Kartı;652,24 TRY;Torku Market
+7.01.2025;İş;Market;Nakit;130,00 TRY;erikli cinnah su
+7.01.2025;İş;Market;Nakit;150,00 TRY;öykü taksi parası
+7.01.2025;İş;Maaş;Nakit;10.157,50 TRY;Döne hanım maaş ödemesi
+8.01.2025;İş;Fatura;Nakit;220,00 TRY;Cep tel fatura YYA3 öznura verildi
+9.01.2025;İş;Market;Nakit;90,00 TRY;Simit alındı
+9.01.2025;İş;Market;Ziraat Kredi Kartı;259,90 TRY;Bim market
+9.01.2025;İş;Diğer;Nakit;2.500,00 TRY;fazilet hanım terapi ödemesi
+9.01.2025;İş;Fatura;Ziraat Bankası;2.875,00 TRY;elektrik faturası
+9.01.2025;İş;Fatura;Ziraat Bankası;801,07 TRY;su faturası
+10.01.2025;İş;Market;Ziraat Kredi Kartı;445,00 TRY;Güneydoğu yöresel ürünler
+10.01.2025;İş;Araç;Ziraat Kredi Kartı;65,00 TRY;otopark
+10.01.2025;Kişisel;Abdullah;Nakit;390,00 TRY;sigara
+10.01.2025;İş;Market;Ziraat Kredi Kartı;2.553,10 TRY;Torku market
+10.01.2025;İş;Market;Ziraat Kredi Kartı;196,50 TRY;Bim market
+10.01.2025;İş;Market;Ziraat Kredi Kartı;112,00 TRY;a 101 market
+10.01.2025;İş;Yemek;Ziraat Kredi Kartı;565,00 TRY;özlem döner
+11.01.2025;İş;Market;Ziraat Kredi Kartı;671,00 TRY;A101 market
+11.01.2025;İş;Hediye;Ziraat Kredi Kartı;800,00 TRY;Eyüpoğlu ekmek - pasta - betül
+11.01.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;415,00 TRY;2025 yılı sekreterya ajanda
+11.01.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;409,00 TRY;ethernet çevirici
+11.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;490,00 TRY;Abdullah hoca yemek
+12.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;612,00 TRY;Abdullah hoca yemek
+13.01.2025;Kişisel;Abdullah;Nakit;439,00 TRY;sigara ekmek
+13.01.2025;İş;Market;Nakit;130,00 TRY;erikli damacana su
+13.01.2025;İş;Maaş;Enpara Hesabı;1.200,00 TRY;Esma özçelik azra özsoydan 2 görüşme ödemesi
+13.01.2025;İş;Maaş;Enpara Hesabı;2.000,00 TRY;Fazilet atik ÇYA ödemesi
+14.01.2025;Kişisel;Abdullah;Nakit;389,00 TRY;abdullah hoca sigara
+14.01.2025;İş;Vergi;Ziraat Bankası;1.281,00 TRY;Çevre temizlik vergisi
+14.01.2025;Kişisel;Abdullah;Nakit;300,00 TRY;dere tepe aidat
+15.01.2025;İş;Maaş;Nakit;5.591,75 TRY;Sedef Hanıma ödeme
+15.01.2025;İş;Araç;Ziraat Kredi Kartı;65,00 TRY;Otopark
+16.01.2025;İş;Abdullah;Nakit;215,00 TRY;ekmek sigara
+17.01.2025;İş;Market;Ziraat Kredi Kartı;614,00 TRY;Seğmenler market
+17.01.2025;İş;Market;Ziraat Kredi Kartı;1.444,00 TRY;Seğmenler Market
+17.01.2025;İş;Market;Ziraat Kredi Kartı;2.744,42 TRY;Torku Market
+18.01.2025;İş;Market;Nakit;130,00 TRY;Erikli su
+18.01.2025;İş;Demirbaş;Ziraat Kredi Kartı;1.450,00 TRY;Çocuk masa ve sandalyesi
+18.01.2025;İş;Demirbaş;Ziraat Kredi Kartı;484,39 TRY;Kasa siparişi,
+18.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;650,00 TRY;Özlem Döner
+19.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;920,00 TRY;Yemek sepeti sipariş
+19.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;3.750,00 TRY;Kokoreç siparişi
+20.01.2025;İş;Vergi;Ziraat Bankası;9.417,70 TRY;Gerçek Usulde Katma Değer Vergisi KDV Tahakkuk
+20.01.2025;İş;Vergi;Ziraat Bankası;7.776,00 TRY;Gelir Vergisi Stopaji Muhtasar Tahakkuk
+20.01.2025;İş;Vergi;Ziraat Bankası;1.293,50 TRY;Motorlu taşıt vergisi 1. taksit
+20.01.2025;İş;Vergi;Ziraat Bankası;1.293,50 TRY;Motorlu taşıt vergisi 2. taksit
+20.01.2025;İş;Vergi;Ziraat Bankası;29.724,88 TRY;SGK prim tahsilatları
+20.01.2025;İş;Fatura;Ziraat Bankası;6.219,00 TRY;Doğalgaz faturası
+20.01.2025;İş;Fatura;Ziraat Bankası;1.254,90 TRY;Abdullah Yılmaz tel fatura
+20.01.2025;İş;Fatura;Ziraat Bankası;421,50 TRY;Ofis tel fatura
+20.01.2025;Kişisel;Abdullah;Nakit;518,50 TRY;ekmek - sigara
+20.01.2025;Kişisel;Abdullah;Nakit;300,00 TRY;Kuru temizleme
+21.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;565,00 TRY;Özlem döner
+22.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;470,00 TRY;Yeni Urfalı kebepçı
+23.01.2025;İş;Market;Nakit;430,00 TRY;Market
+23.01.2025;Kişisel;Abdullah;Nakit;500,00 TRY;Kuru temizleme
+23.01.2025;İş;Market;Nakit;260,00 TRY;2 adet damacana
+23.01.2025;İş;Market;Ziraat Kredi Kartı;2.024,11 TRY;Torku Market
+23.01.2025;İş;Market;Ziraat Kredi Kartı;179,50 TRY;A101 market
+23.01.2025;İş;Market;Ziraat Kredi Kartı;1.885,29 TRY;A101 market
+23.01.2025;İş;Sarf Malzemesi;Nakit;100,00 TRY;Hırdavat kablo şeridi
+23.01.2025;İş;Vakıf Giderleri;Ziraat Kredi Kartı;667,33 TRY;Domain alındı - org.
+24.01.2025;İş;Maaş;Nakit;1.130,00 TRY;Arzu hanım 2 günlük maaş
+24.01.2025;İş;Diğer;Nakit;103,00 TRY;Atabek eczanesi teramisin alındı
+24.01.2025;İş;Market;Nakit;250,00 TRY;hatice ablaya köfte harcı ve yufka alması için verildi
+24.01.2025;İş;Market;Nakit;600,00 TRY;Hamidiye su
+24.01.2025;İş;Market;Enpara Hesabı;1.728,00 TRY;Seğmenler market
+24.01.2025;İş;Abdullah;Ziraat Kredi Kartı;74,00 TRY;atabek eczanesi
+24.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;600,00 TRY;yemek sepeti
+25.01.2025;İş;Market;Nakit;110,00 TRY;hatice abla kendisi almış kendisine nakit verildi
+26.01.2025;Kişisel;Yemek;Nakit;584,00 TRY;apo yemek
+26.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;290,00 TRY;apo yemek
+26.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;555,00 TRY;apo yemek
+27.01.2025;Kişisel;Abdullah;Nakit;728,00 TRY;Atabek Eczanesi abdullah hoca aşı
+27.01.2025;İş;Yemek;Ziraat Kredi Kartı;810,00 TRY;Şirket öğlen yemeği
+28.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;890,00 TRY;Kuzey yıldızı yemek
+28.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;100,00 TRY;Abdullah hoca kahve
+28.01.2025;İş;Yazılım;Enpara Hesabı;8.500,00 TRY;Taha koç sistem yazılım ödemesi
+29.01.2025;Kişisel;Abdullah;Nakit;320,00 TRY;Öznur hoca almış kendisine nakit verildi
+30.01.2025;Kişisel;Abdullah;Ziraat Bankası;66.873,60 TRY;Apo okul taksidi
+30.01.2025;İş;Market;Ziraat Kredi Kartı;674,75 TRY;Torku market
+31.01.2025;Kişisel;Yemek;Ziraat Kredi Kartı;520,00 TRY;Kokoreç
+31.01.2025;İş;Demirbaş;Ziraat Bankası;17.415,00 TRY;video kamera + tripod + micro hdmi kablosu
+31.01.2025;İş;Araç;Ziraat Kredi Kartı;2.162,00 TRY;akaryakıt
+31.01.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.172,40 TRY;fabook reklam
+1.02.2025;İş;Market;Nakit;130,00 TRY;erikli su
+1.02.2025;İş;Maaş;Nakit;16.280,00 TRY;Hatice Abla Maaş Ödemesi
+1.02.2025;İş;Demirbaş;Nakit;1.550,00 TRY;Capture Card alındı. Onur'un kredi kartından ödendi, kendisi nakit olarak aldı.
+1.02.2025;Kişisel;Abdullah;Nakit;456,00 TRY;sigara nakit
+2.02.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;165,91 TRY;kahve dünyası - apo
+2.02.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;650,00 TRY;Zeynel çilli - apo
+2.02.2025;Kişisel;Abdullah;Nakit;565,00 TRY;apo seğmenler market - yiyecek
+2.02.2025;Kişisel;Abdullah;Enpara Hesabı;3.234,50 TRY;Boyner alışveriş
+2.02.2025;Kişisel;Abdullah;Enpara Hesabı;6,99 TRY;Boyner market
+3.02.2025;İş;Market;Nakit;60,00 TRY;simit
+3.02.2025;İş;Market;Nakit;70,00 TRY;Tuğba simit
+3.02.2025;İş;Market;Nakit;70,00 TRY;Öznur Simit
+3.02.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;37.514,69 TRY;Ziraat bankası kredi kartı borç ödeme
+3.02.2025;İş;Kira;Ziraat Bankası;29.006,39 TRY;Kira ödemesi
+3.02.2025;İş;Aidat;Ziraat Bankası;1.003,19 TRY;aidat ödemesi
+3.02.2025;İş;Market;Ziraat Kredi Kartı;2.507,11 TRY;Bim market
+3.02.2025;İş;Maaş;Ziraat Bankası;22.111,39 TRY;Onur hoca maaş ödemesi
+3.02.2025;İş;Maaş;Ziraat Bankası;22.117,80 TRY;Tuğba hanım maaş ödemesi,
+3.02.2025;İş;Maaş;Ziraat Bankası;22.117,80 TRY;Betül Hoca maaş ödemesi
+3.02.2025;İş;Maaş;Ziraat Bankası;22.117,80 TRY;Öykü hoca maaş ödemesi
+3.02.2025;İş;Maaş;Ziraat Bankası;22.117,80 TRY;Öznur hoca maaş ödemesi
+3.02.2025;İş;Vakıf Giderleri;Nakit;350,00 TRY;taksi ödemesi
+3.02.2025;İş;Maaş;Nakit;13.000,00 TRY;Tuğba nakit maaş ödemesi
+3.02.2025;İş;Maaş;Nakit;25.342,00 TRY;Öznur Nakit Maaş ödemesi - MAAŞ+ARALIK SEANS ÖDEMESİ(2.341)
+4.01.2025;İş;Fatura;Enpara Hesabı;224,10 TRY;YYA 2 tel fatura
+4.02.2025;İş;Market;Ziraat Kredi Kartı;2.594,62 TRY;Torku market
+4.02.2025;İş;Maaş;Nakit;1.165,00 TRY;Hatice hanım günlük ödeme - son günü
+4.02.2025;İş;Maaş;Nakit;23.235,00 TRY;Bade Nakit Ödeme
+4.02.2025;İş;Maaş;Nakit;18.245,00 TRY;Betül Nakit Ödeme - Yol - Seans Fark Ödemesi (3733 TL)
+4.02.2025;İş;Maaş;Nakit;9.320,00 TRY;Öykü Nakit Ödeme - yol (1426)
+5.02.2025;Kişisel;Market;Ziraat Kredi Kartı;339,00 TRY;apo sigara
+5.02.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;250,00 TRY;necip bilgisayar
+5.02.2025;İş;Sarf Malzemesi;Nakit;180,00 TRY;özdekor ticaret
+5.02.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;2.081,27 TRY;Zoom pro yükseltildi
+6.02.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;2.278,80 TRY;Doktor takvimi ödemesi
+6.02.2025;İş;Vakıf Giderleri;Nakit;85,00 TRY;otopark
+6.02.2025;Kişisel;Abdullah;Nakit;40,00 TRY;çay - TD- APO
+6.02.2025;İş;Diğer;Ziraat Kredi Kartı;144,00 TRY;Atabek eczanesi
+6.02.2025;İş;Market;Ziraat Kredi Kartı;301,00 TRY;Bim market
+6.02.2025;İş;Market;Ziraat Kredi Kartı;424,70 TRY;Şok Market
+6.02.2025;İş;Market;Nakit;600,00 TRY;3 koli bardak su hamidiye
+6.02.2025;İş;Market;Nakit;130,00 TRY;damacana su
+7.02.2025;İş;Market;Ziraat Kredi Kartı;52,50 TRY;seğmenler market
+7.02.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;292,00 TRY;sigara
+7.02.2025;İş;Market;Ziraat Kredi Kartı;251,00 TRY;Şok market
+7.02.2025;Kişisel;Yemek;Nakit;660,00 TRY;Apo yemek antakya dürüm
+8.02.2025;İş;Maaş;Nakit;900,00 TRY;Murat Dikiş Maaş
+9.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;1.200,00 TRY;Adana kebap abdullah hoca yemek
+10.02.2025;İş;Market;Ziraat Kredi Kartı;747,00 TRY;Seğmenler market
+10.02.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;1.173,89 TRY;Trendyol kitap + metaryal
+11.02.2025;İş;Fatura;Ziraat Bankası;3.165,00 TRY;Elektrik Fatura
+11.02.2025;İş;Fatura;Ziraat Bankası;1.250,06 TRY;Su Fatura
+11.02.2025;İş;Fatura;Ziraat Bankası;428,70 TRY;Apo Telefon faturası
+11.02.2025;İş;Fatura;Ziraat Bankası;356,00 TRY;İnternet Superonline
+11.02.2025;İş;Fatura;Ziraat Bankası;361,50 TRY;Ofis Telefon
+11.02.2025;İş;Maaş;Nakit;5.730,00 TRY;Nuray hanım ödeme
+12.02.2025;İş;Market;Ziraat Kredi Kartı;444,45 TRY;Seğmenler market
+12.02.2025;İş;Demirbaş;Nakit;3.500,00 TRY;Bulaşık makinesi tamir
+13.02.2025;İş;Market;Nakit;90,00 TRY;simit alındı
+14.02.2025;İş;Market;Ziraat Kredi Kartı;1.960,00 TRY;Güneydoğu yöresel ürünler
+14.02.2025;İş;Yemek;Ziraat Kredi Kartı;250,00 TRY;apo yemek
+14.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;435,00 TRY;Özlem Döner apo yemek
+15.02.2025;İş;Market;Nakit;710,00 TRY;çay sigara
+15.02.2025;Kişisel;Abdullah;Nakit;250,00 TRY;kuru temizleme
+15.02.2025;İş;Market;Ziraat Kredi Kartı;190,76 TRY;Torku market
+15.02.2025;İş;Market;Ziraat Kredi Kartı;3.128,80 TRY;Şok market
+15.02.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;135,00 TRY;Burak temizlik (vilada ağzı alındı)
+15.02.2025;İş;Demirbaş;Enpara Hesabı;16.678,00 TRY;Tablet ve şarj adaptörü alındı
+16.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;399,99 TRY;Apo yemek
+17.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;89,00 TRY;apo yemek (bilim üniversitesi kantin)
+17.02.2025;İş;Market;Nakit;255,00 TRY;Pazar alışverisi
+17.02.2025;İş;SGK;Ziraat Bankası;38.944,54 TRY;SGK tahakkuk
+17.02.2025;İş;Vergi;Ziraat Bankası;7.776,00 TRY;Muhtasar Tahakkuk
+17.02.2025;İş;Vergi;Ziraat Bankası;7.320,93 TRY;KDV Tahakkuk
+17.02.2025;İş;Market;Ziraat Kredi Kartı;280,00 TRY;Migros market
+17.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;30,00 TRY;coffeehub kahve
+18.02.2025;İş;Market;Nakit;50,00 TRY;4 ekmek alındı öznura verildi
+18.02.2025;İş;Maaş;Enpara Hesabı;1.473,06 TRY;Gül hanım 2 günlük ödeme
+18.02.2025;İş;Demirbaş;Ziraat Kredi Kartı;544,99 TRY;Tablet kılıfı alındı
+18.02.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;259,00 TRY;Abdullah hoca sigara
+19.02.2025;İş;Market;Ziraat Kredi Kartı;854,22 TRY;Çağdaş Market
+19.02.2025;İş;Market;Nakit;130,00 TRY;erikli damacana su
+19.02.2025;İş;Maaş;Nakit;1.183,00 TRY;Hatice abla 1 günlük ödeme
+20.02.2025;İş;Market;Nakit;95,00 TRY;ekmek
+20.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;380,00 TRY;Cici piknik
+20.02.2025;Kişisel;Abdullah;Nakit;200,00 TRY;Taksi
+20.02.2025;Kişisel;Abdullah;Nakit;476,00 TRY;apo sigara
+20.02.2025;Kişisel;Abdullah;Nakit;30,00 TRY;dolmuş
+21.01.2025;İş;Abdullah;Ziraat Kredi Kartı;110,00 TRY;bilim üniversitesi kantin
+21.02.2025;Kişisel;Abdullah;Nakit;15,00 TRY;apo kullanım
+22.02.2025;İş;Tanıtım;Nakit;6.000,00 TRY;Öznur hocaya kariyer net ödemesi - nakit verildi
+22.02.2025;İş;Tanıtım;Enpara Hesabı;12.000,00 TRY;Öznur hocaya kariyer net ödemesi
+22.02.2025;İş;Market;Nakit;75,00 TRY;ekmek alındı
+22.02.2025;İş;Market;Nakit;600,00 TRY;Hamidiye Su Cinnah
+22.02.2025;Kişisel;Abdullah;Nakit;800,00 TRY;Kuru temizleme + Sigara
+24.02.2025;İş;Tanıtım;Ziraat Kredi Kartı;2.278,00 TRY;Doktor takvimi kesinti
+24.02.2025;İş;Market;Ziraat Kredi Kartı;572,90 TRY;Migros market
+24.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;145,00 TRY;Güneydoğu chefs gaziantep
+24.02.2025;Kişisel;yemek;Ziraat Kredi Kartı;40,00 TRY;Ankara bilim üniversiyesi
+25.02.2025;İş;Market;Nakit;130,00 TRY;Damacana su
+25.02.2025;İş;Market;Nakit;50,00 TRY;Yoğurt
+25.02.2025;İş;Market;Nakit;1.185,00 TRY;Hatice hanım günlük ödeme
+25.02.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;490,00 TRY;uygulamalı davranış analizi kitabı alışverişi -trendyol
+26.02.2025;İş;Market;Ziraat Kredi Kartı;199,85 TRY;Seğmenler market
+26.02.2025;İş;Maaş;Nakit;4.750,00 TRY;Hatice hanım 4 günlük ödeme
+26.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;434,49 TRY;Abdullah hoca yemek
+27.02.2025;İş;Market;Nakit;190,00 TRY;Simit alındı
+27.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;180,00 TRY;apo yemek
+27.02.2025;Kişisel;Yemek;Nakit;15,00 TRY;apo çay
+27.02.2025;İş;Fatura;Ziraat Bankası;6.092,72 TRY;doğalgaz faturası
+27.02.2025;İş;Hediye;Nakit;830,00 TRY;Öznur pasta - tuğba aldı tuğbaya nakit verildi
+27.02.2025;İş;Hediye;Nakit;650,00 TRY;Öznur Çiçek - tuğba aldı tuğbaya nakit verildi
+27.02.2025;İş;Yemek;Nakit;1.145,00 TRY;ofis yemek
+27.02.2025;İş;Market;Nakit;554,60 TRY;Bim market
+27.02.2025;İş;Market;Nakit;291,00 TRY;Şok market
+27.02.2025;İş;Market;Ziraat Kredi Kartı;389,50 TRY;Migros
+28.02.2025;İş;Market;Nakit;2.649,00 TRY;Şok market
+28.02.2025;İş;Market;Nakit;1.563,50 TRY;Torku market
+28.02.2025;İş;Market;Nakit;1.300,00 TRY;Nişantaşı pazarı
+28.02.2025;İş;Market;Nakit;250,00 TRY;Nişantaşı pazarı
+28.02.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;415,60 TRY;GESKO Robot Süpürge Deterjanı Dağ Esintisi
+28.02.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;39.038,22 TRY;Kredi Kartı güncel borç
+28.02.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;1.699,40 TRY;Galoş siparişi
+28.02.2025;İş;Maaş;Nakit;1.185,00 TRY;Hatice hanım ödeme
+28.02.2025;İş;Demirbaş;Nakit;350,00 TRY;baharatlık alındı hatice ablaya verildi
+28.02.2025;Kişisel;Yemek;Ziraat Kredi Kartı;125,00 TRY;bilim üniversitesi kantin
+1.03.2025;İş;Maaş;Nakit;658,00 TRY;Esad Furkan Aydınlı kitap tarama
+2.03.2025;Kişisel;Yemek;Ziraat Kredi Kartı;580,00 TRY;Abdullah hoca yemek
+2.03.2025;Kişisel;Market;Nakit;427,00 TRY;nakit sigara
+3.03.2025;İş;Fatura;Ziraat Bankası;436,80 TRY;İnternet superonline
+3.03.2025;İş;Kira;Ziraat Bankası;29.006,39 TRY;Kira Ödemesi
+3.03.2025;İş;Aidat;Ziraat Bankası;1.003,19 TRY;aidat
+3.03.2025;İş;Maaş;Ziraat Bankası;22.116,80 TRY;Öykü maaş - asgari
+3.03.2025;İş;Maaş;Ziraat Bankası;22.116,80 TRY;Betül maaş - asgari
+3.03.2025;İş;Maaş;Ziraat Bankası;22.110,93 TRY;Onur maaş - asgari
+3.03.2025;İş;Maaş;Ziraat Bankası;22.116,80 TRY;Tuğba Maaş - asgari
+3.03.2025;İş;Maaş;Ziraat Bankası;22.116,80 TRY;Öznur Maaş - asgari
+3.03.2025;İş;Maaş;Ziraat Bankası;8.854,80 TRY;Bade Maaş - asgari
+3.03.2025;İş;Maaş;Nakit;13.000,00 TRY;Tuğba nakit maaş ödemesi
+3.03.2025;Kişisel;Yemek;Ziraat Kredi Kartı;840,00 TRY;Abdullah hoca yemek inegöl köfte
+4.03.2025;İş;Market;Nakit;130,00 TRY;Damacana su
+4.03.2025;İş;Maaş;Nakit;13.262,00 TRY;Bade hoca nakit maaş ödemesi
+4.03.2025;İş;Market;Nakit;90,00 TRY;Simit alındı tuğbaya verildi
+4.03.2025;İş;Maaş;Nakit;9.602,00 TRY;Öykü hoca nakit maaş + yol ödemesi
+4.03.2025;İş;Maaş;Nakit;14.600,00 TRY;Betül hoca nakit maaş + yol ödemesi
+4.03.2025;İş;Maaş;Nakit;23.000,00 TRY;Öznur hoca nakit maaş ödemesi
+4.03.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;43,65 TRY;Abdullah hoca ilaç alımı
+4.03.2025;İş;Market;Ziraat Kredi Kartı;848,00 TRY;a101 market
+4.03.2025;Kişisel;Abdullah;Nakit;73,00 TRY;sigara
+4.03.2025;İş;Market;Nakit;20,00 TRY;pide
+6.03.2025;İş;Maaş;Nakit;1.000,00 TRY;Hizmet elemanı Nuray Hanım günlük ödemesi. BÇ
+6.03.2025;İş;Araç;Ziraat Kredi Kartı;2.400,00 TRY;vadi petrol yakıt alımı
+6.03.2025;İş;Araç;Ziraat Kredi Kartı;505,00 TRY;Vadi petrol market
+6.03.2025;İş;Market;Ziraat Kredi Kartı;732,00 TRY;a101 market
+7.03.2025;İş;Yemek;Ziraat Kredi Kartı;820,00 TRY;maşa yemek
+7.03.2025;İş;Yemek;Nakit;1.400,00 TRY;maşa yemek, öznurun kredi kartından 1425 tl ödendi, öznura 1400 tl nakit verildi.
+08..03.2025;İş;Su;Nakit;130,00 TRY;1 damacana su
+9.03.2025;İş;Market;Ziraat Kredi Kartı;601,77 TRY;Çağdaş Market
+10.03.2025;İş;Market;Nakit;95,00 TRY;Pazar alışlverişi
+11.03.2025;Kişisel;Market;Ziraat Kredi Kartı;775,30 TRY;Migros Market alışverişi
+12.03.2025;İş;Market;Ziraat Kredi Kartı;57,68 TRY;arınan gıda, patates
+12.03.2025;İş;Market;Ziraat Kredi Kartı;4.276,86 TRY;arınan gıda, market
+12.03.2025;Kişisel;Abdullah;Nakit;1.000,00 TRY;kurutemizleme
+13.03.2025;İş;Market;Nakit;75,00 TRY;simit
+13.03.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.840,08 TRY;ezcane vitamin
+13.03.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;527,00 TRY;sigara
+14.03.2025;Kişisel;Yemek;Halk Bankası;1.850,00 TRY;Abdullah Hoca iftar
+14.03.2025;Kişisel;Yemek;Nakit;400,00 TRY;Abdullah Hoca iftar
+15.03.2025;İş;Market;Nakit;50,00 TRY;ekmek
+15.03.2025;İş;Diğer;Nakit;200,00 TRY;davulcuya bahşiş
+17.03.2025;İş;Maaş;Nakit;1.470,00 TRY;Gözde Saraçoğlu (Sekretarya) İki günlük asgari ücretten ödeme
+17.03.2025;İş;Fatura;Ziraat Bankası;404,40 TRY;Abdullah hoca telefon faturası
+17.03.2025;İş;Fatura;Ziraat Bankası;5.685,00 TRY;elektrik faturası
+17.03.2025;İş;Fatura;Ziraat Bankası;5.298,00 TRY;doğalfaz faturası
+17.03.2025;İş;Fatura;Ziraat Bankası;1.002,72 TRY;su faturası
+17.03.2025;İş;Fatura;Ziraat Bankası;361,50 TRY;yol arkadaşları ofis telefon
+17.03.2025;İş;Fatura;Ziraat Bankası;369,70 TRY;yya2 telefon faturası
+18.03.2025;İş;Su;Nakit;600,00 TRY;3 koli bardak su
+18.03.2025;İş;Market;Ziraat Kredi Kartı;497,75 TRY;bim market
+18.03.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;154,00 TRY;sigara
+20.03.2025;İş;Market;Nakit;185,00 TRY;Ayşe hanıma nakit market alışveriş ödemesi
+16.03.2025;Kişisel;Abdullah;Nakit;4.500,00 TRY;Ceket,
+16.03.2025;Kişisel;Abdullah;Nakit;225,00 TRY;yemek
+20.03.2025;İş;Market;Ziraat Kredi Kartı;1.643,35 TRY;Bim market
+20.03.2025;İş;Araç;Ziraat Kredi Kartı;70,00 TRY;Otopark
+20.03.2025;İş;Abdullah;Ziraat Kredi Kartı;250,00 TRY;atabek eczanesi
+20.03.2025;İş;Market;Ziraat Kredi Kartı;181,50 TRY;şok market
+21.03.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;564,90 TRY;A4 kağıdı alındı trendyol
+21.03.2025;İş;Vergi;Ziraat Bankası;7.776,00 TRY;Gelir Vergisi Stopajı (Muhtasar)
+21.03.2025;İş;Vergi;Ziraat Bankası;919,80 TRY;Yıllık Gelir Vergisi (Damga vergisi)
+21.03.2025;İş;Vergi;Ziraat Bankası;8.243,70 TRY;KDV Tahakkuk
+21.03.2025;İş;SGK;Ziraat Bankası;46.795,02 TRY;SGK Tahakkuk
+21.03.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;475,24 TRY;Amazon kitap siparişi
+21.03.2025;İş;Market;Ziraat Kredi Kartı;3.115,88 TRY;Migros market
+21.03.2025;İş;Demirbaş;Nakit;13.500,00 TRY;Bulaşık makinesi alındı
+21.03.2025;İş;Maaş;Nakit;120,00 TRY;Necla hanım yol ücreti
+22.03.2025;İş;Abdullah;Ziraat Kredi Kartı;75,00 TRY;Atabek eczanesi
+22.03.2025;İş;Market;Ziraat Kredi Kartı;40,00 TRY;Şok market
+23.03.2025;Kişisel;Yemek;;725,00 TRY;abdullah hoca yemek
+24.03.2025;İş;Market;Nakit;100,00 TRY;Yufka alındı
+24.03.2025;İş;Maaş;Ziraat Bankası;16.210,00 TRY;Bade Aktekin ziraat maaş ödemesi
+24.03.2025;İş;Maaş;Nakit;5.790,00 TRY;Bade Aktekin Nakit Ödemesi
+24.03.2025;İş;Market;Ziraat Kredi Kartı;1.616,90 TRY;Migros market
+24.03.2025;İş;Araç;Ziraat Kredi Kartı;125,00 TRY;otopark
+24.03.2025;İş;Market;Nakit;40,00 TRY;ekmek alındı
+24.03.2025;İş;Demirbaş;Ziraat Bankası;2.756,40 TRY;yazıcı tamir ücreti
+25.03.2025;İş;Market;Nakit;130,00 TRY;Erikli damacana su
+25.03.2025;İş;Abdullah;Ziraat Kredi Kartı;340,00 TRY;Atabek Eczanesi
+25.03.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;398,71 TRY;Abdullah hoca ekran koruyucu
+26.03.2025;İş;Market;Ziraat Kredi Kartı;844,60 TRY;Şok market
+27.03.2025;Kişisel;Abdullah;Nakit;600,00 TRY;Kuru temizleme / 300 TL geri alınacak
+27.03.2025;İş;Market;Nakit;713,00 TRY;Market
+28.03.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;39.350,92 TRY;Ziraat bankası kredi kartı güncel borç
+28.03.2025;İş;Maaş;Ziraat Bankası;22.110,39 TRY;Onurcan Güler Maaş Ödemesi
+28.03.2025;iş;Maaş;Ziraat Bankası;22.116,80 TRY;Öykü Yıldız Maaş Ödemesi
+28.03.2025;iş;Maaş;Ziraat Bankası;22.116,80 TRY;Öznur Ünsal Maaş Ödemesi
+28.03.2025;iş;Maaş;Ziraat Bankası;22.116,80 TRY;Betül Çavumirza Maaş Ödemesi
+28.03.2025;iş;Maaş;Ziraat Bankası;12.538,80 TRY;Tuğba Doğanay Maaş Ödemesi
+28.03.2025;iş;Maaş;Ziraat Bankası;11.282,80 TRY;Ayşe Işık Maaş Ödemesi
+28.03.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;344,00 TRY;trendol alışveriş
+28.03.2025;iş;Market;Ziraat Kredi Kartı;484,75 TRY;Market alışverişi
+28.03.2025;iş;Market;Ziraat Kredi Kartı;368,25 TRY;Market alışverişi (Bayram şekeri)
+28.03.2025;İş;Market;Ziraat Kredi Kartı;40,00 TRY;Ekmek alındı
+29.03.2025;İş;Maaş;Nakit;22.750,00 TRY;tuğba nakit maaş ödemesi
+29.03.2025;İş;Maaş;Nakit;7.053,00 TRY;ayşe hanım nakit maaş ödemesi
+29.03.2025;iş;Market;Nakit;130,00 TRY;Damacana su alımı
+29.03.2025;iş;Maaş;Nakit;13.000,00 TRY;Betül Hoca nakit maaş ödemesi
+29.03.2025;iş;Maaş;Nakit;23.000,00 TRY;Öznur Hoca nakit maaş ödemesi
+29.03.2025;iş;Maaş;Nakit;8.000,00 TRY;Öykü Hoca nakit maaş ödemesi
+29.03.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;519,99 TRY;Çin parmak tuzağı - amazon
+29.03.2025;Kişisel;Yemek;Ziraat Kredi Kartı;290,00 TRY;Bosna İşkembecisi
+29.03.2025;iş;Araç;Ziraat Kredi Kartı;2.300,00 TRY;06 DF 449 yakıt alımı
+29.03.2025;iş;Market;Ziraat Kredi Kartı;573,00 TRY;Market alışverişi
+30.03.2025;iş;Market;Ziraat Kredi Kartı;504,00 TRY;Market alışverişi
+30.03.2025;iş;Market;Ziraat Kredi Kartı;40,00 TRY;Ekmek alımı
+31.03.2025;Kişisel;Yemek;Ziraat Kredi Kartı;870,00 TRY;Antik Şırdan yemek
+31.03.2025;iş;Market;Ziraat Kredi Kartı;530,00 TRY;Market alışverişi
+2.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;294,49 TRY;Abdullah Hocaya el kremi alındı
+2.04.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;3.060,00 TRY;amazon eliliği sürdürmenin 7 ilkesi kitabı tanesi 205 TL
+2.04.2025;İş;Market;Ziraat Kredi Kartı;37,50 TRY;Ekmek alımı
+2.04.2025;İş;Ulaşım;Nakit;1.800,00 TRY;Betül Hoca yol
+2.04.2025;İş;Ulaşım;Nakit;1.890,00 TRY;Öykü Hoca yol
+3.04.2025;İş;Market;Ziraat Kredi Kartı;659,71 TRY;Market alışverişi
+3.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;240,03 TRY;Netflix
+3.04.2025;İş;Eğitim;Ziraat Kredi Kartı;250,00 TRY;İş Güvenliği Sertifika Programı Abdullah Hoca
+3.04.2025;İş;Maaş;Enpara Hesabı;1.800,00 TRY;Murat Dikiş Maaş (Ocak ve Mart)
+3.04.2025;İş;Vergi;Ziraat Bankası;5.326,00 TRY;Gelir Vergisi Stopajı (Geçmiş Kira ödemelerinden)
+3.04.2025;İş;Vergi;Ziraat Bankası;14.997,25 TRY;Gelir Vergisi Stopajı (Geçmiş Kira ödemelerinden)
+3.04.2025;İş;Fatura;Ziraat Bankası;433,00 TRY;internet superonlıne ödemesi
+3.04.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;12.675,26 TRY;Kredi kartı borç ödemesi
+3.04.2025;İş;Sarf Malzemesi;Ziraat Bankası;3.963,19 TRY;312 promosyon baskı - kalem siparişi
+3.04.2025;İş;Market;Nakit;130,00 TRY;Damacana su alımı
+3.04.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;626,95 TRY;Mop alımı yapıldı
+3.04.2025;İş;Market;Ziraat Kredi Kartı;4.116,75 TRY;Market alışverişi
+3.04.2025;İş;Market;Ziraat Kredi Kartı;2.595,55 TRY;Market alışverişi
+3.04.2025;İş;Yemek;Ziraat Kredi Kartı;1.520,00 TRY;Adana Hasan Usta Kebap Yemek
+3.04.2025;İş;Demirbaş;Ziraat Bankası;60.000,00 TRY;MSI PC alımı ödemesi
+3.04.2025;İş;Demirbaş;Enpara Hesabı;20.500,00 TRY;MSI PC ödemesi
+3.04.2025;Kişisel;Abdullah;Nakit;410,00 TRY;sigara
+4.04.2025;İş;Market;Ziraat Kredi Kartı;181,50 TRY;Ekmek ve filtre kahve alımı
+4.04.2025;İş;Kişisel;Ziraat Kredi Kartı;1.000,00 TRY;Atabek Eczanesi - Abdullah hoca ilaç alımı
+5.04.2025;İş;Kira;Ziraat Bankası;29.006,39 TRY;nisan ayı kira ödemesi
+5.04.2025;İş;Diğer;Ziraat Kredi Kartı;948,78 TRY;Chatgpt
+5.04.2025;İş;Aidat;Ziraat Bankası;1.003,19 TRY;aidat ödemesi
+5.04.2025;İş;Market;Nakit;600,00 TRY;hamidiye su
+5.04.2025;Kişisel;Yemek;Ziraat Kredi Kartı;590,00 TRY;Abdullah Hoca Yemek sepeti Öz karadeniz Balık yemek siparişi
+6.04.2025;Kişisel;Yemek;Ziraat Kredi Kartı;1.010,00 TRY;Abdullah Hoca- Boyacıoğlu Gıda yemek
+6.04.2025;Kişisel;Kişisel;Nakit;800,00 TRY;Abdullah Hoca kişisel (Hamam)
+6.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;2.634,85 TRY;Facebook reklam
+7.04.2025;Kişisel;Market;Ziraat Kredi Kartı;472,90 TRY;Migros market alışverişi
+7.04.2025;Kişisel;Yemek;Ziraat Kredi Kartı;104,00 TRY;Abdullah Hoca - Bilim Üniversitesi kantini yemek
+7.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;49,90 TRY;Hepsipay ödemesi
+7.04.2025;Kişisel;Araç;Ziraat Kredi Kartı;500,00 TRY;Abdullah Hoca oto yıkama
+8.04.2025;İş;Diğer;Ziraat Kredi Kartı;1.292,17 TRY;Abdullah Hoca Avukat Hüdai Ekinci vekalet için noter ödemesi
+8.04.2025;Kişisel;Kişisel;Nakit;400,00 TRY;Kuru temizleme
+8.04.2025;İş;Market;Nakit;37,50 TRY;Ekmek alımı
+8.04.2025;Kişisel;Kişisel;Ziraat Kredi Kartı;369,90 TRY;Abdullah Hoca telefon ekran koruyucu (Trendyol)
+9.04.2025;İş;Market;Ziraat Kredi Kartı;1.185,00 TRY;Deniz Grup İth. Market alışverişi
+9.04.2025;İş;Aidat;Ziraat Bankası;1.200,00 TRY;Mart - Nisan aidat bakiye ödemesi
+9.04.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;260,00 TRY;Paycell TL yükleme
+9.04.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;100,00 TRY;Paycell TL yükleme
+10.04.2025;Kişisel;Kişisel;Ziraat Kredi Kartı;90,00 TRY;Atabek Eczanesi ilaç alımı
+10.04.2025;İş;Market;Ziraat Kredi Kartı;282,26 TRY;Şok market alışverişi
+10.04.2025;Kişisel;Kişisel;Ziraat Kredi Kartı;500,00 TRY;Atabek Eczanesi ilaç alımı
+10.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;100,00 TRY;Araç otopark ücreti
+11.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;115,00 TRY;Abdullah Hoca Tost
+11.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;385,00 TRY;Abdullah Hoca sigara
+11.04.2025;İş;Diğer;Nakit;100,00 TRY;Perde Stor değişimi
+12.04.2025;İş;Market;Ziraat Kredi Kartı;299,50 TRY;Şok market alışverisi
+12.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;752,48 TRY;Google reklam
+12.04.2025;İş;Yazılım;Ziraat Kredi Kartı;13.632,88 TRY;4 adet Samsung 1 TB Hafıza Kartı (Trendyol)
+11.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;30,00 TRY;Bilim Üniversitesi - İçecek
+13.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;625,00 TRY;Kayseri Mutfağı - Yemek
+13.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;4.599,06 TRY;Abdullah Hoca- FR Ankamall Yalı Spor - Giyim
+13.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.449,99 TRY;Olgarlar Spor - Mug
+13.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;230,00 TRY;Malatya Konsept içecek
+12.04.2025;İş;Market;Nakit;130,00 TRY;Damacana su
+14.04.2025;Kişisel;Abdullah;Nakit;515,00 TRY;Abdullah hoca pazar
+14.04.2025;Kişisel;Abdullah;Nakit;310,00 TRY;Abdullah hoca pazar
+14.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;20,00 TRY;Abdullah Hoca Bilim Üniversitesi yemek
+14.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;115,00 TRY;Abdullah Hoca Bilim Üniversitesi yemek
+14.04.2025;İş;Market;Ziraat Kredi Kartı;439,95 TRY;Migros market alışverişi
+15.04.2025;İş;Market;Ziraat Kredi Kartı;322,90 TRY;Çağdaş Market alışveriş
+15.04.2025;İş;Kırtasiye;Ziraat Kredi Kartı;780,00 TRY;Özlük dosyası alımı
+15.04.2025;İş;Araç;Ziraat Kredi Kartı;1.840,00 TRY;Abdullah Hoca Araç Yakıt alımı
+15.04.2025;İş;Market;Ziraat Kredi Kartı;590,00 TRY;Opet Fullmax 5w alımı
+16.04.2025;İş;Market;Ziraat Kredi Kartı;574,48 TRY;Şok Market alışveriş
+16.04.2025;İş;Market;Ziraat Kredi Kartı;499,48 TRY;Şok market
+17.04.2025;İş;Market;Ziraat Kredi Kartı;430,95 TRY;Migros market alışveriş
+17.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;120,00 TRY;Bilim Üniv. Yemek
+17.04.2025;İş;Market;Ziraat Kredi Kartı;362,91 TRY;Şok market alışveriş
+17.04.2025;İş;Market;Nakit;160,00 TRY;Ekmek ve Su alımı
+17.04.2025;İş;Market;Nakit;130,00 TRY;Damacana su alımı
+18.04.2025;İş;Market;Ziraat Kredi Kartı;276,22 TRY;Deniz Grup Gıda
+18.04.2025;İş;Market;Ziraat Kredi Kartı;736,98 TRY;Yaşam eczanesi
+18.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;79,88 TRY;Facebook reklam
+18.04.2025;İş;Diğer;Nakit;1.000,00 TRY;Güvenlik kamerası teknik bakım
+18.04.2025;İş;Market;Ziraat Kredi Kartı;3.379,18 TRY;Arınan Gıda market
+18.04.2025;Kişisel;Abdullah;Nakit;725,00 TRY;Abdullah Hoca Yemek
+19.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;79,88 TRY;Facebook reklam
+19.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;79,88 TRY;Facebook reklam
+19.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;79,88 TRY;Facebook reklam
+19.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;35,00 TRY;Bilim Üniv. Kantin
+20.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;980,00 TRY;Bauhaus - Çiçek alışverişi
+20.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.520,00 TRY;01 Adana Hasan Usta Yemek
+20.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;500,00 TRY;1991 Roko - Dondurma
+20.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;179,64 TRY;Facebook reklam
+20.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;119,63 TRY;Facebook reklam
+20.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;79,88 TRY;Facebook reklam
+20.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;270,25 TRY;Facebook reklam
+20.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.180,00 TRY;Rumeli İşkembecisi
+21.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;180,00 TRY;Bilim Ünv. Kantin
+21.04.2025;İş;Market;Ziraat Kredi Kartı;497,18 TRY;Öğütler Market alışverişi
+21.04.2025;İş;Yazılım;Ziraat Kredi Kartı;269,00 TRY;USB TYPC Kablo alımı
+21.04.2025;İş;Market;Ziraat Kredi Kartı;25,00 TRY;Lerava İnşaat - Hırdavat
+21.04.2025;İş;Market;Ziraat Kredi Kartı;50,00 TRY;Deniz Grup - Gıda
+21.04.2025;İş;Market;Nakit;130,00 TRY;Erikli Damacana Su
+21.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;406,16 TRY;Facebook reklam
+22.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.857,19 TRY;Facebook reklam
+22.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;8.289,09 TRY;Zoom ödemesi
+22.04.2025;İş;Market;Ziraat Kredi Kartı;25,00 TRY;lerava inşaat
+22.04.2025;İş;Market;Ziraat Kredi Kartı;50,00 TRY;Deniz grup market
+23.04.2025;İş;Market;Ziraat Kredi Kartı;440,00 TRY;Deniz Grup Market
+23.04.2025;İş;Sarf Malzemesi;Ziraat Kredi Kartı;327,15 TRY;Amazon - Alışkanlıkların Gücü - Kitap
+23.04.2025;İş;Market;Ziraat Kredi Kartı;75,00 TRY;Ekmek alımı
+23.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;402,49 TRY;Facebook reklam
+24.04.2025;İş;Market;Ziraat Kredi Kartı;2.156,25 TRY;Bim Market alışveriş
+24.04.2025;İş;Market;Ziraat Kredi Kartı;3.155,34 TRY;Arınan Gıda Market alışveriş
+24.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;2.975,04 TRY;Doktor Takvimi ödemesi
+24.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;498,44 TRY;adobe ödemesi
+25.04.2025;İş;Market;Nakit;600,00 TRY;Hamidiye bardak su 3 koli
+25.04.2025;Kişisel;Abdullah;Nakit;1.330,00 TRY;Eczane
+25.04.2025;İş;Demirbaş;Ziraat Kredi Kartı;2.928,90 TRY;Ofis Masası alımı - Trendyol
+25.04.2025;İş;Abdullah;Ziraat Kredi Kartı;132,00 TRY;Deniz Market - Abdullah hoca
+25.04.2025;İş;Market;Ziraat Kredi Kartı;535,00 TRY;Hıdırefendi Gıda - alışveriş
+25.04.2025;Kişisel;Abdullah;Nakit;536,10 TRY;Güneydoğu Yöresel Ürünler - alışveriş
+25.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;82,71 TRY;youtube premium
+26.04.2025;İş;Diğer;Nakit;779,00 TRY;WİFİ adaptör alımı - Media Markt
+26.04.2025;İş;Diğer;Nakit;301,00 TRY;Cuma Bey Adaptör için gidiş geliş yol ücreti
+26.04.2025;İş;Araç;Ziraat Kredi Kartı;437,91 TRY;Araç yakıt
+26.04.2025;Kişisel;Yemek;Ziraat Kredi Kartı;890,00 TRY;Özlemce Döner
+26.04.2025;Kişisel;Yemek;Ziraat Kredi Kartı;1.305,00 TRY;Kesginler İskender
+26.04.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;Tuğba Doğanay Maaş Ödemesi
+26.04.2025;İş;Market;Ziraat Kredi Kartı;62,50 TRY;Kırkpınar Gıda
+27.04.2025;İş;Tanıtım;Ziraat Kredi Kartı;840,96 TRY;Facebook reklam
+27.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;890,00 TRY;Yemek sepeti sipariş
+27.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;39,00 TRY;Amazon Prime
+27.04.2025;İş;Araç;Ziraat Kredi Kartı;660,00 TRY;Büyükanlı Opet
+28.04.2025;Kişisel;Abdullah;Nakit;450,00 TRY;Pazar alışverişi (kendi)
+28.04.2025;İş;Araç;Ziraat Kredi Kartı;125,00 TRY;Araç otopark ücreti
+28.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;120,00 TRY;Bilim Üniv. Kantin
+28.04.2025;İş;Market;Ziraat Kredi Kartı;719,90 TRY;Migros Market
+28.04.2025;İş;Market;Ziraat Kredi Kartı;84,95 TRY;Migros Market
+29.04.2025;İş;Market;Ziraat Kredi Kartı;55,00 TRY;Deniz Grup Market - Ekmek
+29.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;30,00 TRY;Coffeehub Kahve
+29.04.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;195,00 TRY;Coffeehub Kahve
+30.04.2025;İş;Market;Enpara Hesabı;698,00 TRY;Deniz Grup market
+22.04.2025;İş;SGK;Ziraat Bankası;48.992,01 TRY;SGK Ödemesi
+22.04.2025;İş;Vergi;Ziraat Bankası;9.925,36 TRY;Gerçek Usulde KDV ödemesi
+22.04.2025;İş;Vergi;Ziraat Bankası;7.776,00 TRY;Gelir Vergisi Stopaj ödemesi
+21.04.2025;İş;Vergi;Ziraat Bankası;9.464,13 TRY;Gelir Vergisi Stopaj ödemesi
+19.04.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;35.326,26 TRY;Ziraat Kredi Kartı ödemesi
+18.04.2025;İş;Fatura;Ziraat Bankası;3.243,00 TRY;Doğalgaz Faturası
+29.04.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;20.000,00 TRY;Kredi kartı ödemesi
+15.04.2025;İş;Fatura;Ziraat Bankası;221,60 TRY;539 989 33 75 ödemesi
+15.04.2025;İş;Fatura;Ziraat Bankası;461,50 TRY;532 419 33 75 Ödemesi
+15.04.2025;İş;Fatura;Ziraat Bankası;440,00 TRY;534 322 95 64 Ödemesi
+15.04.2025;İş;Fatura;Ziraat Bankası;3.075,00 TRY;Elektrik Faturası
+15.04.2025;İş;Fatura;Ziraat Bankası;1.124,90 TRY;Su Faturası
+30.04.2025;İş;Market;Nakit;150,00 TRY;Damacana Su alımı
+1.05.2025;İş;Market;Ziraat Kredi Kartı;300,00 TRY;Deniz Grup Market
+1.05.2025;İş;Market;Nakit;1.700,00 TRY;Mado Dondurma
+1.05.2025;İş;Maaş;Nakit;12.896,00 TRY;Tuğba Doğanay Nakit Maaş ödemesi
+1.05.2025;İş;Market;Ziraat Kredi Kartı;1.912,75 TRY;Bim Market
+1.05.2025;Kişisel;Abdullah;Enpara Hesabı;2.265,00 TRY;01 Adana Hasan Usta Yemek
+1.05.2025;İş;Market;Ziraat Kredi Kartı;1.795,73 TRY;Altunbilekler Market
+2.05.2025;Kişisel;Abdullah;Nakit;15,00 TRY;simit alımı
+2.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;440,00 TRY;Sigara alımı
+2.05.2025;İş;Kira;Ziraat Bankası;29.000,00 TRY;Kira Ödemesi
+2.05.2025;İş;Aidat;Ziraat Bankası;1.600,00 TRY;Aidat ödemesi
+2.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;938,98 TRY;Xiaomi Mi WiFi Router 4A 1167 Mbps 2.4G 5G Çift Bant 4 Antenli Wifi güçlendirici
+2.05.2025;İş;Market;Ziraat Kredi Kartı;1.256,00 TRY;Hıdırefendi Gıda
+2.05.2025;Kişisel;Abdullah;Nakit;300,00 TRY;Kurutemizleme
+3.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;11.024,00 TRY;Trendyol - Shokz openswim Pro Kulaklık
+3.05.2025;İş;Fatura;Ziraat Bankası;434,10 TRY;Superonline fatura ödemesi
+3.05.2025;İş;Demirbaş;Nakit;3.000,00 TRY;Robot Süpürge tamiri
+5.05.2025;İş;Eğitim;Ziraat Bankası;21.600,00 TRY;Meta bussiness eğitimi ödemesi
+5.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;270,00 TRY;Amazon - Kayıptan Sonra Yaşam kitap siparişi
+5.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;390,00 TRY;Amazon - Beden algısı Kitap siparişi
+5.05.2025;İş;Market;Ziraat Kredi Kartı;156,00 TRY;Deniz Grup market
+5.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;125,00 TRY;Otopark ücreti
+2.05.2025;İş;Maaş;Ziraat Bankası;15.473,27 TRY;Pınar Soğukpınar maaş ödemesi
+2.05.2025;İş;Maaş;Ziraat Bankası;11.789,16 TRY;Zeliha Gültekin Maaş ödemesi
+2.05.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;Ayşe Işık Maaş ödemesi
+2.05.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;Öykü Yıldız Maaş ödemesi
+2.05.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;Öznur Ünsal Maaş ödemesi
+2.05.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;Betül Çavumirza maaş ödemesi
+2.05.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;Onurcan Güler Maaş ödemesi
+2.05.2025;İş;Maaş;Nakit;23.000,00 TRY;Öznur Hoca maaş
+2.05.2025;İş;Maaş;Nakit;8.000,00 TRY;Öykü Hoca maaş
+2.05.2025;İş;Maaş;Nakit;10.315,00 TRY;Zeliha Hoca maaş
+2.05.2025;İş;Maaş;Nakit;22.104,00 TRY;Duygu Hoca maaş
+2.05.2025;İş;Maaş;Nakit;22.104,00 TRY;Mert Hoca maaş
+2.05.2025;İş;Maaş;Nakit;9.527,00 TRY;Pınar Soğukpınar Maaş
+2.05.2025;İş;Maaş;Nakit;13.000,00 TRY;Betül Hoca maaş
+2.05.2025;İş;Maaş;Nakit;2.896,00 TRY;Ayşe Hanım Maaş
+3.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;229,99 TRY;Netflix ödemesi
+5.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;660,00 TRY;Amazon kitap siparişi
+5.05.2025;İş;Market;Ziraat Kredi Kartı;156,00 TRY;Deniz grup market
+5.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;125,00 TRY;Otopark ücreti
+6.05.2025;İş;Maaş;Nakit;4.420,80 TRY;Cuma Karadaş Maaş ödemesi
+6.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;954,38 TRY;Chatgpt ödemesi
+6.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;441,00 TRY;Migros sigara alışverişi
+6.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.004,48 TRY;Facebook reklam
+7.05.2025;İş;Market;Ziraat Kredi Kartı;60,00 TRY;Kırkpınar Gıda market
+7.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;49,90 TRY;Hepsipay ödemesi
+7.05.2025;İş;Market;Ziraat Kredi Kartı;536,50 TRY;Şok Market
+7.05.2025;İş;Vergi;Ziraat Kredi Kartı;3.843,14 TRY;Çankaya Belediyesi Katı Atık ve çevre Temizlik vergileri ödemesi
+7.05.2025;İş;Diğer;Nakit;2.000,00 TRY;Kıymet Özel Market alışverişi yardımı
+8.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;85,00 TRY;Bilim Üniv. Kantin
+8.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;65,00 TRY;Bilim Üniv. Kantin
+8.05.2025;İş;Market;Nakit;600,00 TRY;Hamidiye bardak su - 3 Koli
+9.05.2025;İş;Market;Ziraat Kredi Kartı;437,00 TRY;Deniz grup market
+9.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;214,99 TRY;Hepsiburada - Gama kronometre çalar saat siparişi
+9.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;589,00 TRY;Hepsiburada- Kablosuz mikrofon
+9.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;260,99 TRY;Hepsiburada - 12li tahta kalemi
+9.05.2025;İş;Market;Ziraat Kredi Kartı;233,00 TRY;Deniz Gurp market
+9.05.2025;İş;Market;Ziraat Kredi Kartı;126,00 TRY;Hıdırefendi Gıda
+9.05.2025;Kişisel;Yemek;Ziraat Kredi Kartı;815,00 TRY;Özlemce Döner
+10.05.2025;İş;Yemek;Ziraat Kredi Kartı;200,00 TRY;Çorbacı Hasan Usta - Pide yaptırıldı
+10.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;274,00 TRY;Seda Yıldırım eczanesi
+10.05.2025;İş;Market;Ziraat Kredi Kartı;1.973,70 TRY;Arınan Gıda alışveriş
+10.05.2025;Kişisel;Abdullah;Enpara Hesabı;1.310,00 TRY;Minnettar Bolulu Haşlamacı Yemek
+10.05.2025;İş;Market;Nakit;434,50 TRY;Mrdıy retail ev gereçleri - Masa örtüsü ve havluluk alımı
+12.05.2025;İş;Fatura;Ziraat Bankası;544,40 TRY;Abdullah Hoca telefon faturası
+12.05.2025;İş;Fatura;Ziraat Bankası;461,50 TRY;Ofis telefon faturası
+12.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;992,62 TRY;Facebook reklam
+12.05.2025;İş;Fatura;Ziraat Bankası;221,50 TRY;Ofis 2 telefon faturası
+12.05.2025;İş;Market;Enpara Hesabı;1.499,62 TRY;Çağdaş market
+13.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;255,00 TRY;Psikonet İyi hissetmek dergi (2 adet)
+13.05.2025;İş;Fatura;Ziraat Bankası;1.355,44 TRY;Su faturası
+13.05.2025;İş;Fatura;Ziraat Bankası;4.045,00 TRY;Elektrik Faturası
+13.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;577,00 TRY;Amazon - Robot süpürge su haznesi
+13.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;169,98 TRY;Trendyol - Çöp Kovası
+13.05.2025;İş;Maaş;Nakit;4.250,00 TRY;Öznur Hoca Nisan ayı Grup terapi ödemesi
+13.05.2025;İş;Market;Nakit;75,00 TRY;Şok Market ekmek alımı
+13.05.2025;İş;Diğer;Nakit;250,00 TRY;Uluses Elektrik - Kablo kanalı alımı
+13.05.2025;İş;Diğer;Nakit;175,00 TRY;Sürgü kapı kilidi alımı
+13.05.2025;İş;Diğer;Nakit;300,00 TRY;Kapı kilidi
+13.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;746,79 TRY;Google ödemesi
+13.05.2025;İş;Market;Ziraat Kredi Kartı;469,50 TRY;Mjet Market
+13.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;940,00 TRY;Maşa restaurant yemek
+14.05.2025;Kişisel;Abdullah;Nakit;940,00 TRY;Eczane ilaç
+15.05.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+15.05.2025;İş;Market;Ziraat Kredi Kartı;360,50 TRY;Deniz Grup market
+15.05.2025;İş;Market;Nakit;27,00 TRY;Şok market - Kalem pil alımı
+16.05.2025;İş;Vergi;Ziraat Bankası;691,10 TRY;SSK Damga vergisi ödemesi
+16.05.2025;İş;Market;Ziraat Kredi Kartı;50,00 TRY;Irmak market
+16.05.2025;İş;Market;Nakit;1.400,00 TRY;Bim Market alışverişi
+17.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;176,00 TRY;Hepsiburada - Dark USB 3.0 Type A Erkek - USB 3.1 Type C Dişi Dönüştürücü
+17.05.2025;İş;Araç;Nakit;2.420,00 TRY;Araç Yakıt alımı
+17.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.130,00 TRY;Yemek sepeti sipariş
+17.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;959,00 TRY;Facebook reklam
+17.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;432,00 TRY;Yemek sepeti sipariş
+18.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;140,30 TRY;Facebook reklam
+18.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.130,00 TRY;Yemek sepeti
+19.05.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+19.05.2025;İş;Market;Nakit;209,00 TRY;Şok market - 3lü priz alımı
+19.05.2025;İş;Market;Nakit;600,00 TRY;Bardak su alımı (3 koli)
+19.05.2025;İş;Fatura;Ziraat Bankası;636,00 TRY;Doğalgaz fatura ödemesi
+19.05.2025;İş;Market;Nakit;150,00 TRY;Dolap kilidi 2 adet
+19.05.2025;İş;Market;Ziraat Kredi Kartı;2.278,00 TRY;Denir Grup market
+20.05.2025;İş;Market;Nakit;35,00 TRY;dolap kilit alımı
+20.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.055,00 TRY;Facebook reklam
+20.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.835,99 TRY;Abdullah hoca yemek
+21.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;478,80 TRY;Adobe ödemesi
+21.05.2025;İş;Kırtasiye;Ziraat Kredi Kartı;725,38 TRY;Kırtasiye giderleri
+21.05.2025;İş;Market;Nakit;100,00 TRY;Ekmek alımı
+22.05.2025;İş;Market;Enpara Hesabı;385,00 TRY;Deniz Grup Market
+22.05.2025;İş;Market;Ziraat Kredi Kartı;390,00 TRY;Vural Market
+22.05.2025;İş;Market;Ziraat Kredi Kartı;2.851,00 TRY;Bim Market
+22.05.2025;İş;Market;Ziraat Kredi Kartı;2.388,86 TRY;Altunbilekler Market
+22.05.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+22.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;430,00 TRY;Cici piknik
+22.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.055,00 TRY;Reklam ödemesi
+23.05.2025;İş;Ulaşım;Nakit;1.980,00 TRY;Öykü Hoca Nisan yol ödemesi
+23.05.2025;İş;Ulaşım;Nakit;1.890,00 TRY;Betül Hoca Nisan Yol ödemesi
+23.05.2025;İş;Market;Ziraat Kredi Kartı;326,19 TRY;Deniz Grup Market
+23.05.2025;İş;Market;Ziraat Kredi Kartı;226,00 TRY;Hıdırefendi Gıda Market
+23.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;3.867,14 TRY;Amazon - Harici disk ve 2 adet mouse alımı
+23.05.2025;İş;Ulaşım;Nakit;2.340,00 TRY;Zeliha Hoca Nisan Yol ödemesi
+24.05.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+24.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.089,00 TRY;Atabek Eczanesi ilaç
+24.05.2025;Kişisel;Abdullah;Nakit;1.070,00 TRY;Çorbacı Osman Usta yemek
+25.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.108,00 TRY;Facebook reklam
+26.05.2025;İş;Vergi;Ziraat Bankası;7.776,00 TRY;Nisan 2025 Muhtasar ödemesi
+26.05.2025;İş;SGK;Ziraat Bankası;61.486,12 TRY;Nisan 2025 SGK ödemesi
+26.05.2025;Kişisel;Abdullah;Nakit;1.000,00 TRY;Abdullah Hocaya verildi
+26.05.2025;İş;Fatura;Ziraat Bankası;288,25 TRY;TTnet internet fatura ödemesi
+26.05.2025;İş;Market;Ziraat Kredi Kartı;451,75 TRY;Migros Market
+26.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;50,00 TRY;Vadi Pertrol market
+26.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;500,00 TRY;Maltepe garage Oto Yıkama
+26.05.2025;İş;Market;Ziraat Kredi Kartı;2.943,14 TRY;Altunbilekler Market
+27.05.2025;İş;Diğer;Nakit;750,00 TRY;Test bilgisayarı RAM SSD bakımı
+27.05.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;2.567,50 TRY;Amazon - Fark et düşün kitap siparişi (10 adet)
+27.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.164,00 TRY;Facebook reklam
+27.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;49,90 TRY;Amazon ödemesi
+27.05.2025;İş;Market;Ziraat Kredi Kartı;1.937,22 TRY;Yeni Çağdaş market
+27.05.2025;İş;Vergi;Ziraat Bankası;443,70 TRY;Nisan 2025 KDV ödemesi
+28.05.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+28.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;700,00 TRY;Atabek eczanesi ilaç
+28.05.2025;İş;Market;Enpara Hesabı;437,50 TRY;Deniz Grup Market
+29.05.2025;İş;Fatura;Ziraat Kredi Kartı;2.975,04 TRY;Doktor Takvimi ödemesi
+29.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;79,99 TRY;Youtube premium ödemesi
+29.05.2025;İş;Market;Nakit;600,00 TRY;Bardak su alımı (3 koli)
+29.05.2025;İş;Fatura;Ziraat Kredi Kartı;2.879,87 TRY;Zoom ödemesi
+30.05.2025;İş;Market;Nakit;120,00 TRY;Ekmek ve süt alımı
+30.05.2025;İş;Market;Ziraat Kredi Kartı;930,00 TRY;Deniz Grup Market
+30.05.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.223,00 TRY;Facebook Reklam
+31.05.2025;İş;Market;Nakit;150,00 TRY;Damacana Su alımı
+31.05.2025;İş;Market;Ziraat Kredi Kartı;787,69 TRY;Şok market alışveriş
+31.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;286,00 TRY;Kocalar Petrol alışveriş
+31.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;220,00 TRY;Kocalar Petrol alışveriş
+31.05.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;66,00 TRY;Kocalar Petrol alışveriş
+31.05.2025;Kişisel;Abdullah;Nakit;2.000,00 TRY;Abdullah Hocaya verildi
+2.06.2025;İş;Market;Ziraat Kredi Kartı;45,00 TRY;NCZ İnşaat market
+2.06.2025;İş;Tanıtım;Ziraat Kredi Kartı;1.285,00 TRY;Facebook reklam
+2.06.2025;İş;Maaş;Nakit;12.769,00 TRY;Mert Tokatlı Maaş
+3.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;130,00 TRY;Deniz Grup Market
+3.06.2025;İş;Fatura;Ziraat Bankası;1.274,70 TRY;Superonline internet faturası
+3.06.2025;İş;Fatura;Ziraat Bankası;689,75 TRY;TTnet internet faturası
+3.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;229,99 TRY;Netflix ödemesi
+3.06.2025;İş;Maaş;Nakit;5.894,00;Görkem Sayar Maaş
+3.06.2025;İş;Maaş;Nakit;23.000,00;Öznur Ünsal Maaş
+3.06.2025;İş;Maaş;Nakit;8.000,00;Öykü Yıldız Maaş
+3.06.2025;İş;Maaş;Nakit;13.000,00;Betül Çavumirza Maaş
+3.06.2025;İş;Ulaşım;Nakit;1.980,00;Öykü Yıldız yol
+3.06.2025;İş;Ulaşım;Nakit;1.980,00;Betül Çavumirza Yol
+3.06.2025;İş;Maaş;Nakit;5.157,00;Duygu Sarıkaya Maaş
+4.06.2025;İş;Market;Ziraat Kredi Kartı;52,50 TRY;Deniz Grup Market
+4.06.2025;İş;Market;Ziraat Kredi Kartı;420,00 TRY;Deniz Grup Market
+4.06.2025;İş;Market;Ziraat Kredi Kartı;434,00 TRY;Şok Market
+4.06.2025;İş;Maaş;Nakit;8.000,00 TRY;Öznur Hoca Mayıs ayı Grup terapi ödemesi
+4.06.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+4.06.2025;İş;Maaş;Nakit;22.100,00;Cuma Karadaş Maaş
+4.06.2025;İş;Maaş;Nakit;34.367,00;Tuğba Doğanay Maaş
+4.06.2025;İş;Maaş;Nakit;2.896,00;Ayşe Işık Maaş
+4.06.2025;İş;Maaş;Nakit;7.895,00;Duygu Sarıkaya Maaş
+4.06.2025;İş;Maaş;Nakit;2.896,00;Pınar Soğukpınar maaş
+4.06.2025;İş;Market;Ziraat Kredi Kartı;1.012,80 TRY;Migros Jet market
+4.06.2025;İş;Market;Ziraat Kredi Kartı;399,00 TRY;A101 Market
+4.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;995,00 TRY;Özlemce Döner
+5.06.2025;İş;Market;Ziraat Kredi Kartı;1.655,97 TRY;Deniz Grup Market
+5.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;210,00 TRY;Büyükhanlı Opet
+5.06.2025;İş;Market;Ziraat Kredi Kartı;340,95 TRY;Deniz Grup Market
+5.06.2025;İş;Market;Ziraat Kredi Kartı;2.065,63 TRY;Çağdaş Market
+5.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;365,00 TRY;Başmarkoç Kahve
+5.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;2.180,00 TRY;Beykoz Restoran
+10.06.2025;İş;Abonelikler;Ziraat Bankası;27.600,00 TRY;Kariyernet ilan paketi alımı
+10.06.2025;İş;EFT;Ziraat Bankası;6,39 TRY;EFT bedeli
+10.06.2025;İş;Market;Nakit;80,00 TRY;Şok market
+10.06.2025;İş;Market;Ziraat Kredi Kartı;374,50 TRY;Migros Market
+11.06.2025;İş;Market;Enpara Hesabı;441,00 TRY;Deniz Grup Market
+11.06.2025;İş;Market;Ziraat Kredi Kartı;3.823,77 TRY;Altunbilekler Market
+11.06.2025;İş;Market;Ziraat Kredi Kartı;115,00 TRY;Vural Züccaciye - Çöp poşeti
+11.06.2025;Kişisel;Araç;Nakit;1.600,00 TRY;Araç Lastik değişimi
+12.06.2025;İş;Market;Nakit;150,00 TRY;Damacana su
+12.06.2025;İş;Market;Nakit;600,00 TRY;Bardak su 3 koli
+13.06.2025;İş;Market;Ziraat Kredi Kartı;815,00 TRY;Deniz Grup Market
+13.06.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;3.494,51 TRY;Ziraat Kredi kartı ödemesi
+13.06.2025;İş;Fatura;Ziraat Bankası;503,60 TRY;Abdullah Hoca telefon faturası
+13.06.2025;İş;Fatura;Ziraat Bankası;1.830,00 TRY;Elektrik Faturası ödeme
+13.06.2025;İş;Fatura;Ziraat Bankası;361,50 TRY;Ofis telefon faturası
+13.06.2025;İş;Fatura;Ziraat Bankası;221,50 TRY;Terapist telefonu faturası
+14.06.2025;Kişisel;Abdullah;Nakit;450,00 TRY;Kurutemizleme
+14.06.2025;Kişisel;Abdullah;Nakit;500,00 TRY;Eczane ilaç alımı
+14.06.2025;İş;Market;Ziraat Kredi Kartı;523,70 TRY;Şok market
+14.06.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;535,00 TRY;Trendyol kutu selpak siparişi
+15.06.2025;Kişisel;Yemek;Ziraat Kredi Kartı;1.240,00 TRY;özlemce döner
+15.06.2025;Kişisel;Yemek;Ziraat Kredi Kartı;270,00 TRY;beykoz paça
+15.06.2025;İş;Araç;Ziraat Kredi Kartı;660,00 TRY;araç benzin
+15.06.2025;İş;Araç;Ziraat Kredi Kartı;2.082,11 TRY;araç benzin
+16.06.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;13.978,02 TRY;son ekstreden kalan borç
+16.06.2025;İş;Yemek;Enpara Hesabı;310,00 TRY;dürümcü ali
+16.06.2025;İş;Yemek;Ziraat Kredi Kartı;80,00 TRY;apo yemek
+15.06.2025;Kişisel;Abdullah;Nakit;2.800,00 TRY;Abdullah hocaya verildi
+17.06.2025;İş;Market;Ziraat Kredi Kartı;584,00 TRY;Deniz Grup market
+17.06.2025;İş;Market;Ziraat Kredi Kartı;37,50 TRY;Ekmek alımı
+18.06.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+18.06.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;254,99 TRY;Trendyol - kasa defteri siparişi
+18.06.2025;İş;Fatura;Ziraat Bankası;565,00 TRY;Doğalgaz fatura
+18.06.2025;İş;Fatura;Ziraat Bankası;1.613,34 TRY;Su Faturası ödemesi
+18.06.2025;İş;Vergi;Ziraat Bankası;2.756,55 TRY;İşyeri sahibi için verdiğimiz damga vergisi borcuna ait vergi ödemesi
+18.06.2025;İş;Kırtasiye;Enpara Hesabı;3.350,00 TRY;Aktif Reklamcılık - 40 adet Bloknot Siparişi
+18.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;150,00 TRY;Ayazağa Çorba
+18.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;30,00 TRY;Coffeehub kahve
+19.06.2025;İş;Market;Ziraat Kredi Kartı;3.083,94 TRY;Deniz Grup Market
+19.06.2025;Kişisel;Abdullah;Nakit;6.000,00 TRY;Abdullah Hocaya verildi
+20.06.2025;İş;Market;Ziraat Kredi Kartı;530,00 TRY;Dere pastanesi - Ayşe Hanıma doğumgünü pastası
+20.06.2025;İş;Market;Ziraat Kredi Kartı;170,00 TRY;İmza çiçekçilik
+21.06.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;4.751,00 TRY;Trendyol - Pirantech buharlı temizlik makinesi siparişi
+21.06.2025;İş;Fatura;Ziraat Bankası;249,00 TRY;Türk telekom sabit hat fatura ödemesi
+21.06.2025;İş;Fatura;Ziraat Bankası;5.000,00 TRY;Ziraat Kredi Kartı ödemesi
+21.06.2025;İş;Market;Nakit;150,00 TRY;Damacana su
+22.06.2025;İş;Market;Ziraat Kredi Kartı;2.526,91 TRY;Altunbilekler Market
+22.06.2025;İş;Market;Ziraat Kredi Kartı;2.123,50 TRY;Bim Market
+22.06.2025;Kişisel;Abdullah;Halk Bankası;5.699,00 TRY;Abdullah hoca kişisel alışveriş
+22.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;1.745,00 TRY;Abdullah hoca yemek
+23.06.2025;Kişisel;Abdullah;Halk Bankası;437,50 TRY;Abdullah hoca kişisel (sigara içecek)
+24.06.2025;İş;Maaş;Nakit;3.580,00 TRY;Elif Dinçel Maaş
+24.06.2025;İş;Maaş;Ziraat Bankası;4.421,00 TRY;Elif Dinçel Maaş
+25.06.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+25.06.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;5.000,00 TRY;Ziraat Kredi Kartı ödemesi
+25.06.2025;İş;Market;Ziraat Kredi Kartı;468,70 TRY;Şok market
+25.06.2025;İş;Vergi;Ziraat Bankası;7.776,00 TRY;Damga Vergisi ödemesi
+25.06.2025;İş;SGK;Ziraat Bankası;69.092,74 TRY;Mayıs SGK tahakkuk ödemesi
+25.06.2025;İş;Market;Nakit;600,00 TRY;Bardak su (3 koli)
+26.06.2025;İş;Market;Ziraat Kredi Kartı;1.100,00 TRY;Deniz Grup Market
+27.06.2025;İş;Market;Enpara Hesabı;1.800,00 TRY;Hıdırefendi Gıda market
+28.06.2025;İş;Market;Ziraat Kredi Kartı;2.420,29 TRY;Altunbilekler market
+28.06.2025;İş;Market;Nakit;150,00 TRY;Damacana Su
+28.06.2025;İş;Market;Ziraat Kredi Kartı;690,00 TRY;Erler Konağı manav
+28.06.2025;İş;Market;Ziraat Kredi Kartı;1.795,00 TRY;Atasoy Et Galerisi
+28.06.2025;Kişisel;Abdullah;Ziraat Kredi Kartı;308,00 TRY;Migros market
+30.06.2025;İş;Market;Ziraat Kredi Kartı;283,50 TRY;Deniz Grup MArket
+30.06.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;1.299,00 TRY;Trendyol - Discover Oda kokusu siparişi
+30.06.2025;İş;Vergi;Ziraat Bankası;443,70 TRY;Mayıs / 2025 KDV ödemesi
+27.06.2025;İş;Kredi Kartı Borç Ödemesi;Ziraat Bankası;38.575,14 TRY;Ziraat Kredi Kartı ödemesi
+30.06.2025;İş;Maaş;Nakit;1.842,00 TRY;Melisa Gönen Maaş (2,5 gün)
+30.06.2025;İş;Avans;Nakit;1.000,00 TRY;tuğba avans
+1.07.2025;Kişisel;Abdullah;Enpara Hesabı;500,00 TRY;Merve Yıldız (Abdullah Hoca kişisel ödemesi)
+1.07.2025;İş;Maaş;Enpara Hesabı;10.250,00 TRY;Mert Tokatlı maaş
+1.07.2025;İş;Maaş;Enpara Hesabı;6.875,00 TRY;Öykü Yıldız Maaş
+1.07.2025;İş;Maaş;Nakit;14.066,00 TRY;Duygu Sarıkaya Maaş
+1.07.2025;İş;Maaş;Enpara Hesabı;9.747,00 TRY;Öykü Yıldız Maaş
+1.07.2025;İş;Maaş;Nakit;12.350,00 TRY;Onurcan Güler Maaş
+1.07.2025;İş;Market;Nakit;300,00 TRY;Damacana SU
+1.07.2025;İş;Maaş;Enpara Hesabı;21.030,00 TRY;Betül Çavumirza Maaş
+1.07.2025;İş;Maaş;Nakit;18.000,00 TRY;Pınar maaş
+1.07.2025;İş;Maaş;Nakit;17.000,00 TRY;Tuğba maaş (1000 TL avans alındı)
+1.07.2025;İş;Maaş;Nakit;5.160,00 TRY;Eralp hoca nakit ödeme
+1.07.2025;İş;Maaş;Nakit;5.160,00 TRY;Busenaz hoca nakit ödeme
+1.07.2025;İş;Maaş;Nakit;6.630,00 TRY;İlke hoca nakit ödeme
+1.07.2025;İş;Maaş;Nakit;5.000,00 TRY;ayşe hanım nakit ödeme
+1.07.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;Pınar maaş
+1.07.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;tuğba maaş
+1.07.2025;İş;Maaş;Ziraat Bankası;22.104,00 TRY;ayşe hanım maaş
+1.07.2025;İş;Maaş;Ziraat Bankası;5.894,58 TRY;Yılmaz Kaan Hoca maaş
+1.07.2025;İş;Maaş;Nakit;3.315,00 TRY;Yılmaz Kaan hoca nakit
+1.07.2025;İş;Kira;Ziraat Bankası;29.000,00 TRY;Kira Ödemesi
+1.07.2025;İş;Aidat;Ziraat Bankası;1.600,00 TRY;Aidat Ödemesi
+1.07.2025;İş;Maaş;Ziraat Bankası;3.000,00 TRY;Gökhan Bey Ödeme
+1.07.2025;Kişisel;Yemek;Ziraat Kredi Kartı;995,00 TRY;Abdullah hoca yemek
+2.07.2025;Kişisel;Abdullah;Nakit;60,00 TRY;İçecek
+2.07.2025;İş;Maaş;Nakit;22.105,00 TRY;Cuma karataş nakit maaş
+2.07.2025;İş;Maaş;Ziraat Bankası;7.312,80 TRY;Betül hoca haziran ayı tahsil edilmemiş ödemeler
+2.07.2025;İş;Maaş;Ziraat Bankası;2.756,40 TRY;Öykü hoca haziran ayı tahsil edilmemiş ödemeler
+2.07.2025;İş;Maaş;Ziraat Bankası;1.381,40 TRY;mert hoca haziran ayı tahsil edilmemiş ödemeler
+3.07.2025;İş;Market;Nakit;62,00 TRY;Market
+3.07.2025;İş;Fatura;Ziraat Bankası;684,00 TRY;türk telekom fatura ödemesi
+3.07.2025;İş;Online Alışveriş;Ziraat Kredi Kartı;164,64 TRY;amazon kitap siparişi
