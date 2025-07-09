@@ -44,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Link from "next/link";
 
 const menuData = [
   {
@@ -54,10 +55,11 @@ const menuData = [
     bgColor: "bg-red-50",
     borderColor: "border-red-200",
     items: [
-      { title: "Giderler", url: "#", icon: FileText },
-      { title: "Danışan Ödemeleri", url: "#", icon: DollarSign },
-      { title: "Çocuk Danışan Ödemeleri", url: "#", icon: Users },
-      { title: "Hesap Hareketleri", url: "#", icon: Activity },
+      { title: "Giderler", url: "/finans/giderler", icon: FileText },
+      { title: "Danışan Ödemeleri", url: "/finans/danisan-odemeleri", icon: DollarSign },
+      { title: "Çocuk Danışan Ödemeleri", url: "/finans/cocuk-danisan-odemeleri", icon: Users },
+      { title: "Hesap Hareketleri", url: "/finans/hesap-hareketleri", icon: Activity },
+      { title: "Bilanço", url: "/finans/bilanco", icon: BarChart3 },
       { title: "Mali Raporlar", url: "#", icon: BarChart3 },
       { title: "Bütçe Takibi", url: "#", icon: Target },
     ],
@@ -150,12 +152,21 @@ const AccordionMenuItem = React.memo(({ item, index }: { item: any; index: numbe
                       data-[active=true]:bg-accent data-[active=true]:font-medium
                     "
                   >
-                    <a href={subItem.url} className="flex items-center gap-2">
-                      {subItem.icon && (
-                        <subItem.icon className="size-3.5 text-muted-foreground group-hover/sub-item:text-foreground transition-colors" />
-                      )}
-                      <span className="text-sm">{subItem.title}</span>
-                    </a>
+                    {subItem.url && subItem.url !== "#" ? (
+                      <Link href={subItem.url} className="flex items-center gap-2">
+                        {subItem.icon && (
+                          <subItem.icon className="size-3.5 text-muted-foreground group-hover/sub-item:text-foreground transition-colors" />
+                        )}
+                        <span className="text-sm">{subItem.title}</span>
+                      </Link>
+                    ) : (
+                      <a href="#" className="flex items-center gap-2">
+                        {subItem.icon && (
+                          <subItem.icon className="size-3.5 text-muted-foreground group-hover/sub-item:text-foreground transition-colors" />
+                        )}
+                        <span className="text-sm">{subItem.title}</span>
+                      </a>
+                    )}
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
               ))}

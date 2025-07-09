@@ -63,6 +63,12 @@ const menuData = [
         icon: Activity,
         description: "Hesap hareket detayları",
       },
+      {
+        title: "Bilanço",
+        url: "/finans/bilanco",
+        icon: BarChart3,
+        description: "Gelir-gider özeti",
+      },
     ],
   },
   {
@@ -183,7 +189,7 @@ const MobileMenu = () => {
                   {section.items.map((item) => (
                     <Link
                       key={item.title}
-                      href={item.url}
+                      href={item.url || "#"}
                       className="flex items-center gap-2 p-2 text-sm rounded-md hover:bg-accent transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
@@ -215,13 +221,14 @@ const MobileMenu = () => {
 
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & { icon?: React.ComponentType<any>; description?: string }
->(({ className, title, children, icon: Icon, description, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<"a"> & { icon?: React.ComponentType<any>; description?: string; href: string }
+>(({ className, title, children, icon: Icon, description, href, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
         <Link
           ref={ref}
+          href={href || "#"}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className,
@@ -275,7 +282,7 @@ export function AppNavbar() {
                         <ListItem
                           key={item.title}
                           title={item.title}
-                          href={item.url}
+                          href={item.url || "#"}
                           icon={item.icon}
                           description={item.description}
                         />
