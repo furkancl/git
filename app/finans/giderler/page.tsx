@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, DollarSign, Calendar, AlertTriangle, CheckCircle, Loader2 } from "lucide-react"
-import { Gider, formatCurrency, parseDate } from "@/lib/csv-parser"
+import { Gider } from "@/lib/csv-parser"
+import { formatCurrency } from "@/lib/utils"
 
 // CSV verilerini doğrudan import et
 let csvData: Gider[] = []
@@ -27,7 +28,9 @@ const formFields = [
     name: "kategori",
     label: "Kategori",
     type: "select" as const,
-    options: ["Ofis Giderleri", "Ulaşım", "Yemek", "Teknoloji", "Diğer"],
+    options: [
+      "Yemek", "Kira", "Aidat", "Maaş", "Market", "Sarf Malzemesi", "Diğer", "Abdullah", "Fatura", "Araç", "Demirbaş", "Vergi", "Vakıf Giderleri", "Online Alışveriş", "SGK", "Tanıtım", "Yazılım", "Hediye"
+    ],
     required: true,
   },
   { name: "aciklama", label: "Açıklama", type: "textarea" as const, required: true },
@@ -140,58 +143,60 @@ export default function GiderlerPage() {
     )
   }
 
-  // İstatistik hesaplamaları - güncel data ile
-  const toplamGider = giderlerData.reduce(
-    (sum: number, item: any) => {
-      const tutar = parseFloat(item.tutar.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
-      return sum + tutar
-    },
-    0,
-  )
-  const onaylananGiderler = giderlerData.filter((item: any) => item.durum === "Onaylandı")
-  const bekleyenGiderler = giderlerData.filter((item: any) => item.durum === "Beklemede")
+  // Türk Lirası formatını doğru ve güvenli parse eden fonksiyon
+  function parseTurkishCurrency(str: string): number {
+    let cleaned = (str || '').replace(/[^\d.,-]/g, '');
+    if (cleaned.includes('-')) {
+      cleaned = '-' + cleaned.replace(/-/g, '');
+    }
+    if (cleaned.includes('.') && cleaned.includes(',')) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+    } else if (cleaned.includes(',')) {
+      cleaned = cleaned.replace(',', '.');
+    }
+    // Sadece ilk noktadan sonrasını (ondalık) bırak, en fazla iki basamak
+    if (cleaned.includes('.')) {
+      const [intPart, decPart] = cleaned.split('.');
+      cleaned = intPart + '.' + (decPart || '').slice(0, 2);
+    }
+    return parseFloat(cleaned) || 0;
+  }
 
-  const onaylananTutar = onaylananGiderler.reduce(
-    (sum: number, item: any) => {
-      const tutar = parseFloat(item.tutar.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
-      return sum + tutar
-    },
-    0,
-  )
-  const bekleyenTutar = bekleyenGiderler.reduce(
-    (sum: number, item: any) => {
-      const tutar = parseFloat(item.tutar.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
-      return sum + tutar
-    },
-    0,
-  )
+  // İstatistik hesaplamaları - csvData üzerinden
+  const toplamGider = csvData.reduce((sum, item) => {
+    const tutar = parseTurkishCurrency(item.harcamaTutari || '');
+    if (tutar !== 0) {
+      console.log('Harcama:', item.harcamaTutari, '->', tutar);
+    }
+    return sum + tutar;
+  }, 0);
 
-  // Kategori bazında analiz
-  const kategoriAnalizi = giderlerData.reduce(
-    (acc: Record<string, { toplam: number; adet: number }>, item: any) => {
-      const kategori = item.kategori
-      const tutar = parseFloat(item.tutar.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
+  // Kategori bazında analiz - csvData üzerinden
+  const kategoriAnalizi = csvData.reduce(
+    (acc: Record<string, { toplam: number; adet: number }>, item) => {
+      const kategori = item.giderCesidi || 'Diğer';
+      const tutar = parseTurkishCurrency(item.harcamaTutari || '');
       if (!acc[kategori]) {
-        acc[kategori] = { toplam: 0, adet: 0 }
+        acc[kategori] = { toplam: 0, adet: 0 };
       }
-      acc[kategori].toplam += tutar
-      acc[kategori].adet += 1
-      return acc
+      acc[kategori].toplam += tutar;
+      acc[kategori].adet += 1;
+      return acc;
     },
     {} as Record<string, { toplam: number; adet: number }>,
-  )
+  );
 
   const enYuksekKategori = Object.entries(kategoriAnalizi).reduce(
     (max, [kategori, data]) => (data.toplam > max.toplam ? { kategori, toplam: data.toplam } : max),
-    { kategori: "", toplam: 0 },
-  )
+    { kategori: '', toplam: 0 },
+  );
 
   return (
     <main className="w-[85%] mx-auto px-4 py-6">
       <PageHeader title="Giderler" description="Tüm gider kayıtlarını görüntüleyin ve yönetin" />
 
       {/* İstatistik Kartları */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Toplam Gider</CardTitle>
@@ -205,29 +210,6 @@ export default function GiderlerPage() {
             </p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Onaylanan Giderler</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(onaylananTutar.toString())}</div>
-            <p className="text-xs text-muted-foreground">{onaylananGiderler.length} gider onaylandı</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bekleyen Giderler</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">₺{bekleyenTutar.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">{bekleyenGiderler.length} gider onay bekliyor</p>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En Yüksek Kategori</CardTitle>

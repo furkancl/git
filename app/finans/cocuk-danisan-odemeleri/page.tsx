@@ -71,9 +71,9 @@ export default function CocukDanisanOdemeleriPage() {
     // Handle delete
   }
 
-  // Özetler için örnek hesaplamalar
-  const toplamOdeme = data.reduce((sum, d) => sum + parseFloat((d.odenenUcret || '0').replace(/[^\d,.-]/g, '').replace(',', '.')), 0)
-  const toplamBorc = data.reduce((sum, d) => sum + parseFloat((d.danisanBorcu || '0').replace(/[^\d,.-]/g, '').replace(',', '.')), 0)
+  // Özetler için hesaplamalar - ham veriyle
+  const toplamOdeme = data.reduce((sum, d) => sum + (parseFloat((d.odenenUcret || '0').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0), 0)
+  const toplamBorc = data.reduce((sum, d) => sum + (parseFloat((d.danisanBorcu || '0').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0), 0)
   const toplamSeans = data.length
   const aktifDanisan = new Set(data.map(d => d.adiSoyadi)).size
 

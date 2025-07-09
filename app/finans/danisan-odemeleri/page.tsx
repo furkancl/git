@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/page-header"
 import { DataTable } from "@/components/data-table"
 import { FormBuilder } from "@/components/form-builder"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { DanisanOdeme, formatCurrency, parseDate } from "@/lib/csv-parser"
+import { DanisanOdeme } from "@/lib/csv-parser"
+import { formatCurrency } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, TrendingUp, TrendingDown, DollarSign } from "lucide-react"
@@ -134,10 +135,11 @@ export default function DanisanOdemeleriPage() {
 
   // İstatistikleri hesapla
   const totalOdemeler = odemelerData.length
-  const totalGelir = odemelerData.reduce((sum: number, item: any) => {
-    const tutar = parseFloat(item.tutar.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
-    return sum + tutar
-  }, 0)
+  const totalGelir = csvData.reduce((sum, item) => {
+    let cleaned = (item.hizmetBedeli || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
+    const tutar = parseFloat(cleaned) || 0;
+    return sum + tutar;
+  }, 0);
   
   const bekleyenOdemeler = odemelerData.filter((item: any) => item.durum === "Beklemede").length
 

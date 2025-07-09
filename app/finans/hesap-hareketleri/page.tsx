@@ -22,10 +22,10 @@ const columns = [
 export default function HesapHareketleriPage() {
   const { data, loading, error } = useHesapHareketleri()
 
-  // Özetler için örnek hesaplamalar (gerekirse güncellenebilir)
-  const toplamGelir = data.filter(d => d.kategori?.toLowerCase().includes('gelir') || d.islem?.toLowerCase().includes('giriş')).reduce((sum, d) => sum + parseFloat((d.tutar || '0').replace(/[^\d,.-]/g, '').replace(',', '.')), 0)
-  const toplamGider = data.filter(d => d.kategori?.toLowerCase().includes('gider') || d.islem?.toLowerCase().includes('çıkış')).reduce((sum, d) => sum + parseFloat((d.tutar || '0').replace(/[^\d,.-]/g, '').replace(',', '.')), 0)
-  const netAkis = toplamGelir - toplamGider
+  // Özetler için hesaplamalar - ham veriyle
+  const toplamGelir = data.filter(d => d.kategori?.toLowerCase().includes('gelir') || d.islem?.toLowerCase().includes('giriş')).reduce((sum, d) => sum + (parseFloat((d.tutar || '0').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0), 0)
+  const toplamGider = data.filter(d => d.kategori?.toLowerCase().includes('gider') || d.islem?.toLowerCase().includes('çıkış')).reduce((sum, d) => sum + (parseFloat((d.tutar || '0').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0), 0)
+  const netAkis = toplamGelir - toplamGider;
 
   return (
     <main className="w-[85%] mx-auto px-4 py-6">
