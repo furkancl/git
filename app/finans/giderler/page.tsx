@@ -7,11 +7,10 @@ import { FormBuilder } from "@/components/form-builder"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, DollarSign, Calendar, AlertTriangle, CheckCircle, Loader2 } from "lucide-react"
+import { TrendingUp, DollarSign, Calendar, Loader2 } from "lucide-react"
 import { Gider } from "@/lib/csv-parser"
 import { formatCurrency } from "@/lib/utils"
 
-// CSV verilerini doğrudan import et
 let csvData: Gider[] = []
 
 const columns = [
@@ -29,7 +28,8 @@ const formFields = [
     label: "Kategori",
     type: "select" as const,
     options: [
-      "Yemek", "Kira", "Aidat", "Maaş", "Market", "Sarf Malzemesi", "Diğer", "Abdullah", "Fatura", "Araç", "Demirbaş", "Vergi", "Vakıf Giderleri", "Online Alışveriş", "SGK", "Tanıtım", "Yazılım", "Hediye"
+      "Yemek", "Kira", "Aidat", "Maaş", "Market", "Sarf Malzemesi", "Diğer", "Abdullah", "Fatura",
+      "Araç", "Demirbaş", "Vergi", "Vakıf Giderleri", "Online Alışveriş", "SGK", "Tanıtım", "Yazılım", "Hediye"
     ],
     required: true,
   },
@@ -50,7 +50,6 @@ export default function GiderlerPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
 
-  // CSV verilerini yükle
   useEffect(() => {
     const loadCSVData = async () => {
       try {
@@ -59,19 +58,18 @@ export default function GiderlerPage() {
         if (response.ok) {
           const result = await response.json()
           csvData = result.data
-          
-          // CSV verilerini DataTable formatına dönüştür
+
           const formattedData = csvData.map((item, index) => ({
             id: index + 1,
             tarih: item.tarih,
             kategori: item.giderCesidi,
             aciklama: item.aciklama,
-            tutar: formatCurrency(item.harcamaTutari),
-            durum: "Onaylandı", // CSV'de durum bilgisi yok, varsayılan olarak onaylandı
+            tutar: formatCurrency(parseTurkishCurrency(item.harcamaTutari || '')),
+            durum: "Onaylandı",
             gider_turu: item.giderTuru,
             odeme_sekli: item.odemeSekli
           }))
-          
+
           setGiderlerData(formattedData)
         }
       } catch (error) {
@@ -84,6 +82,42 @@ export default function GiderlerPage() {
     loadCSVData()
   }, [])
 
+  const parseTurkishCurrency = (str: string): number => {
+    if (!str) return 0
+    let cleaned = str.replace(/\s/g, '').replace(/[^\d.,-]/g, '')
+    if (cleaned.includes('.') && cleaned.includes(',')) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.')
+    } else if (cleaned.includes(',') && !cleaned.includes('.')) {
+      cleaned = cleaned.replace(',', '.')
+    }
+    const parsed = parseFloat(cleaned)
+    return isNaN(parsed) ? 0 : parsed
+  }
+
+  const toplamGider = csvData.reduce((sum, item) => {
+    const tutar = parseTurkishCurrency(item.harcamaTutari || '')
+    return sum + tutar
+  }, 0)
+
+  const kategoriAnalizi = csvData.reduce(
+    (acc: Record<string, { toplam: number; adet: number }>, item) => {
+      const kategori = item.giderCesidi || 'Diğer'
+      const tutar = parseTurkishCurrency(item.harcamaTutari || '')
+      if (!acc[kategori]) {
+        acc[kategori] = { toplam: 0, adet: 0 }
+      }
+      acc[kategori].toplam += tutar
+      acc[kategori].adet += 1
+      return acc
+    },
+    {}
+  )
+
+  const enYuksekKategori = Object.entries(kategoriAnalizi).reduce(
+    (max, [kategori, data]) => (data.toplam > max.toplam ? { kategori, toplam: data.toplam } : max),
+    { kategori: '', toplam: 0 }
+  )
+
   const handleAdd = () => {
     setEditingItem(null)
     setShowForm(true)
@@ -95,42 +129,34 @@ export default function GiderlerPage() {
   }
 
   const handleDelete = (item: any) => {
-    setGiderlerData((prev: any[]) => prev.filter((gider: any) => gider.id !== item.id))
+    setGiderlerData((prev) => prev.filter((gider) => gider.id !== item.id))
   }
 
   const handleSubmit = (data: Record<string, any>) => {
     if (editingItem) {
-      // Düzenleme
-      setGiderlerData((prev: any[]) =>
-        prev.map((item: any) => (item.id === editingItem.id ? { ...data, id: editingItem.id } : item)),
+      setGiderlerData((prev) =>
+        prev.map((item) => (item.id === editingItem.id ? { ...data, id: editingItem.id } : item))
       )
     } else {
-      // Yeni ekleme
-      const newId = Math.max(...giderlerData.map((item: any) => item.id)) + 1
-      setGiderlerData((prev: any[]) => [...prev, { ...data, id: newId }])
+      const newId = Math.max(...giderlerData.map((item) => item.id), 0) + 1
+      setGiderlerData((prev) => [...prev, { ...data, id: newId }])
     }
     setShowForm(false)
     setEditingItem(null)
   }
 
   const handleImport = (importedData: any[]) => {
-    console.log("İçeri aktarılan veriler:", importedData)
-
-    // İçeri aktarılan verileri formatla ve ID ekle
     const formattedData = importedData.map((item, index) => ({
-      id: Math.max(...giderlerData.map((g: any) => g.id)) + index + 1,
-      tarih: item.tarih || item.Tarih || "",
-      kategori: item.kategori || item.Kategori || "Diğer",
-      aciklama: item.aciklama || item.Açıklama || item.aciklama || "",
-      tutar: item.tutar || item.Tutar || "₺0",
-      durum: item.durum || item.Durum || "Beklemede",
+      id: Math.max(...giderlerData.map((g: any) => g.id), 0) + index + 1,
+      tarih: item.tarih || item.Tarih || '',
+      kategori: item.kategori || item.Kategori || 'Diğer',
+      aciklama: item.aciklama || item.Açıklama || '',
+      tutar: formatCurrency(parseTurkishCurrency(item.tutar || item.Tutar || '0')),
+      durum: item.durum || item.Durum || 'Beklemede',
     }))
-
-    // Mevcut verilere ekle
-    setGiderlerData((prev: any[]) => [...prev, ...formattedData])
+    setGiderlerData((prev) => [...prev, ...formattedData])
   }
 
-  // Loading durumu
   if (loading) {
     return (
       <main className="w-[85%] mx-auto px-4 py-6">
@@ -143,59 +169,10 @@ export default function GiderlerPage() {
     )
   }
 
-  // Türk Lirası formatını doğru ve güvenli parse eden fonksiyon
-  function parseTurkishCurrency(str: string): number {
-    let cleaned = (str || '').replace(/[^\d.,-]/g, '');
-    if (cleaned.includes('-')) {
-      cleaned = '-' + cleaned.replace(/-/g, '');
-    }
-    if (cleaned.includes('.') && cleaned.includes(',')) {
-      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-    } else if (cleaned.includes(',')) {
-      cleaned = cleaned.replace(',', '.');
-    }
-    // Sadece ilk noktadan sonrasını (ondalık) bırak, en fazla iki basamak
-    if (cleaned.includes('.')) {
-      const [intPart, decPart] = cleaned.split('.');
-      cleaned = intPart + '.' + (decPart || '').slice(0, 2);
-    }
-    return parseFloat(cleaned) || 0;
-  }
-
-  // İstatistik hesaplamaları - csvData üzerinden
-  const toplamGider = csvData.reduce((sum, item) => {
-    const tutar = parseTurkishCurrency(item.harcamaTutari || '');
-    if (tutar !== 0) {
-      console.log('Harcama:', item.harcamaTutari, '->', tutar);
-    }
-    return sum + tutar;
-  }, 0);
-
-  // Kategori bazında analiz - csvData üzerinden
-  const kategoriAnalizi = csvData.reduce(
-    (acc: Record<string, { toplam: number; adet: number }>, item) => {
-      const kategori = item.giderCesidi || 'Diğer';
-      const tutar = parseTurkishCurrency(item.harcamaTutari || '');
-      if (!acc[kategori]) {
-        acc[kategori] = { toplam: 0, adet: 0 };
-      }
-      acc[kategori].toplam += tutar;
-      acc[kategori].adet += 1;
-      return acc;
-    },
-    {} as Record<string, { toplam: number; adet: number }>,
-  );
-
-  const enYuksekKategori = Object.entries(kategoriAnalizi).reduce(
-    (max, [kategori, data]) => (data.toplam > max.toplam ? { kategori, toplam: data.toplam } : max),
-    { kategori: '', toplam: 0 },
-  );
-
   return (
     <main className="w-[85%] mx-auto px-4 py-6">
       <PageHeader title="Giderler" description="Tüm gider kayıtlarını görüntüleyin ve yönetin" />
 
-      {/* İstatistik Kartları */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -203,7 +180,7 @@ export default function GiderlerPage() {
             <DollarSign className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(toplamGider.toString())}</div>
+            <div className="text-2xl font-bold text-red-600">{formatCurrency(toplamGider)}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
               Bu ay toplam
@@ -217,12 +194,13 @@ export default function GiderlerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold text-blue-600">{enYuksekKategori.kategori}</div>
-            <p className="text-xs text-muted-foreground">₺{enYuksekKategori.toplam.toLocaleString()} harcama</p>
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(enYuksekKategori.toplam)}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Kategori Analizi */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Kategori Bazında Gider Analizi</CardTitle>
@@ -238,7 +216,7 @@ export default function GiderlerPage() {
                     <p className="text-xs text-muted-foreground">{data.adet} gider</p>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">₺{data.toplam.toLocaleString()}</div>
+                    <div className="font-medium">{formatCurrency(data.toplam)}</div>
                     <Badge variant="secondary">%{yuzde}</Badge>
                   </div>
                 </div>
