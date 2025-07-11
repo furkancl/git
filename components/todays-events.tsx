@@ -1,90 +1,128 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Calendar, User, FileText, Users, Heart } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Clock, Calendar, User, FileText, Users, Heart, UserCheck } from "lucide-react"
+import { parsePsikologlar, Psikolog, parseRandevular, Randevu } from "@/lib/csv-parser"
 
-const todaysEvents = [
-  {
-    id: 1,
-    time: "09:00",
-    title: "Bireysel Terapi",
-    client: "Ayşe K.",
-    type: "therapy",
-    status: "confirmed",
-  },
-  {
-    id: 2,
-    time: "14:00",
-    title: "Çift Terapisi",
-    client: "Zeynep & Ali B.",
-    type: "couple",
-    status: "pending",
-  },
-  {
-    id: 3,
-    time: "15:30",
-    title: "İlk Görüşme",
-    client: "Fatma D.",
-    type: "initial",
-    status: "confirmed",
-  },
-]
+interface TodaysEventsProps {
+  selectedPsikolog: string
+  onPsikologChange: (value: string) => void
+}
 
-const getEventIcon = (type: string) => {
-  switch (type) {
-    case "therapy":
+const getEventIcon = (seansTipi: string) => {
+  switch (seansTipi) {
+    case "Bireysel Terapi":
       return User
-    case "assessment":
+    case "MMPI Testi":
       return FileText
-    case "couple":
+    case "Çift Terapisi":
       return Users
-    case "initial":
+    default:
       return Heart
-    default:
-      return Calendar
   }
 }
 
-const getEventColor = (type: string) => {
-  switch (type) {
-    case "therapy":
+const getEventColor = (seansTipi: string) => {
+  switch (seansTipi) {
+    case "Bireysel Terapi":
       return "bg-blue-100 text-blue-800"
-    case "assessment":
+    case "MMPI Testi":
       return "bg-purple-100 text-purple-800"
-    case "couple":
+    case "Çift Terapisi":
       return "bg-pink-100 text-pink-800"
-    case "initial":
-      return "bg-green-100 text-green-800"
     default:
-      return "bg-gray-100 text-gray-800"
+      return "bg-green-100 text-green-800"
   }
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "confirmed":
+const getStatusColor = (durum: string) => {
+  switch (durum) {
+    case "Onaylandı":
       return "bg-green-100 text-green-800"
-    case "pending":
+    case "Planlandı":
+      return "bg-blue-100 text-blue-800"
+    case "Beklemede":
       return "bg-yellow-100 text-yellow-800"
     default:
       return "bg-gray-100 text-gray-800"
   }
 }
 
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case "confirmed":
+const getStatusLabel = (durum: string) => {
+  switch (durum) {
+    case "Onaylandı":
       return "Onaylandı"
-    case "pending":
+    case "Planlandı":
+      return "Planlandı"
+    case "Beklemede":
       return "Bekliyor"
     default:
       return "Bilinmiyor"
   }
 }
 
-export function TodaysEvents() {
+export function TodaysEvents({ selectedPsikolog, onPsikologChange }: TodaysEventsProps) {
+  const [psikologlar, setPsikologlar] = useState<Psikolog[]>([])
+  const [randevular, setRandevular] = useState<Randevu[]>([])
   const currentTime = new Date()
   const currentHour = currentTime.getHours()
   const currentMinute = currentTime.getMinutes()
+
+  // Load psychologists data from CSV
+  useEffect(() => {
+    const loadPsikologlar = async () => {
+      try {
+        const response = await fetch('/data/csv/Psikologlar.csv')
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const csvContent = await response.text()
+        const psikologData = parsePsikologlar(csvContent)
+        setPsikologlar(psikologData)
+      } catch (error) {
+        console.error('Psikologlar.csv yüklenirken hata:', error)
+      }
+    }
+    
+    loadPsikologlar()
+  }, [])
+
+  // Load appointments data from CSV
+  useEffect(() => {
+    const loadRandevular = async () => {
+      try {
+        const response = await fetch('/data/csv/Randevular.csv')
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const csvContent = await response.text()
+        const randevuData = parseRandevular(csvContent)
+        setRandevular(randevuData)
+      } catch (error) {
+        console.error('Randevular.csv yüklenirken hata:', error)
+      }
+    }
+    
+    loadRandevular()
+  }, [])
+
+  // Get today's date in YYYY-MM-DD format
+  const today = currentTime.toISOString().split('T')[0]
+
+  // Filter today's appointments based on selected psychologist
+  const todaysAppointments = randevular.filter(randevu => {
+    const isToday = randevu.tarih === today
+    const matchesPsychologist = selectedPsikolog === "tumu" || randevu.psikolog === selectedPsikolog
+    return isToday && matchesPsychologist
+  })
+
+  // Sort appointments by time
+  const sortedAppointments = todaysAppointments.sort((a, b) => 
+    a.saat.localeCompare(b.saat)
+  )
 
   const isEventActive = (eventTime: string) => {
     const [hour, minute] = eventTime.split(":").map(Number)
@@ -102,21 +140,48 @@ export function TodaysEvents() {
             <CardTitle className="text-base">Bugünün Etkinlikleri</CardTitle>
           </div>
           <Badge variant="secondary" className="bg-primary/10 text-primary text-xs px-1.5 py-0.5">
-            {todaysEvents.length}
+            {sortedAppointments.length}
           </Badge>
         </div>
-        <CardDescription className="text-xs">Bugün için planlanan randevular</CardDescription>
+        <CardDescription className="text-xs">
+          {selectedPsikolog === "tumu" 
+            ? "Bugün için planlanan tüm randevular" 
+            : `${selectedPsikolog} için bugünkü randevular`}
+        </CardDescription>
       </CardHeader>
+      
+      {/* Psikolog Seçimi Dropdown */}
+      <div className="px-4 pb-3">
+        <div className="flex items-center space-x-2 mb-2">
+          <UserCheck className="h-3 w-3 text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground">Psikolog Seçimi</span>
+        </div>
+        <Select value={selectedPsikolog} onValueChange={onPsikologChange}>
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue>
+              {selectedPsikolog === "tumu" ? "Tüm Psikologlar" : selectedPsikolog}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {psikologlar.map((psikolog, index) => (
+              <SelectItem key={index} value={psikolog.adiSoyadi}>
+                {psikolog.adiSoyadi}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <CardContent className="p-2">
-        {todaysEvents.length > 0 ? (
+        {sortedAppointments.length > 0 ? (
           <div className="space-y-1.5">
-            {todaysEvents.map((event) => {
-              const EventIcon = getEventIcon(event.type)
-              const isActive = isEventActive(event.time)
+            {sortedAppointments.map((appointment, index) => {
+              const EventIcon = getEventIcon(appointment.seansTipi)
+              const isActive = isEventActive(appointment.saat)
 
               return (
                 <div
-                  key={event.id}
+                  key={index}
                   className={`
                     p-2 rounded border transition-all duration-200 hover:shadow-sm
                     ${isActive ? "bg-primary/5 border-primary/20" : "bg-card hover:bg-accent/50"}
@@ -124,12 +189,13 @@ export function TodaysEvents() {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-1.5">
-                      <div className={`p-0.5 rounded ${getEventColor(event.type)}`}>
+                      <div className={`p-0.5 rounded ${getEventColor(appointment.seansTipi)}`}>
                         <EventIcon className="h-2.5 w-2.5" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-xs">{event.title}</h4>
-                        <p className="text-xs text-muted-foreground">{event.client}</p>
+                        <h4 className="font-medium text-xs">{appointment.danisan}</h4>
+                        <p className="text-xs text-muted-foreground">{appointment.seansTipi}</p>
+                        <p className="text-xs text-muted-foreground">{appointment.psikolog}</p>
                       </div>
                     </div>
                     {isActive && (
@@ -142,10 +208,11 @@ export function TodaysEvents() {
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center space-x-1">
                       <Clock className="h-2 w-2 text-muted-foreground" />
-                      <span className="font-medium">{event.time}</span>
+                      <span className="font-medium">{appointment.saat}</span>
+                      <span className="text-muted-foreground">({appointment.sure} dk)</span>
                     </div>
-                    <Badge variant="secondary" className={`${getStatusColor(event.status)} text-xs px-1 py-0`}>
-                      {getStatusLabel(event.status)}
+                    <Badge variant="secondary" className={`${getStatusColor(appointment.durum)} text-xs px-1 py-0`}>
+                      {getStatusLabel(appointment.durum)}
                     </Badge>
                   </div>
                 </div>
@@ -155,7 +222,11 @@ export function TodaysEvents() {
         ) : (
           <div className="text-center py-4 text-muted-foreground">
             <Calendar className="h-6 w-6 mx-auto mb-1 opacity-50" />
-            <p className="text-xs">Bugün için randevu yok</p>
+            <p className="text-xs">
+              {selectedPsikolog === "tumu" 
+                ? "Bugün için randevu yok" 
+                : `${selectedPsikolog} için bugünkü randevu yok`}
+            </p>
           </div>
         )}
       </CardContent>

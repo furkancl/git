@@ -1,62 +1,98 @@
 "use client"
 
 import * as React from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarDays, Clock, User } from "lucide-react"
+import { parseRandevular, Randevu } from "@/lib/csv-parser"
 
-// Örnek seans verileri - gerçek uygulamada bu veriler state management'tan gelecek
-const seansVerileri = [
-  {
-    id: 1,
-    tarih: "2024-01-20",
-    saat: "14:00",
-    danisan: "Ayşe K.",
-    tip: "Bireysel Terapi",
-    durum: "Onaylandı",
-  },
-  {
-    id: 2,
-    tarih: "2024-01-21",
-    saat: "16:00",
-    danisan: "Mehmet D.",
-    tip: "Çift Terapisi",
-    durum: "Planlandı",
-  },
-  {
-    id: 3,
-    tarih: "2024-01-22",
-    saat: "10:00",
-    danisan: "Zeynep Y.",
-    tip: "MMPI Testi",
-    durum: "Beklemede",
-  },
-  {
-    id: 4,
-    tarih: "2024-01-23",
-    saat: "15:30",
-    danisan: "Can Ö.",
-    tip: "Bireysel Terapi",
-    durum: "Onaylandı",
-  },
-]
+interface DashboardCalendarProps {
+  selectedPsikolog: string
+}
 
-export function DashboardCalendar() {
+// Generate colors for psychologists
+const getPsikologColor = (psikologName: string) => {
+  const colors = {
+    "Psk.Abdullah Yılmaz": {
+      bg: "rgb(59 130 246 / 0.1)",
+      text: "rgb(59 130 246)",
+      border: "rgb(59 130 246 / 0.3)"
+    },
+    "Psk.Eralp Yılmaz": {
+      bg: "rgb(168 85 247 / 0.1)",
+      text: "rgb(168 85 247)",
+      border: "rgb(168 85 247 / 0.3)"
+    }
+  }
+  return colors[psikologName as keyof typeof colors] || {
+    bg: "rgb(107 114 128 / 0.1)",
+    text: "rgb(107 114 128)",
+    border: "rgb(107 114 128 / 0.3)"
+  }
+}
+
+export function DashboardCalendar({ selectedPsikolog }: DashboardCalendarProps) {
   const [date, setDate] = React.useState<Date | undefined>(new Date())
-  const [selectedDateSessions, setSelectedDateSessions] = React.useState<any[]>([])
+  const [selectedDateSessions, setSelectedDateSessions] = React.useState<Randevu[]>([])
+  const [randevular, setRandevular] = useState<Randevu[]>([])
 
-  // Seçilen tarihteki seansları filtrele
+  // Load appointment data from CSV
+  useEffect(() => {
+    const loadRandevular = async () => {
+      try {
+        console.log('Loading Randevular.csv...')
+        const response = await fetch('/data/csv/Randevular.csv')
+        console.log('Response status:', response.status)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const csvContent = await response.text()
+        console.log('CSV content length:', csvContent.length)
+        const randevuData = parseRandevular(csvContent)
+        console.log('Parsed appointments:', randevuData)
+        setRandevular(randevuData)
+      } catch (error) {
+        console.error('Randevular.csv yüklenirken hata:', error)
+      }
+    }
+    
+    loadRandevular()
+  }, [])
+
+  // Filter appointments based on selected psychologist - memoized to prevent infinite loops
+  const filteredRandevular = useMemo(() => {
+    console.log('Filtering appointments for:', selectedPsikolog)
+    console.log('Total appointments:', randevular.length)
+    const filtered = selectedPsikolog === "tumu" 
+      ? randevular 
+      : randevular.filter(randevu => randevu.psikolog === selectedPsikolog)
+    console.log('Filtered appointments:', filtered.length)
+    return filtered
+  }, [selectedPsikolog, randevular])
+
+  // Seçilen tarihteki seansları filtrele - ALWAYS show ALL appointments for selected date
   React.useEffect(() => {
     if (date) {
       const selectedDateStr = date.toISOString().split("T")[0]
-      const sessionsForDate = seansVerileri.filter((seans) => seans.tarih === selectedDateStr)
+      console.log('Selected date:', selectedDateStr)
+      console.log('Available dates:', randevular.map(r => r.tarih))
+      // Always show ALL appointments for the selected date, regardless of psychologist filter
+      const sessionsForDate = randevular.filter((seans) => seans.tarih === selectedDateStr)
+      console.log('Sessions for selected date:', sessionsForDate)
       setSelectedDateSessions(sessionsForDate)
+    } else {
+      setSelectedDateSessions([])
     }
-  }, [date])
+  }, [date, randevular]) // Changed dependency from filteredRandevular to randevular
 
-  // Seans olan tarihleri belirle
-  const seansOlanTarihler = seansVerileri.map((seans) => new Date(seans.tarih))
+  // Seans olan tarihleri belirle - memoized to prevent recalculation
+  const seansOlanTarihler = useMemo(() => {
+    const dates = filteredRandevular.map((seans) => new Date(seans.tarih))
+    console.log('Calendar dates with sessions:', dates)
+    return dates
+  }, [filteredRandevular])
 
   const getDurumColor = (durum: string) => {
     switch (durum) {
@@ -71,6 +107,28 @@ export function DashboardCalendar() {
     }
   }
 
+  // Get calendar modifier styles based on selected psychologist - memoized
+  const modifierStyles = useMemo(() => {
+    if (selectedPsikolog === "tumu") {
+      return {
+        hasSession: {
+          backgroundColor: "rgb(59 130 246 / 0.1)",
+          color: "rgb(59 130 246)",
+          fontWeight: "bold",
+        },
+      }
+    } else {
+      const color = getPsikologColor(selectedPsikolog)
+      return {
+        hasSession: {
+          backgroundColor: color.bg,
+          color: color.text,
+          fontWeight: "bold",
+        },
+      }
+    }
+  }, [selectedPsikolog])
+
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-2">
@@ -79,7 +137,11 @@ export function DashboardCalendar() {
             <CalendarDays className="h-4 w-4 text-primary" />
             <CardTitle className="text-base">Takvim</CardTitle>
           </div>
-          <CardDescription className="text-xs">Randevularınızı ve önemli tarihleri takip edin.</CardDescription>
+          <CardDescription className="text-xs">
+            {selectedPsikolog === "tumu" 
+              ? "Tüm psikologların randevuları" 
+              : `${selectedPsikolog} randevuları`}
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-2">
           <div className="flex justify-center">
@@ -91,13 +153,7 @@ export function DashboardCalendar() {
               modifiers={{
                 hasSession: seansOlanTarihler,
               }}
-              modifiersStyles={{
-                hasSession: {
-                  backgroundColor: "rgb(59 130 246 / 0.1)",
-                  color: "rgb(59 130 246)",
-                  fontWeight: "bold",
-                },
-              }}
+              modifiersStyles={modifierStyles}
               classNames={{
                 months: "flex flex-col sm:flex-row space-y-2 sm:space-x-2 sm:space-y-0",
                 month: "space-y-2 w-full",
@@ -151,30 +207,40 @@ export function DashboardCalendar() {
         <CardContent className="p-2">
           {selectedDateSessions.length > 0 ? (
             <div className="space-y-2">
-              {selectedDateSessions.map((seans) => (
-                <div
-                  key={seans.id}
-                  className="p-2 rounded border transition-all duration-200 hover:shadow-sm bg-card hover:bg-accent/50"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center space-x-1.5">
-                      <User className="h-2.5 w-2.5 text-muted-foreground" />
-                      <div>
-                        <h4 className="font-medium text-xs">{seans.danisan}</h4>
-                        <p className="text-xs text-muted-foreground">{seans.tip}</p>
+              {selectedDateSessions.map((seans, index) => {
+                const psikologColor = getPsikologColor(seans.psikolog)
+                return (
+                  <div
+                    key={index}
+                    className="p-2 rounded border transition-all duration-200 hover:shadow-sm bg-card hover:bg-accent/50"
+                    style={{ borderLeftColor: psikologColor.border, borderLeftWidth: '3px' }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center space-x-1.5">
+                        <User className="h-2.5 w-2.5 text-muted-foreground" />
+                        <div>
+                          <h4 className="font-medium text-xs">{seans.danisan}</h4>
+                          <p className="text-xs text-muted-foreground">{seans.seansTipi}</p>
+                          <p className="text-xs text-muted-foreground" style={{ color: psikologColor.text }}>
+                            {seans.psikolog}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className={`${getDurumColor(seans.durum)} text-xs px-1 py-0`}>
+                        {seans.durum}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center">
+                        <Clock className="h-2 w-2 text-muted-foreground mr-1" />
+                        <span className="font-medium">{seans.saat}</span>
+                        <span className="text-muted-foreground ml-1">({seans.sure} dk)</span>
                       </div>
                     </div>
-                    <Badge variant="secondary" className={`${getDurumColor(seans.durum)} text-xs px-1 py-0`}>
-                      {seans.durum}
-                    </Badge>
                   </div>
-
-                  <div className="flex items-center text-xs">
-                    <Clock className="h-2 w-2 text-muted-foreground mr-1" />
-                    <span className="font-medium">{seans.saat}</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <div className="text-center py-4 text-muted-foreground">

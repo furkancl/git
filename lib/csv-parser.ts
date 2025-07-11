@@ -49,6 +49,22 @@ export interface HesapHareketi {
   kategori: string
 }
 
+export interface Psikolog {
+  kayitTarihi: string
+  adiSoyadi: string
+}
+
+export interface Randevu {
+  tarih: string
+  saat: string
+  danisan: string
+  psikolog: string
+  seansTipi: string
+  durum: string
+  sure: string
+  notlar: string
+}
+
 export function parseCSV(csvContent: string, delimiter: string = ';'): string[][] {
   const lines = csvContent.split('\n').filter((line: string) => line.trim())
   return lines.map((line: string) =>
@@ -120,5 +136,29 @@ export function parseHesapHareketleri(csvContent: string): HesapHareketi[] {
     tutar: row[3] || '',
     aciklama: row[4] || '',
     kategori: row[5] || ''
+  }))
+}
+
+export function parsePsikologlar(csvContent: string): Psikolog[] {
+  const rows = parseCSV(csvContent)
+  const dataRows = rows.slice(1)
+  return dataRows.map(row => ({
+    kayitTarihi: row[0] || '',
+    adiSoyadi: row[1] || ''
+  }))
+}
+
+export function parseRandevular(csvContent: string): Randevu[] {
+  const rows = parseCSV(csvContent)
+  const dataRows = rows.slice(1)
+  return dataRows.map(row => ({
+    tarih: row[0] || '',
+    saat: row[1] || '',
+    danisan: row[2] || '',
+    psikolog: row[3] || '',
+    seansTipi: row[4] || '',
+    durum: row[5] || '',
+    sure: row[6] || '',
+    notlar: row[7] || ''
   }))
 } 
