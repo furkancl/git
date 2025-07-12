@@ -6,6 +6,12 @@ import { DashboardCalendar } from "@/components/dashboard-calendar"
 import { TodaysEvents } from "@/components/todays-events"
 import { Randevu, Psikolog } from "@/lib/csv-parser"
 
+// Psikolog isimlerini eşleştirmek için mapping - artık gerekli değil çünkü aynı isimler kullanılıyor
+const psikologMapping: Record<string, string> = {
+  // Eğer eski format varsa buraya ekleyin
+  // 'Eski Format': 'Yeni Format',
+}
+
 export default function Dashboard() {
   const [selectedPsikolog, setSelectedPsikolog] = useState<string>("tumu")
   const [randevular, setRandevular] = useState<Randevu[]>([])
@@ -60,6 +66,7 @@ export default function Dashboard() {
           <DashboardCalendar 
             selectedPsikolog={selectedPsikolog} 
             randevular={randevular}
+            psikologMapping={psikologMapping}
           />
         </div>
 
@@ -70,6 +77,7 @@ export default function Dashboard() {
             onPsikologChange={setSelectedPsikolog}
             randevular={randevular}
             psikologlar={psikologlar}
+            psikologMapping={psikologMapping}
           />
         </div>
       </div>

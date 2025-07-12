@@ -159,7 +159,7 @@ export default function GiderlerPage() {
 
   if (loading) {
     return (
-      <main className="w-[85%] mx-auto px-4 py-6">
+      <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <PageHeader title="Giderler" description="Tüm gider kayıtlarını görüntüleyin ve yönetin" />
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -170,10 +170,10 @@ export default function GiderlerPage() {
   }
 
   return (
-    <main className="w-[85%] mx-auto px-4 py-6">
+    <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <PageHeader title="Giderler" description="Tüm gider kayıtlarını görüntüleyin ve yönetin" />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 mb-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Toplam Gider</CardTitle>
@@ -246,7 +246,7 @@ export default function GiderlerPage() {
             fields={formFields}
             onSubmit={handleSubmit}
             onCancel={() => setShowForm(false)}
-            initialData={editingItem}
+            initialData={editingItem || {}}
           />
         </DialogContent>
       </Dialog>

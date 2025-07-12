@@ -33,7 +33,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
 const menuData = [
@@ -165,8 +165,8 @@ const MobileMenu = () => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-80 p-0">
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b">
+        <SheetHeader className="p-4 border-b">
+          <SheetTitle className="text-left">
             <div className="flex items-center gap-2">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <BarChart3 className="size-4" />
@@ -176,8 +176,10 @@ const MobileMenu = () => {
                 <p className="text-xs text-muted-foreground">v2.1.0</p>
               </div>
             </div>
-          </div>
-
+          </SheetTitle>
+        </SheetHeader>
+        
+        <div className="flex flex-col h-full">
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {menuData.map((section) => (
               <div key={section.title} className="space-y-2">

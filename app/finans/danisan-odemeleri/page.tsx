@@ -145,7 +145,7 @@ export default function DanisanOdemeleriPage() {
 
   if (loading) {
     return (
-      <main className="w-[85%] mx-auto px-4 py-6">
+      <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <PageHeader title="Danışan Ödemeleri" description="Danışan ödeme kayıtlarını takip edin" />
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -156,11 +156,11 @@ export default function DanisanOdemeleriPage() {
   }
 
   return (
-    <main className="w-[85%] mx-auto px-4 py-6">
+    <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <PageHeader title="Danışan Ödemeleri" description="Danışan ödeme kayıtlarını takip edin" />
 
       {/* İstatistik Kartları */}
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Toplam Ödeme</CardTitle>
@@ -215,7 +215,7 @@ export default function DanisanOdemeleriPage() {
             fields={formFields}
             onSubmit={handleSubmit}
             onCancel={() => setShowForm(false)}
-            initialData={editingItem}
+            initialData={editingItem || {}}
           />
         </DialogContent>
       </Dialog>

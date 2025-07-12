@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Clock, Calendar, User, FileText, Users, Heart, UserCheck } from "lucide-react"
 import { Psikolog, Randevu } from "@/lib/csv-parser"
+import { getPsikologColor } from "@/lib/utils"
 
 interface TodaysEventsProps {
   selectedPsikolog: string
   onPsikologChange: (value: string) => void
   randevular: Randevu[]
   psikologlar: Psikolog[]
+  psikologMapping: Record<string, string>
 }
 
 const getEventIcon = (seansTipi: string) => {
@@ -23,19 +25,6 @@ const getEventIcon = (seansTipi: string) => {
       return Users
     default:
       return Heart
-  }
-}
-
-const getEventColor = (seansTipi: string) => {
-  switch (seansTipi) {
-    case "Bireysel Terapi":
-      return "bg-blue-100 text-blue-800"
-    case "MMPI Testi":
-      return "bg-purple-100 text-purple-800"
-    case "Çift Terapisi":
-      return "bg-pink-100 text-pink-800"
-    default:
-      return "bg-green-100 text-green-800"
   }
 }
 
@@ -73,10 +62,15 @@ const formatDateToYYYYMMDD = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
-export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, psikologlar }: TodaysEventsProps) {
+export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, psikologlar, psikologMapping }: TodaysEventsProps) {
   const currentTime = new Date()
   const currentHour = currentTime.getHours()
   const currentMinute = currentTime.getMinutes()
+
+  // Psikolog ismini eşleştir - artık direkt ismi döndür
+  const getMappedPsikologName = (psikologName: string): string => {
+    return psikologMapping[psikologName] || psikologName
+  }
 
   // Get today's date in YYYY-MM-DD format (CSV formatı ile aynı)
   const today = formatDateToYYYYMMDD(currentTime)
@@ -85,15 +79,19 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, p
   // Filter today's appointments based on selected psychologist
   const todaysAppointments = randevular.filter(randevu => {
     const isToday = randevu.tarih === today
-    const matchesPsychologist = selectedPsikolog === "tumu" || randevu.psikolog === selectedPsikolog
+    const mappedSelectedPsikolog = getMappedPsikologName(selectedPsikolog)
+    const mappedRandevuPsikolog = getMappedPsikologName(randevu.psikolog)
+    const matchesPsychologist = selectedPsikolog === "tumu" || mappedRandevuPsikolog === mappedSelectedPsikolog
     
     // Debug için log ekleyelim
     if (isToday) {
       console.log('Today\'s Events - Today appointment:', {
         danisan: randevu.danisan,
         psikolog: randevu.psikolog,
+        mappedPsikolog: mappedRandevuPsikolog,
         tarih: randevu.tarih,
         selectedPsikolog: selectedPsikolog,
+        mappedSelectedPsikolog: mappedSelectedPsikolog,
         matches: matchesPsychologist
       })
     }
@@ -113,7 +111,8 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, p
     const [hour, minute] = eventTime.split(":").map(Number)
     const eventMinutes = hour * 60 + minute
     const currentMinutes = currentHour * 60 + currentMinute
-    return currentMinutes >= eventMinutes && currentMinutes < eventMinutes + 50
+    // Seans süresi olmadan, sadece saat bazında kontrol
+    return currentMinutes >= eventMinutes && currentMinutes < eventMinutes + 60 // 1 saat varsayımı
   }
 
   return (
@@ -149,11 +148,20 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, p
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="tumu">Tüm Psikologlar</SelectItem>
-            {psikologlar.map((psikolog, index) => (
-              <SelectItem key={index} value={psikolog.adiSoyadi}>
-                {psikolog.adiSoyadi}
-              </SelectItem>
-            ))}
+            {psikologlar.map((psikolog, index) => {
+              const psikologColor = getPsikologColor(psikolog.adiSoyadi)
+              return (
+                <SelectItem key={index} value={psikolog.adiSoyadi}>
+                  <div className="flex items-center space-x-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: psikologColor.text }}
+                    />
+                    <span>{psikolog.adiSoyadi}</span>
+                  </div>
+                </SelectItem>
+              )
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -164,6 +172,8 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, p
             {sortedAppointments.map((appointment, index) => {
               const EventIcon = getEventIcon(appointment.seansTipi)
               const isActive = isEventActive(appointment.saat)
+              const mappedPsikolog = getMappedPsikologName(appointment.psikolog)
+              const psikologColor = getPsikologColor(mappedPsikolog)
 
               return (
                 <div
@@ -172,16 +182,24 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, p
                     p-2 rounded border transition-all duration-200 hover:shadow-sm
                     ${isActive ? "bg-primary/5 border-primary/20" : "bg-card hover:bg-accent/50"}
                   `}
+                  style={{
+                    borderLeft: `3px solid ${psikologColor.border}`,
+                    backgroundColor: isActive ? "rgb(59 130 246 / 0.05)" : psikologColor.bg
+                  }}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-1.5">
-                      <div className={`p-0.5 rounded ${getEventColor(appointment.seansTipi)}`}>
+                      <div className={`p-0.5 rounded ${psikologColor.badge}`}>
                         <EventIcon className="h-2.5 w-2.5" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-xs">{appointment.danisan}</h4>
+                        <h4 className="font-medium text-xs" style={{ color: psikologColor.text }}>
+                          {appointment.danisan}
+                        </h4>
                         <p className="text-xs text-muted-foreground">{appointment.seansTipi}</p>
-                        <p className="text-xs text-muted-foreground">{appointment.psikolog}</p>
+                        <p className="text-xs font-medium" style={{ color: psikologColor.text }}>
+                          {appointment.psikolog}
+                        </p>
                       </div>
                     </div>
                     {isActive && (
@@ -195,7 +213,6 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, p
                     <div className="flex items-center space-x-1">
                       <Clock className="h-2 w-2 text-muted-foreground" />
                       <span className="font-medium">{appointment.saat}</span>
-                      <span className="text-muted-foreground">({appointment.sure} dk)</span>
                     </div>
                     <Badge variant="secondary" className={`${getStatusColor(appointment.durum)} text-xs px-1 py-0`}>
                       {getStatusLabel(appointment.durum)}
@@ -206,13 +223,8 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, p
             })}
           </div>
         ) : (
-          <div className="text-center py-4 text-muted-foreground">
-            <Calendar className="h-6 w-6 mx-auto mb-1 opacity-50" />
-            <p className="text-xs">
-              {selectedPsikolog === "tumu" 
-                ? "Bugün için randevu yok" 
-                : `${selectedPsikolog} için bugünkü randevu yok`}
-            </p>
+          <div className="text-center py-4 text-muted-foreground text-xs">
+            Bugün için randevu bulunmuyor
           </div>
         )}
       </CardContent>

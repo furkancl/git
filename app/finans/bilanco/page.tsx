@@ -10,7 +10,7 @@ export default function BilancoPage() {
 
   if (loading) {
     return (
-      <main className="w-[85%] mx-auto px-4 py-6">
+      <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <PageHeader title="Bilanço" description="Toplam gelir, gider ve net bakiyenizi özet olarak görüntüleyin." />
         <div className="flex items-center justify-center h-64">
           <span className="animate-spin mr-2">
@@ -24,7 +24,7 @@ export default function BilancoPage() {
 
   if (error) {
     return (
-      <main className="w-[85%] mx-auto px-4 py-6">
+      <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <PageHeader title="Bilanço" description="Toplam gelir, gider ve net bakiyenizi özet olarak görüntüleyin." />
         <div className="flex items-center justify-center h-64 text-red-600">
           Hata: {error}
@@ -34,9 +34,9 @@ export default function BilancoPage() {
   }
 
   return (
-    <main className="w-[85%] mx-auto px-4 py-6">
+    <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <PageHeader title="Bilanço" description="Toplam gelir, gider ve net bakiyenizi özet olarak görüntüleyin." />
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Toplam Gelir</CardTitle>

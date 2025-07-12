@@ -7,31 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { CalendarDays, Clock, User } from "lucide-react"
 import { Randevu } from "@/lib/csv-parser"
+import { getPsikologColor } from "@/lib/utils"
 
 interface DashboardCalendarProps {
   selectedPsikolog: string
   randevular: Randevu[]
-}
-
-// Generate colors for psychologists
-const getPsikologColor = (psikologName: string) => {
-  const colors = {
-    "Psk.Abdullah Yılmaz": {
-      bg: "rgb(59 130 246 / 0.1)",
-      text: "rgb(59 130 246)",
-      border: "rgb(59 130 246 / 0.3)"
-    },
-    "Psk.Eralp Yılmaz": {
-      bg: "rgb(168 85 247 / 0.1)",
-      text: "rgb(168 85 247)",
-      border: "rgb(168 85 247 / 0.3)"
-    }
-  }
-  return colors[psikologName as keyof typeof colors] || {
-    bg: "rgb(107 114 128 / 0.1)",
-    text: "rgb(107 114 128)",
-    border: "rgb(107 114 128 / 0.3)"
-  }
+  psikologMapping: Record<string, string>
 }
 
 // Tarih formatını standardize etmek için yardımcı fonksiyon
@@ -42,20 +23,31 @@ const formatDateToYYYYMMDD = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
-export function DashboardCalendar({ selectedPsikolog, randevular }: DashboardCalendarProps) {
+export function DashboardCalendar({ selectedPsikolog, randevular, psikologMapping }: DashboardCalendarProps) {
   const [date, setDate] = React.useState<Date | undefined>(new Date())
   const [selectedDateSessions, setSelectedDateSessions] = React.useState<Randevu[]>([])
+
+  // Psikolog ismini eşleştir - artık direkt ismi döndür
+  const getMappedPsikologName = (psikologName: string): string => {
+    return psikologMapping[psikologName] || psikologName
+  }
 
   // Filter appointments based on selected psychologist - memoized to prevent infinite loops
   const filteredRandevular = useMemo(() => {
     console.log('Dashboard Calendar - Filtering appointments for:', selectedPsikolog)
     console.log('Dashboard Calendar - Total appointments:', randevular.length)
+    
+    const mappedSelectedPsikolog = getMappedPsikologName(selectedPsikolog)
     const filtered = selectedPsikolog === "tumu" 
       ? randevular 
-      : randevular.filter(randevu => randevu.psikolog === selectedPsikolog)
+      : randevular.filter(randevu => {
+          const mappedRandevuPsikolog = getMappedPsikologName(randevu.psikolog)
+          return mappedRandevuPsikolog === mappedSelectedPsikolog
+        })
+    
     console.log('Dashboard Calendar - Filtered appointments:', filtered.length)
     return filtered
-  }, [selectedPsikolog, randevular])
+  }, [selectedPsikolog, randevular, psikologMapping])
 
   // Seçilen tarihteki seansları filtrele - Şimdi psikolog filtresine göre göster
   React.useEffect(() => {
@@ -68,16 +60,20 @@ export function DashboardCalendar({ selectedPsikolog, randevular }: DashboardCal
       const sessionsForDate = randevular.filter((seans) => seans.tarih === selectedDateStr)
       console.log('Dashboard Calendar - Sessions for date:', sessionsForDate)
       
+      const mappedSelectedPsikolog = getMappedPsikologName(selectedPsikolog)
       const filteredSessions = selectedPsikolog === "tumu" 
         ? sessionsForDate 
-        : sessionsForDate.filter(seans => seans.psikolog === selectedPsikolog)
+        : sessionsForDate.filter(seans => {
+            const mappedRandevuPsikolog = getMappedPsikologName(seans.psikolog)
+            return mappedRandevuPsikolog === mappedSelectedPsikolog
+          })
       
       console.log('Dashboard Calendar - Sessions for selected date and psychologist:', filteredSessions)
       setSelectedDateSessions(filteredSessions)
     } else {
       setSelectedDateSessions([])
     }
-  }, [date, selectedPsikolog, randevular]) // selectedPsikolog dependency'si eklendi
+  }, [date, selectedPsikolog, randevular, psikologMapping])
 
   // Seans olan tarihleri belirle - memoized to prevent recalculation
   const seansOlanTarihler = useMemo(() => {
@@ -110,16 +106,17 @@ export function DashboardCalendar({ selectedPsikolog, randevular }: DashboardCal
         },
       }
     } else {
-      const color = getPsikologColor(selectedPsikolog)
+      const mappedPsikolog = getMappedPsikologName(selectedPsikolog)
+      const color = getPsikologColor(mappedPsikolog)
       return {
         hasSession: {
-          backgroundColor: color.bg,
+          backgroundColor: color.calendar,
           color: color.text,
           fontWeight: "bold",
         },
       }
     }
-  }, [selectedPsikolog])
+  }, [selectedPsikolog, psikologMapping])
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -204,7 +201,8 @@ export function DashboardCalendar({ selectedPsikolog, randevular }: DashboardCal
           {selectedDateSessions.length > 0 ? (
             <div className="space-y-2">
               {selectedDateSessions.map((seans, index) => {
-                const psikologColor = getPsikologColor(seans.psikolog)
+                const mappedPsikolog = getMappedPsikologName(seans.psikolog)
+                const psikologColor = getPsikologColor(mappedPsikolog)
                 return (
                   <div
                     key={index}
@@ -231,7 +229,6 @@ export function DashboardCalendar({ selectedPsikolog, randevular }: DashboardCal
                       <div className="flex items-center">
                         <Clock className="h-2 w-2 text-muted-foreground mr-1" />
                         <span className="font-medium">{seans.saat}</span>
-                        <span className="text-muted-foreground ml-1">({seans.sure} dk)</span>
                       </div>
                     </div>
                   </div>

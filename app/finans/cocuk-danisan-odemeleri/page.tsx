@@ -53,9 +53,11 @@ export default function CocukDanisanOdemeleriPage() {
 
   const handleSubmit = (data: any) => {
     if (editingItem) {
-      // Handle update
+      // Handle update - şimdilik sadece console'a yazdır
+      console.log("Güncellenecek veri:", { ...(editingItem as any), ...data })
     } else {
-      // Handle create
+      // Handle create - şimdilik sadece console'a yazdır
+      console.log("Yeni veri:", data)
     }
     setShowForm(false)
     setEditingItem(null)
@@ -63,12 +65,12 @@ export default function CocukDanisanOdemeleriPage() {
 
   const handleImport = (importedData: any[]) => {
     console.log("İçeri aktarılan çocuk danışan verileri:", importedData)
-
-    // Handle import
+    // Handle import - şimdilik sadece console'a yazdır
   }
 
   const handleDelete = (item: any) => {
-    // Handle delete
+    console.log("Silinecek çocuk danışan ödemesi:", item)
+    // Handle delete - şimdilik sadece console'a yazdır
   }
 
   // Özetler için hesaplamalar - ham veriyle
@@ -78,9 +80,9 @@ export default function CocukDanisanOdemeleriPage() {
   const aktifDanisan = new Set(data.map(d => d.adiSoyadi)).size
 
   return (
-    <main className="w-[85%] mx-auto px-4 py-6">
+    <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <PageHeader title="Çocuk Danışan Ödemeleri" description="Çocuk danışan ödeme kayıtlarını CSV'den takip edin" />
-      <div className="grid gap-6 mb-6 md:grid-cols-3">
+      <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Toplam Ödeme</CardTitle>
@@ -135,7 +137,7 @@ export default function CocukDanisanOdemeleriPage() {
             fields={formFields}
             onSubmit={handleSubmit}
             onCancel={() => setShowForm(false)}
-            initialData={editingItem}
+            initialData={editingItem || {}}
           />
         </DialogContent>
       </Dialog>
