@@ -6,10 +6,11 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarDays, Clock, User } from "lucide-react"
-import { parseRandevular, Randevu } from "@/lib/csv-parser"
+import { Randevu } from "@/lib/csv-parser"
 
 interface DashboardCalendarProps {
   selectedPsikolog: string
+  randevular: Randevu[]
 }
 
 // Generate colors for psychologists
@@ -33,64 +34,55 @@ const getPsikologColor = (psikologName: string) => {
   }
 }
 
-export function DashboardCalendar({ selectedPsikolog }: DashboardCalendarProps) {
+// Tarih formatını standardize etmek için yardımcı fonksiyon
+const formatDateToYYYYMMDD = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function DashboardCalendar({ selectedPsikolog, randevular }: DashboardCalendarProps) {
   const [date, setDate] = React.useState<Date | undefined>(new Date())
   const [selectedDateSessions, setSelectedDateSessions] = React.useState<Randevu[]>([])
-  const [randevular, setRandevular] = useState<Randevu[]>([])
-
-  // Load appointment data from CSV
-  useEffect(() => {
-    const loadRandevular = async () => {
-      try {
-        console.log('Loading Randevular.csv...')
-        const response = await fetch('/data/csv/Randevular.csv')
-        console.log('Response status:', response.status)
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const csvContent = await response.text()
-        console.log('CSV content length:', csvContent.length)
-        const randevuData = parseRandevular(csvContent)
-        console.log('Parsed appointments:', randevuData)
-        setRandevular(randevuData)
-      } catch (error) {
-        console.error('Randevular.csv yüklenirken hata:', error)
-      }
-    }
-    
-    loadRandevular()
-  }, [])
 
   // Filter appointments based on selected psychologist - memoized to prevent infinite loops
   const filteredRandevular = useMemo(() => {
-    console.log('Filtering appointments for:', selectedPsikolog)
-    console.log('Total appointments:', randevular.length)
+    console.log('Dashboard Calendar - Filtering appointments for:', selectedPsikolog)
+    console.log('Dashboard Calendar - Total appointments:', randevular.length)
     const filtered = selectedPsikolog === "tumu" 
       ? randevular 
       : randevular.filter(randevu => randevu.psikolog === selectedPsikolog)
-    console.log('Filtered appointments:', filtered.length)
+    console.log('Dashboard Calendar - Filtered appointments:', filtered.length)
     return filtered
   }, [selectedPsikolog, randevular])
 
-  // Seçilen tarihteki seansları filtrele - ALWAYS show ALL appointments for selected date
+  // Seçilen tarihteki seansları filtrele - Şimdi psikolog filtresine göre göster
   React.useEffect(() => {
     if (date) {
-      const selectedDateStr = date.toISOString().split("T")[0]
-      console.log('Selected date:', selectedDateStr)
-      console.log('Available dates:', randevular.map(r => r.tarih))
-      // Always show ALL appointments for the selected date, regardless of psychologist filter
+      const selectedDateStr = formatDateToYYYYMMDD(date)
+      console.log('Dashboard Calendar - Selected date (YYYY-MM-DD):', selectedDateStr)
+      console.log('Dashboard Calendar - Selected psychologist:', selectedPsikolog)
+      
+      // Önce tarihe göre filtrele, sonra psikoloğa göre filtrele
       const sessionsForDate = randevular.filter((seans) => seans.tarih === selectedDateStr)
-      console.log('Sessions for selected date:', sessionsForDate)
-      setSelectedDateSessions(sessionsForDate)
+      console.log('Dashboard Calendar - Sessions for date:', sessionsForDate)
+      
+      const filteredSessions = selectedPsikolog === "tumu" 
+        ? sessionsForDate 
+        : sessionsForDate.filter(seans => seans.psikolog === selectedPsikolog)
+      
+      console.log('Dashboard Calendar - Sessions for selected date and psychologist:', filteredSessions)
+      setSelectedDateSessions(filteredSessions)
     } else {
       setSelectedDateSessions([])
     }
-  }, [date, randevular]) // Changed dependency from filteredRandevular to randevular
+  }, [date, selectedPsikolog, randevular]) // selectedPsikolog dependency'si eklendi
 
   // Seans olan tarihleri belirle - memoized to prevent recalculation
   const seansOlanTarihler = useMemo(() => {
     const dates = filteredRandevular.map((seans) => new Date(seans.tarih))
-    console.log('Calendar dates with sessions:', dates)
+    console.log('Dashboard Calendar - Calendar dates with sessions:', dates)
     return dates
   }, [filteredRandevular])
 
@@ -200,8 +192,12 @@ export function DashboardCalendar({ selectedPsikolog }: DashboardCalendarProps) 
           </div>
           <CardDescription className="text-xs">
             {selectedDateSessions.length > 0
-              ? `${selectedDateSessions.length} seans planlanmış`
-              : "Bu tarihte seans yok"}
+              ? selectedPsikolog === "tumu"
+                ? `${selectedDateSessions.length} seans planlanmış`
+                : `${selectedPsikolog} için ${selectedDateSessions.length} seans planlanmış`
+              : selectedPsikolog === "tumu"
+                ? "Bu tarihte seans yok"
+                : `${selectedPsikolog} için bu tarihte seans yok`}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-2">
@@ -245,7 +241,11 @@ export function DashboardCalendar({ selectedPsikolog }: DashboardCalendarProps) 
           ) : (
             <div className="text-center py-4 text-muted-foreground">
               <CalendarDays className="h-6 w-6 mx-auto mb-1 opacity-50" />
-              <p className="text-xs">Bu tarihte seans yok</p>
+              <p className="text-xs">
+                {selectedPsikolog === "tumu" 
+                  ? "Bu tarihte seans yok" 
+                  : `${selectedPsikolog} için bu tarihte seans yok`}
+              </p>
             </div>
           )}
         </CardContent>

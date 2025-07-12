@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
-import { parseDanisanOdemeleri, parseGiderler, parseCocukDanisanOdemeleri, parseHesapHareketleri } from '@/lib/csv-parser'
+import { 
+  parseDanisanOdemeleri, 
+  parseGiderler, 
+  parseCocukDanisanOdemeleri, 
+  parseHesapHareketleri,
+  parsePsikologlar,
+  parseRandevular
+} from '@/lib/csv-parser'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const dataType = searchParams.get('type') // 'danisan-odemeleri', 'giderler', 'cocuk-danisan-odemeleri', 'hesap-hareketleri'
+    const dataType = searchParams.get('type') // 'danisan-odemeleri', 'giderler', 'cocuk-danisan-odemeleri', 'hesap-hareketleri', 'psikologlar', 'randevular'
     
     if (!dataType) {
       return NextResponse.json({ error: 'Data type parameter is required' }, { status: 400 })
@@ -31,6 +38,14 @@ export async function GET(request: NextRequest) {
       csvFilePath = path.join(process.cwd(), 'data', 'csv', 'Hesap hareketleri.csv')
       const csvContent = await fs.readFile(csvFilePath, 'utf-8')
       parsedData = parseHesapHareketleri(csvContent)
+    } else if (dataType === 'psikologlar') {
+      csvFilePath = path.join(process.cwd(), 'data', 'csv', 'Psikologlar.csv')
+      const csvContent = await fs.readFile(csvFilePath, 'utf-8')
+      parsedData = parsePsikologlar(csvContent)
+    } else if (dataType === 'randevular') {
+      csvFilePath = path.join(process.cwd(), 'data', 'csv', 'Randevular.csv')
+      const csvContent = await fs.readFile(csvFilePath, 'utf-8')
+      parsedData = parseRandevular(csvContent)
     } else {
       return NextResponse.json({ error: 'Invalid data type' }, { status: 400 })
     }

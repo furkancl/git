@@ -1,15 +1,16 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Clock, Calendar, User, FileText, Users, Heart, UserCheck } from "lucide-react"
-import { parsePsikologlar, Psikolog, parseRandevular, Randevu } from "@/lib/csv-parser"
+import { Psikolog, Randevu } from "@/lib/csv-parser"
 
 interface TodaysEventsProps {
   selectedPsikolog: string
   onPsikologChange: (value: string) => void
+  randevular: Randevu[]
+  psikologlar: Psikolog[]
 }
 
 const getEventIcon = (seansTipi: string) => {
@@ -64,60 +65,44 @@ const getStatusLabel = (durum: string) => {
   }
 }
 
-export function TodaysEvents({ selectedPsikolog, onPsikologChange }: TodaysEventsProps) {
-  const [psikologlar, setPsikologlar] = useState<Psikolog[]>([])
-  const [randevular, setRandevular] = useState<Randevu[]>([])
+// Tarih formatını standardize etmek için yardımcı fonksiyon
+const formatDateToYYYYMMDD = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function TodaysEvents({ selectedPsikolog, onPsikologChange, randevular, psikologlar }: TodaysEventsProps) {
   const currentTime = new Date()
   const currentHour = currentTime.getHours()
   const currentMinute = currentTime.getMinutes()
 
-  // Load psychologists data from CSV
-  useEffect(() => {
-    const loadPsikologlar = async () => {
-      try {
-        const response = await fetch('/data/csv/Psikologlar.csv')
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const csvContent = await response.text()
-        const psikologData = parsePsikologlar(csvContent)
-        setPsikologlar(psikologData)
-      } catch (error) {
-        console.error('Psikologlar.csv yüklenirken hata:', error)
-      }
-    }
-    
-    loadPsikologlar()
-  }, [])
-
-  // Load appointments data from CSV
-  useEffect(() => {
-    const loadRandevular = async () => {
-      try {
-        const response = await fetch('/data/csv/Randevular.csv')
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const csvContent = await response.text()
-        const randevuData = parseRandevular(csvContent)
-        setRandevular(randevuData)
-      } catch (error) {
-        console.error('Randevular.csv yüklenirken hata:', error)
-      }
-    }
-    
-    loadRandevular()
-  }, [])
-
-  // Get today's date in YYYY-MM-DD format
-  const today = currentTime.toISOString().split('T')[0]
+  // Get today's date in YYYY-MM-DD format (CSV formatı ile aynı)
+  const today = formatDateToYYYYMMDD(currentTime)
+  console.log('Today\'s Events - Today\'s date (YYYY-MM-DD):', today)
 
   // Filter today's appointments based on selected psychologist
   const todaysAppointments = randevular.filter(randevu => {
     const isToday = randevu.tarih === today
     const matchesPsychologist = selectedPsikolog === "tumu" || randevu.psikolog === selectedPsikolog
+    
+    // Debug için log ekleyelim
+    if (isToday) {
+      console.log('Today\'s Events - Today appointment:', {
+        danisan: randevu.danisan,
+        psikolog: randevu.psikolog,
+        tarih: randevu.tarih,
+        selectedPsikolog: selectedPsikolog,
+        matches: matchesPsychologist
+      })
+    }
+    
     return isToday && matchesPsychologist
   })
+
+  console.log('Today\'s Events - Selected psychologist:', selectedPsikolog)
+  console.log('Today\'s Events - Today\'s appointments:', todaysAppointments)
 
   // Sort appointments by time
   const sortedAppointments = todaysAppointments.sort((a, b) => 
@@ -163,6 +148,7 @@ export function TodaysEvents({ selectedPsikolog, onPsikologChange }: TodaysEvent
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="tumu">Tüm Psikologlar</SelectItem>
             {psikologlar.map((psikolog, index) => (
               <SelectItem key={index} value={psikolog.adiSoyadi}>
                 {psikolog.adiSoyadi}

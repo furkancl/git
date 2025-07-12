@@ -52,10 +52,6 @@ export function StatCards() {
     }
   }
 
-  // En çok tekrar eden ilk 5 isim
-  const nameCountsArr = Object.entries(nameCounts).sort((a, b) => b[1] - a[1])
-  const top5 = nameCountsArr.slice(0, 5)
-
   const stats = [
     {
       title: "Toplam Danışan",
