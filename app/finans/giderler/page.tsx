@@ -13,6 +13,20 @@ import { formatCurrency } from "@/lib/utils"
 
 let csvData: Gider[] = []
 
+// Kategori adını normalize et
+function normalizeCategory(category: string): string {
+  if (!category) return 'Diğer';
+  
+  // Önce trim yap
+  const trimmed = category.trim();
+  
+  // Boş string kontrolü
+  if (!trimmed) return 'Diğer';
+  
+  // İlk harf büyük, geri kalanı küçük yap
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
 const columns = [
   { key: "tarih", label: "Tarih", sortable: true },
   { key: "kategori", label: "Kategori", sortable: true },
@@ -62,7 +76,7 @@ export default function GiderlerPage() {
           const formattedData = csvData.map((item, index) => ({
             id: index + 1,
             tarih: item.tarih,
-            kategori: item.giderCesidi,
+            kategori: normalizeCategory(item.giderCesidi),
             aciklama: item.aciklama,
             tutar: formatCurrency(parseTurkishCurrency(item.harcamaTutari || '')),
             durum: "Onaylandı",
@@ -101,7 +115,7 @@ export default function GiderlerPage() {
 
   const kategoriAnalizi = csvData.reduce(
     (acc: Record<string, { toplam: number; adet: number }>, item) => {
-      const kategori = item.giderCesidi || 'Diğer'
+      const kategori = normalizeCategory(item.giderCesidi || 'Diğer')
       const tutar = parseTurkishCurrency(item.harcamaTutari || '')
       if (!acc[kategori]) {
         acc[kategori] = { toplam: 0, adet: 0 }
@@ -149,7 +163,7 @@ export default function GiderlerPage() {
     const formattedData = importedData.map((item, index) => ({
       id: Math.max(...giderlerData.map((g: any) => g.id), 0) + index + 1,
       tarih: item.tarih || item.Tarih || '',
-      kategori: item.kategori || item.Kategori || 'Diğer',
+      kategori: normalizeCategory(item.kategori || item.Kategori || 'Diğer'),
       aciklama: item.aciklama || item.Açıklama || '',
       tutar: formatCurrency(parseTurkishCurrency(item.tutar || item.Tutar || '0')),
       durum: item.durum || item.Durum || 'Beklemede',

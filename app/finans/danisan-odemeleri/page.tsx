@@ -136,9 +136,17 @@ export default function DanisanOdemeleriPage() {
   // İstatistikleri hesapla
   const totalOdemeler = odemelerData.length
   const totalGelir = csvData.reduce((sum, item) => {
-    let cleaned = (item.hizmetBedeli || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
+    let cleaned = (item.odenenUcret || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
     const tutar = parseFloat(cleaned) || 0;
     return sum + tutar;
+  }, 0);
+  
+  // Henüz ödenmemiş gelirleri hesapla (borçlar)
+  const toplamBorc = csvData.reduce((sum, item) => {
+    let cleaned = (item.danisanBorcu || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
+    const borc = parseFloat(cleaned) || 0;
+    // Sadece pozitif borçları topla (negatif değerler fazla ödeme)
+    return sum + (borc > 0 ? borc : 0);
   }, 0);
   
   const bekleyenOdemeler = odemelerData.filter((item: any) => item.durum === "Beklemede").length
@@ -160,7 +168,7 @@ export default function DanisanOdemeleriPage() {
       <PageHeader title="Danışan Ödemeleri" description="Danışan ödeme kayıtlarını takip edin" />
 
       {/* İstatistik Kartları */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Toplam Ödeme</CardTitle>
@@ -179,7 +187,7 @@ export default function DanisanOdemeleriPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalGelir.toString())}</div>
-            <p className="text-xs text-muted-foreground">Toplam kazanç</p>
+            <p className="text-xs text-muted-foreground">Tahsil edilen</p>
           </CardContent>
         </Card>
         
@@ -191,6 +199,17 @@ export default function DanisanOdemeleriPage() {
           <CardContent>
             <div className="text-2xl font-bold">{bekleyenOdemeler}</div>
             <p className="text-xs text-muted-foreground">Ödenmemiş kayıtlar</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Toplam Borç</CardTitle>
+            <TrendingDown className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{formatCurrency(toplamBorc.toString())}</div>
+            <p className="text-xs text-muted-foreground">Tahsil edilecek</p>
           </CardContent>
         </Card>
       </div>
