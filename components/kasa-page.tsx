@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { tr } from "date-fns/locale"
+import { isWithinInterval, parseISO } from "date-fns"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Transaction {
@@ -45,6 +46,7 @@ export function KasaPage() {
   const [newTransactionAmount, setNewTransactionAmount] = useState("")
   const [newTransactionDate, setNewTransactionDate] = useState<Date | undefined>(new Date())
   const [newTransactionBankAccount, setNewTransactionBankAccount] = useState<"Banka 1" | "Banka 2" | null>(null)
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
 
   // Tüm işlemleri tek bir state'te tutuyoruz
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([
@@ -246,19 +248,27 @@ export function KasaPage() {
 
   // Seçilen filtreye göre işlemleri filtrele
   const filteredTransactions = useMemo(() => {
-    if (selectedAccountFilter === "all") {
-      return allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    let filtered = allTransactions
+    if (selectedAccountFilter !== "all") {
+      filtered = filtered.filter((t) => t.accountType === selectedAccountFilter)
     }
-    return allTransactions
-      .filter((t) => t.accountType === selectedAccountFilter)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [allTransactions, selectedAccountFilter])
-
-  const filteredCashTransactions = allTransactions.filter((transaction) => {
-    const matchesSearch = transaction.details.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = filterType === "all" || transaction.type === filterType
-    return matchesSearch && matchesType
-  })
+    if (searchTerm) {
+      filtered = filtered.filter((transaction) => transaction.details.toLowerCase().includes(searchTerm.toLowerCase()))
+    }
+    if (filterType !== "all") {
+      filtered = filtered.filter((transaction) => transaction.type === filterType)
+    }
+    if (dateRange.from || dateRange.to) {
+      filtered = filtered.filter((transaction) => {
+        const transactionDate = parseISO(transaction.date)
+        return (
+          (!dateRange.from || isWithinInterval(transactionDate, { start: dateRange.from, end: dateRange.to || new Date() })) &&
+          (!dateRange.to || isWithinInterval(transactionDate, { start: dateRange.from || new Date(0), end: dateRange.to }))
+        )
+      })
+    }
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [allTransactions, selectedAccountFilter, searchTerm, filterType, dateRange])
 
   if (loading) {
     return (
@@ -278,34 +288,38 @@ export function KasaPage() {
           <h1 className="text-2xl font-bold text-gray-900">Kasa Yönetimi</h1>
           <p className="text-gray-600 text-sm">Nakit ve banka hesaplarınızdaki giriş/çıkışları takip edin</p>
         </div>
-        <Button onClick={() => openNewTransactionDialog("cash-in")}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Yeni Kasa Hareketi Ekle
-        </Button>
+        {/* <Button onClick={() => openNewTransactionDialog("cash-in")}> */}
+        {/*   <PlusCircle className="mr-2 h-4 w-4" /> */}
+        {/*   Yeni Kasa Hareketi Ekle */}
+        {/* </Button> */}
       </div>
 
       {/* Yeniden Tasarlanmış Özet Kartlar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 flex-shrink-0">
         {/* Toplam Bakiye Kartı */}
-        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 col-span-full lg:col-span-1">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Bakiye</p>
-              <p className="text-3xl font-bold text-blue-700">₺{overallCurrentBalance.toLocaleString()}</p>
+        <Card className="shadow-lg rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border-0 col-span-full lg:col-span-1">
+          <CardContent className="flex flex-col items-center justify-center p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-200 text-lg">
+                💼
+              </span>
+              <span className="text-blue-700 text-base font-semibold">Toplam Bakiye</span>
             </div>
-            <Wallet className="h-10 w-10 text-blue-500 opacity-70" />
+            <div className="text-2xl font-bold text-blue-700">₺{overallCurrentBalance.toLocaleString()}</div>
           </CardContent>
         </Card>
 
         {/* Nakit Durumu Kartı */}
-        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-600">Nakit Durumu</p>
-              <Wallet className="h-6 w-6 text-blue-500 opacity-70" />
+        <Card className="shadow-lg rounded-xl bg-gradient-to-br from-green-50 to-green-100 border-0">
+          <CardContent className="flex flex-col items-center justify-center p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-200 text-lg">
+                💵
+              </span>
+              <span className="text-green-700 text-base font-semibold">Nakit Durumu</span>
             </div>
-            <p className="text-2xl font-bold text-gray-800 mb-2">₺{currentCashBalance.toLocaleString()}</p>
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="text-xl font-bold text-gray-800 mb-1">₺{currentCashBalance.toLocaleString()}</div>
+            <div className="flex justify-between w-full text-xs text-gray-500">
               <span className="text-green-600">Giriş: ₺{cashTotals.totalIn.toLocaleString()}</span>
               <span className="text-red-600">Çıkış: ₺{cashTotals.totalOut.toLocaleString()}</span>
             </div>
@@ -313,14 +327,16 @@ export function KasaPage() {
         </Card>
 
         {/* Banka 1 Durumu Kartı */}
-        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-600">Banka 1 Durumu</p>
-              <Banknote className="h-6 w-6 text-green-500 opacity-70" />
+        <Card className="shadow-lg rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 border-0">
+          <CardContent className="flex flex-col items-center justify-center p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-200 text-lg">
+                🏦
+              </span>
+              <span className="text-purple-700 text-base font-semibold">Banka 1 Durumu</span>
             </div>
-            <p className="text-2xl font-bold text-gray-800 mb-2">₺{currentBank1Balance.toLocaleString()}</p>
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="text-xl font-bold text-gray-800 mb-1">₺{currentBank1Balance.toLocaleString()}</div>
+            <div className="flex justify-between w-full text-xs text-gray-500">
               <span className="text-green-600">Giriş: ₺{bank1Totals.totalIn.toLocaleString()}</span>
               <span className="text-red-600">Çıkış: ₺{bank1Totals.totalOut.toLocaleString()}</span>
             </div>
@@ -328,14 +344,16 @@ export function KasaPage() {
         </Card>
 
         {/* Banka 2 Durumu Kartı */}
-        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-600">Banka 2 Durumu</p>
-              <Banknote className="h-6 w-6 text-purple-500 opacity-70" />
+        <Card className="shadow-lg rounded-xl bg-gradient-to-br from-yellow-50 to-yellow-100 border-0">
+          <CardContent className="flex flex-col items-center justify-center p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-200 text-lg">
+                🏦
+              </span>
+              <span className="text-yellow-700 text-base font-semibold">Banka 2 Durumu</span>
             </div>
-            <p className="text-2xl font-bold text-gray-800 mb-2">₺{currentBank2Balance.toLocaleString()}</p>
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="text-xl font-bold text-gray-800 mb-1">₺{currentBank2Balance.toLocaleString()}</div>
+            <div className="flex justify-between w-full text-xs text-gray-500">
               <span className="text-green-600">Giriş: ₺{bank2Totals.totalIn.toLocaleString()}</span>
               <span className="text-red-600">Çıkış: ₺{bank2Totals.totalOut.toLocaleString()}</span>
             </div>
@@ -345,26 +363,26 @@ export function KasaPage() {
 
       {/* Add/Subtract Cash and Card Buttons */}
       <div className="flex justify-end gap-2 mb-6 flex-shrink-0 flex-wrap">
-        <Button className="bg-green-600 hover:bg-green-700" onClick={() => openNewTransactionDialog("cash-in")}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Nakit Girişi
+        <Button className="bg-green-600 hover:bg-green-700" onClick={() => openNewTransactionDialog("cash-in")}> 
+          <span className="mr-2 text-xl font-bold">+</span> Nakit Girişi
         </Button>
         <Button
           variant="outline"
           className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
           onClick={() => openNewTransactionDialog("cash-out")}
         >
-          <PlusCircle className="mr-2 h-4 w-4" /> Nakit Çıkışı
+          <span className="mr-2 text-xl font-bold">-</span> Nakit Çıkışı
         </Button>
         {/* Kart Girişi/Çıkışı Butonları */}
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => openNewTransactionDialog("card-in")}>
-          <CreditCard className="mr-2 h-4 w-4" /> Kart Girişi
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => openNewTransactionDialog("card-in")}> 
+          <span className="mr-2 text-xl font-bold">+</span> Kart Girişi
         </Button>
         <Button
           variant="outline"
           className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent"
           onClick={() => openNewTransactionDialog("card-out")}
         >
-          <CreditCard className="mr-2 h-4 w-4" /> Kart Çıkışı
+          <span className="mr-2 text-xl font-bold">-</span> Kart Çıkışı
         </Button>
       </div>
 
@@ -427,6 +445,27 @@ export function KasaPage() {
                 <SelectItem value="out">Çıkış</SelectItem>
               </SelectContent>
             </Select>
+            {/* Tarih Aralığı Seçici */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full md:w-[220px] justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange.from && dateRange.to
+                    ? `${format(dateRange.from, "dd.MM.yyyy")} - ${format(dateRange.to, "dd.MM.yyyy")}`
+                    : "Tarih Aralığı Seç"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                  locale={tr}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <Table>
             <TableHeader>
@@ -440,8 +479,8 @@ export function KasaPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCashTransactions.length > 0 ? (
-                filteredCashTransactions.map((transaction) => (
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell className="font-medium">{transaction.date}</TableCell>
                     <TableCell>{transaction.personName}</TableCell>
