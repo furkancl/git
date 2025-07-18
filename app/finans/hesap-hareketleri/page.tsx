@@ -1,5 +1,5 @@
 import { Header } from "@/components/header"
-import { HesapHareketleriPage } from "@/components/hesap-hareketleri-page"
+import HesapHareketleriPage from "@/components/hesap-hareketleri-page"
 
 export default function HesapHareketleri() {
   return (
