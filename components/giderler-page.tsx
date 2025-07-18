@@ -14,6 +14,9 @@ import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { tr } from "date-fns/locale"
 import { isWithinInterval, parseISO } from "date-fns"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Expense {
   id: number
@@ -35,6 +38,11 @@ export function GiderlerPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("all")
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [newExpenseDescription, setNewExpenseDescription] = useState("")
+  const [newExpenseAmount, setNewExpenseAmount] = useState("")
+  const [newExpenseDate, setNewExpenseDate] = useState<string>("")
+  const [newExpenseCategory, setNewExpenseCategory] = useState<string>("")
 
   const categories = ["Kira", "Personel Maaşı", "Ofis Giderleri", "Pazarlama", "Diğer"]
 
@@ -50,6 +58,32 @@ export function GiderlerPage() {
       (!dateRange.to || isWithinInterval(transactionDate, { start: dateRange.from || new Date(0), end: dateRange.to }))
     return matchesSearch && matchesCategory && matchesDate
   })
+
+  // Kategori filtresi değiştiğinde formda da güncelle
+  useEffect(() => {
+    if (filterCategory !== "all") {
+      setNewExpenseCategory(filterCategory)
+    } else {
+      setNewExpenseCategory("")
+    }
+  }, [filterCategory])
+
+  const handleAddExpense = () => {
+    if (!newExpenseDescription || !newExpenseAmount || !newExpenseDate || !newExpenseCategory) return
+    const newExpense: Expense = {
+      id: Date.now(),
+      date: newExpenseDate,
+      description: newExpenseDescription,
+      category: newExpenseCategory,
+      amount: Number(newExpenseAmount),
+    }
+    setTransactions((prev) => [newExpense, ...prev])
+    setIsDialogOpen(false)
+    setNewExpenseDescription("")
+    setNewExpenseAmount("")
+    setNewExpenseDate("")
+    setNewExpenseCategory(filterCategory !== "all" ? filterCategory : "")
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -125,9 +159,74 @@ export function GiderlerPage() {
         </div>
         {/* Yeni Gider Ekle Butonu */}
         <div className="flex justify-end mb-4 flex-shrink-0">
-          <Button className="bg-red-600 hover:bg-red-700">
+          <Button className="bg-red-600 hover:bg-red-700" onClick={() => setIsDialogOpen(true)}>
             <PlusCircle className="mr-2 h-4 w-4" /> Yeni Gider Ekle
           </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Yeni Gider Ekle</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-2">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">Açıklama</Label>
+                  <Textarea
+                    id="description"
+                    value={newExpenseDescription}
+                    onChange={(e) => setNewExpenseDescription(e.target.value)}
+                    className="col-span-3"
+                    placeholder="Gider açıklaması"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amount" className="text-right">Tutar</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={newExpenseAmount}
+                    onChange={(e) => setNewExpenseAmount(e.target.value)}
+                    className="col-span-3"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">Tarih</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={newExpenseDate}
+                    onChange={(e) => setNewExpenseDate(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">Kategori</Label>
+                  <Select value={newExpenseCategory} onValueChange={setNewExpenseCategory}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Kategori seç" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>İptal</Button>
+                <Button
+                  onClick={handleAddExpense}
+                  disabled={
+                    !newExpenseDescription ||
+                    !newExpenseAmount ||
+                    !newExpenseDate ||
+                    !newExpenseCategory
+                  }
+                >Ekle</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Card>

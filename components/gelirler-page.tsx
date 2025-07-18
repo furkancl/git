@@ -14,6 +14,9 @@ import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { isWithinInterval, parseISO } from "date-fns"
 import { CalendarIcon } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Income {
   id: number
@@ -47,6 +50,11 @@ export function GelirlerPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("all")
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [newIncomeDescription, setNewIncomeDescription] = useState("")
+  const [newIncomeAmount, setNewIncomeAmount] = useState("")
+  const [newIncomeDate, setNewIncomeDate] = useState<string>("")
+  const [newIncomeCategory, setNewIncomeCategory] = useState<string>("")
 
   const categories = ["Randevu Ücreti", "Danışmanlık", "Eğitim", "Diğer"]
 
@@ -62,6 +70,32 @@ export function GelirlerPage() {
       (!dateRange.to || isWithinInterval(transactionDate, { start: dateRange.from || new Date(0), end: dateRange.to }))
     return matchesSearch && matchesCategory && matchesDate
   })
+
+  // Kategori filtresi değiştiğinde formda da güncelle
+  useEffect(() => {
+    if (filterCategory !== "all") {
+      setNewIncomeCategory(filterCategory)
+    } else {
+      setNewIncomeCategory("")
+    }
+  }, [filterCategory])
+
+  const handleAddIncome = () => {
+    if (!newIncomeDescription || !newIncomeAmount || !newIncomeDate || !newIncomeCategory) return
+    const newIncome: Income = {
+      id: Date.now(),
+      date: newIncomeDate,
+      description: newIncomeDescription,
+      category: newIncomeCategory,
+      amount: Number(newIncomeAmount),
+    }
+    setTransactions((prev) => [newIncome, ...prev])
+    setIsDialogOpen(false)
+    setNewIncomeDescription("")
+    setNewIncomeAmount("")
+    setNewIncomeDate("")
+    setNewIncomeCategory(filterCategory !== "all" ? filterCategory : "")
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -135,9 +169,74 @@ export function GelirlerPage() {
 
       {/* Add New Income Button */}
       <div className="flex justify-end mb-4 flex-shrink-0">
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsDialogOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Yeni Gelir Ekle
         </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Yeni Gelir Ekle</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">Açıklama</Label>
+                <Textarea
+                  id="description"
+                  value={newIncomeDescription}
+                  onChange={(e) => setNewIncomeDescription(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Gelir açıklaması"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="amount" className="text-right">Tutar</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  value={newIncomeAmount}
+                  onChange={(e) => setNewIncomeAmount(e.target.value)}
+                  className="col-span-3"
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="date" className="text-right">Tarih</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newIncomeDate}
+                  onChange={(e) => setNewIncomeDate(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="category" className="text-right">Kategori</Label>
+                <Select value={newIncomeCategory} onValueChange={setNewIncomeCategory}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Kategori seç" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>İptal</Button>
+              <Button
+                onClick={handleAddIncome}
+                disabled={
+                  !newIncomeDescription ||
+                  !newIncomeAmount ||
+                  !newIncomeDate ||
+                  !newIncomeCategory
+                }
+              >Ekle</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search and Filter */}
