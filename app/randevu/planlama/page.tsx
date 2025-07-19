@@ -91,6 +91,12 @@ export default function RandevuPlanlamaPage() {
         </div>
         <div className="overflow-x-auto w-full max-w-5xl">
           <table className="min-w-full border border-gray-200 bg-white rounded-lg shadow-md">
+            <colgroup>
+              <col style={{ width: '60px' }} />
+              {days.map((_, i) => (
+                <col key={i} style={{ width: '120px' }} />
+              ))}
+            </colgroup>
             <thead>
               <tr>
                 <th className="sticky top-0 left-0 z-20 bg-gray-100 border-b border-r border-gray-200 h-10 w-15" />
@@ -104,6 +110,7 @@ export default function RandevuPlanlamaPage() {
                 <tr key={slotIdx}>
                   <td className="sticky left-0 z-10 bg-gray-100 border-b border-r border-gray-200 h-6 text-xs text-gray-500 font-semibold text-center">{slot.hour}:{slot.minute.toString().padStart(2, "0")}</td>
                   {days.map((_, dayIdx) => {
+                    // O slotta o güne ait bir randevu başlıyor mu?
                     const appt = appointments.find(a => a.day === dayIdx && a.hour === slot.hour && a.minute === slot.minute)
                     if (appt) {
                       const client = clients.find(c => c.id === appt.clientId)
@@ -130,6 +137,15 @@ export default function RandevuPlanlamaPage() {
                         </td>
                       )
                     }
+                    // Eğer bu slot, o güne ait bir randevunun kapsama alanındaysa (başlangıcı değilse), hiç hücre render etme
+                    const isCovered = appointments.some(a => {
+                      if (a.day !== dayIdx) return false
+                      const startIdx = getSlotIndex(a.hour, a.minute)
+                      const endIdx = startIdx + getSlotCount(a.duration)
+                      return slotIdx > startIdx && slotIdx < endIdx
+                    })
+                    if (isCovered) return null
+                    // Gerçekten boş slot
                     return (
                       <td
                         key={`${dayIdx}-${slotIdx}`}
