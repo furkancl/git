@@ -23,6 +23,10 @@ const days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 const hours = Array.from({ length: 10 }, (_, i) => 9 + i) // 09:00-18:00
 const minutes = [0, 15, 30, 45]
 const durations = [15, 30, 45, 60, 90]
+// 15 dakikalık slotlar (09:00-18:15 arası)
+const timeSlots = [] as { hour: number, minute: number }[]
+for (let h of hours) for (let m of minutes) timeSlots.push({ hour: h, minute: m })
+timeSlots.push({ hour: 18, minute: 15 }) // Son slot
 
 export default function RandevuPlanlamaPage() {
   const [clients] = useState(initialClients)
@@ -37,21 +41,16 @@ export default function RandevuPlanlamaPage() {
   const [newDesc, setNewDesc] = useState("")
   const [draggedId, setDraggedId] = useState<number|null>(null)
 
-  // 15 dakikalık slotlar
-  const timeSlots = [] as { hour: number, minute: number }[]
-  for (let h of hours) for (let m of minutes) timeSlots.push({ hour: h, minute: m })
-  timeSlots.push({ hour: 18, minute: 30 })
-
   const handleAddAppointment = () => {
-    if (!newClientId || newDay === "" || newHour === "" || newMinute === "" || newDuration === "" || !newDesc) return
+    if (!newClientId || newDuration.length === 0 || newDesc.trim().length === 0) return
     setAppointments(prev => [
       ...prev,
       {
         id: Date.now(),
         clientId: Number(newClientId),
-        day: Number(newDay),
-        hour: Number(newHour),
-        minute: Number(newMinute),
+        day: newDay.length > 0 ? Number(newDay) : 0,
+        hour: newHour.length > 0 ? Number(newHour) : 9,
+        minute: newMinute.length > 0 ? Number(newMinute) : 0,
         duration: Number(newDuration),
         desc: newDesc,
       },
@@ -75,9 +74,14 @@ export default function RandevuPlanlamaPage() {
     setDraggedId(null)
   }
 
-  // Randevunun slotta başlama ve bitişini hesapla (slot indexleri)
-  const getSlotIndex = (hour: number, minute: number) => (hour - hours[0]) * 4 + minutes.indexOf(minute)
-  const getSlotCount = (duration: number) => Math.ceil(duration / 15)
+  // Slot indexini bul
+  const getSlotIndex = (hour: number, minute: number) => (hour - 9) * 4 + minutes.indexOf(minute)
+  // Randevu bitiş saatini hesapla
+  const getEndTime = (hour: number, minute: number, duration: number) => {
+    const start = new Date(0,0,0,hour,minute)
+    const end = new Date(start.getTime() + duration * 60000)
+    return { hour: end.getHours(), minute: end.getMinutes() }
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -94,7 +98,7 @@ export default function RandevuPlanlamaPage() {
             <colgroup>
               <col style={{ width: '60px' }} />
               {days.map((_, i) => (
-                <col key={i} style={{ width: '120px' }} />
+                <col key={i} style={{ width: '120px', minWidth: '120px', maxWidth: '120px' }} />
               ))}
             </colgroup>
             <thead>
@@ -108,31 +112,41 @@ export default function RandevuPlanlamaPage() {
             <tbody>
               {timeSlots.map((slot, slotIdx) => (
                 <tr key={slotIdx}>
-                  <td className="sticky left-0 z-10 bg-gray-100 border-b border-r border-gray-200 h-6 text-xs text-gray-500 font-semibold text-center">{slot.hour}:{slot.minute.toString().padStart(2, "0")}</td>
+                  <td className="sticky left-0 z-10 bg-gray-100 border-b border-r border-gray-200 h-6 text-xs text-gray-500 font-semibold text-center" style={{ width: 60, minWidth: 60, maxWidth: 60 }}>{slot.hour}:{slot.minute.toString().padStart(2, "0")}</td>
                   {days.map((_, dayIdx) => {
                     // O slotta o güne ait bir randevu başlıyor mu?
                     const appt = appointments.find(a => a.day === dayIdx && a.hour === slot.hour && a.minute === slot.minute)
                     if (appt) {
                       const client = clients.find(c => c.id === appt.clientId)
-                      const slotCount = getSlotCount(appt.duration)
+                      const startIdx = getSlotIndex(appt.hour, appt.minute)
+                      const { hour: endHour, minute: endMinute } = getEndTime(appt.hour, appt.minute, appt.duration)
+                      const endIdx = getSlotIndex(endHour, endMinute)
+                      const rowSpan = endIdx - startIdx
+                      // Eğer süre uygunsuzsa (negatif/boş) render etme
+                      if (rowSpan <= 0) return <td key={`${dayIdx}-${slotIdx}`} />
                       return (
                         <td
                           key={`${dayIdx}-${slotIdx}`}
-                          rowSpan={slotCount}
+                          rowSpan={rowSpan}
                           className="relative z-20 p-0 align-top"
-                          style={{ minWidth: 80 }}
+                          style={{ width: 120, minWidth: 120, maxWidth: 120 }}
                           draggable
                           onDragStart={() => handleDragStart(appt.id)}
                           onDragEnd={() => setDraggedId(null)}
                           onClick={() => setSelectedAppointment(appt)}
                         >
-                          <div className="bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-2 py-1 text-xs font-medium shadow border border-blue-200 cursor-pointer h-full flex flex-col justify-center transition-all select-none">
-                            <div className="truncate font-semibold">{client?.name}</div>
-                            <div className="text-[10px] text-blue-700 truncate">{appt.desc}</div>
-                            <div className="text-[10px] text-gray-500">{appt.hour}:{appt.minute.toString().padStart(2, "0")} - {(() => {
-                              const end = new Date(0,0,0,appt.hour,appt.minute+appt.duration)
-                              return `${end.getHours()}:${end.getMinutes().toString().padStart(2,"0")}`
-                            })()}</div>
+                          <div
+                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-2 py-1 text-xs font-medium shadow border border-blue-200 cursor-pointer h-full flex flex-col justify-center transition-all select-none"
+                            style={{ minHeight: `${rowSpan * 24}px`, maxWidth: 100, overflow: 'hidden' }}
+                          >
+                            <div className="truncate font-semibold" style={{ maxWidth: 100 }}>{client?.name}</div>
+                            <div className="text-[10px] text-blue-700 truncate" style={{ maxWidth: 100 }}>{appt.desc}</div>
+                            <div className="text-[10px] text-gray-500" style={{ maxWidth: 100 }}>
+                              {appt.hour}:{appt.minute.toString().padStart(2, "0")} - {(() => {
+                                let { hour: eh, minute: em } = getEndTime(appt.hour, appt.minute, appt.duration)
+                                return `${eh}:${em.toString().padStart(2, "0")}`
+                              })()}
+                            </div>
                           </div>
                         </td>
                       )
@@ -141,7 +155,8 @@ export default function RandevuPlanlamaPage() {
                     const isCovered = appointments.some(a => {
                       if (a.day !== dayIdx) return false
                       const startIdx = getSlotIndex(a.hour, a.minute)
-                      const endIdx = startIdx + getSlotCount(a.duration)
+                      const { hour: endHour, minute: endMinute } = getEndTime(a.hour, a.minute, a.duration)
+                      const endIdx = getSlotIndex(endHour, endMinute)
                       return slotIdx > startIdx && slotIdx < endIdx
                     })
                     if (isCovered) return null
@@ -152,7 +167,7 @@ export default function RandevuPlanlamaPage() {
                         className="h-6 border-b border-gray-100 text-center align-middle p-0"
                         onDragOver={e => draggedId && e.preventDefault()}
                         onDrop={() => handleDrop(dayIdx, slot.hour, slot.minute)}
-                        style={{ minWidth: 80 }}
+                        style={{ width: 120, minWidth: 120, maxWidth: 120 }}
                       />
                     )
                   })}
@@ -262,7 +277,11 @@ export default function RandevuPlanlamaPage() {
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>İptal</Button>
               <Button
                 onClick={handleAddAppointment}
-                disabled={!newClientId || newDay === "" || newHour === "" || newMinute === "" || !newDuration || !newDesc}
+                disabled={
+                  !newClientId ||
+                  newDuration.length === 0 ||
+                  newDesc.trim().length === 0
+                }
               >Ekle</Button>
             </DialogFooter>
           </DialogContent>
