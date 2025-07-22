@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { format, startOfWeek, addDays, isSameDay } from "date-fns"
 import { tr } from "date-fns/locale"
-import { cn } from "@/lib/utils" // cn fonksiyonunu import ediyoruz
+import { cn } from "@/lib/utils"
+import { toast } from 'sonner' // Sonner'dan toast'ı import edin!
 
 // Dummy danışan verisi
 const initialClients = [
@@ -38,7 +39,7 @@ const initialAppointments = [
     minute: 0,
     duration: 60,
     desc: "Bireysel seans",
-  }, // Pazartesi 10:00-11:00
+  }, // Pazartesi 12:00-13:00
   {
     id: 2,
     clientId: 2,
@@ -92,14 +93,21 @@ const initialAppointments = [
 ]
 
 const days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
-const hours = Array.from({ length: 10 }, (_, i) => 9 + i) // 09:00-18:00
-const minutes = [0, 15, 30, 45]
 
 const durations = [60, 90]
 
+// hours dizisini 20:00'ye kadar uzattık.
+const hours = Array.from({ length: 12 }, (_, i) => 9 + i) // 09:00-20:00
+const minutes = [0, 15, 30, 45]
+
 const timeSlots = [] as { hour: number; minute: number }[]
-for (const h of hours) for (const m of minutes) timeSlots.push({ hour: h, minute: m })
-timeSlots.push({ hour: 18, minute: 15 }) // Son slot
+for (const h of hours) {
+  for (const m of minutes) {
+    // 20:00'dan sonraki 15 dakikalık slotları eklememek için kontrol
+    if (h === 20 && m > 0) continue // 20:15, 20:30, 20:45 slotlarını eklemez
+    timeSlots.push({ hour: h, minute: m })
+  }
+}
 
 const SLOT_HEIGHT_PX = 24
 
@@ -134,8 +142,8 @@ export default function RandevuPlanlamaPage() {
   const [psychologists] = useState(initialPsychologists)
   const [appointments, setAppointments] = useState(initialAppointments)
   const [selectedAppointment, setSelectedAppointment] = useState(null as null | (typeof appointments)[0])
-  const [isAddOrEditDialogOpen, setIsAddOrEditDialogOpen] = useState(false) // Hem ekleme hem düzenleme için tek modal
-  const [isEditing, setIsEditing] = useState(false) // Düzenleme modunda mı?
+  const [isAddOrEditDialogOpen, setIsAddOrEditDialogOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
 
   const [newClientId, setNewClientId] = useState<string>("")
   const [newPsychologistId, setNewPsychologistId] = useState<string>("")
@@ -152,7 +160,6 @@ export default function RandevuPlanlamaPage() {
     return days.map((_, i) => addDays(start, i))
   }, [])
 
-  // selectedAppointment değiştiğinde form alanlarını doldur
   useEffect(() => {
     if (selectedAppointment && isEditing) {
       setNewClientId(selectedAppointment.clientId.toString())
@@ -164,7 +171,6 @@ export default function RandevuPlanlamaPage() {
       setNewDesc(selectedAppointment.desc)
       setIsAddOrEditDialogOpen(true)
     } else if (!selectedAppointment && !isEditing) {
-      // Modal kapandığında veya yeni ekleme moduna geçildiğinde form alanlarını sıfırla
       setNewClientId("")
       setNewPsychologistId("")
       setNewDate(undefined)
@@ -176,11 +182,34 @@ export default function RandevuPlanlamaPage() {
   }, [selectedAppointment, isEditing])
 
   const handleSaveAppointment = () => {
-    if (!newClientId || !newPsychologistId || !newDate || newDuration.length === 0 || newDesc.trim().length === 0)
-      return
+    if (
+      !newClientId ||
+      !newPsychologistId ||
+      !newDate ||
+      newDuration.length === 0 ||
+      newDesc.trim().length === 0
+    ) {
+      // HATA MESAJI: Tüm alanların doldurulması gerekli
+      toast.error("Gerekli Alanlar Eksik!", {
+        description: "Lütfen randevu bilgilerinin tümünü doldurun.",
+        duration: 3000,
+      });
+      return;
+    }
+
+    const selectedHour = Number(newHour);
+    const selectedMinute = Number(newMinute);
+
+    if (selectedHour > 18 || (selectedHour === 18 && selectedMinute > 30)) {
+      // UYARI MESAJI: Randevu saati kısıtlaması
+      toast.warning("Geçersiz Randevu Saati!", {
+        description: "En son 18:30'da başlayan bir randevu oluşturabilirsiniz. Lütfen daha erken bir saat seçin.",
+        duration: 5000,
+      });
+      return;
+    }
 
     if (isEditing && selectedAppointment) {
-      // Randevu düzenleme
       setAppointments((prev) =>
         prev.map((appt) =>
           appt.id === selectedAppointment.id
@@ -199,8 +228,11 @@ export default function RandevuPlanlamaPage() {
       )
       setSelectedAppointment(null)
       setIsEditing(false)
+      // BAŞARI MESAJI: Randevu güncellendi
+      toast.success("Randevu Başarıyla Güncellendi!", {
+        description: `${clients.find(c => c.id === Number(newClientId))?.name} için randevu güncellendi.`,
+      });
     } else {
-      // Yeni randevu ekleme
       setAppointments((prev) => [
         ...prev,
         {
@@ -214,26 +246,53 @@ export default function RandevuPlanlamaPage() {
           desc: newDesc,
         },
       ])
+      // BAŞARI MESAJI: Yeni randevu eklendi
+      toast.success("Yeni Randevu Eklendi!", {
+        description: `${clients.find(c => c.id === Number(newClientId))?.name} için yeni bir randevu oluşturuldu.`,
+      });
     }
     setIsAddOrEditDialogOpen(false)
-    // Form alanlarını sıfırlama useEffect tarafından yönetiliyor
-  }
+  };
 
   const handleDeleteAppointment = () => {
     if (selectedAppointment) {
+      const clientName = clients.find(c => c.id === selectedAppointment.clientId)?.name;
       setAppointments((prev) => prev.filter((appt) => appt.id !== selectedAppointment.id))
-      setSelectedAppointment(null) // Modalı kapat
+      setSelectedAppointment(null)
+      // BİLGİ MESAJI: Randevu silindi
+      toast.info("Randevu Silindi!", {
+        description: `${clientName} ile olan randevu iptal edildi.`,
+      });
     }
-  }
+  };
 
   const handleDragStart = (id: number) => setDraggedId(id)
   const handleDrop = (targetDate: Date, hour: number, minute: number) => {
     if (draggedId == null) return
+
+    if (hour > 18 || (hour === 18 && minute > 30)) {
+      // UYARI MESAJI: Sürükle-bırak kısıtlaması
+      toast.warning("Randevu Taşınamaz!", {
+        description: "18:30'dan sonra başlayan randevu oluşturulamaz veya taşınamaz.",
+        duration: 5000,
+      });
+      setDraggedId(null);
+      return;
+    }
+
     setAppointments((prev) =>
       prev.map((appt) => (appt.id === draggedId ? { ...appt, date: targetDate, hour, minute } : appt)),
     )
-    setDraggedId(null)
-  }
+    // BAŞARI MESAJI: Randevu taşındı
+    const movedAppt = appointments.find(appt => appt.id === draggedId);
+    if(movedAppt) {
+      const clientName = clients.find(c => c.id === movedAppt.clientId)?.name;
+      toast.success("Randevu Taşındı!", {
+        description: `${clientName} randevusu başarıyla yeni saate/güne taşındı.`,
+      });
+    }
+    setDraggedId(null);
+  };
 
   const getEndTime = (hour: number, minute: number, duration: number) => {
     const start = new Date(0, 0, 0, hour, minute)
@@ -251,8 +310,8 @@ export default function RandevuPlanlamaPage() {
             className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-md transition-colors"
             onClick={() => {
               setIsAddOrEditDialogOpen(true)
-              setIsEditing(false) // Yeni randevu ekleme modu
-              setNewDate(currentWeekDays[0]) // Varsayılan olarak haftanın ilk günü
+              setIsEditing(false)
+              setNewDate(currentWeekDays[0])
             }}
           >
             + Randevu Planla
@@ -297,7 +356,6 @@ export default function RandevuPlanlamaPage() {
                       {displayTime && `${slot.hour}:${slot.minute.toString().padStart(2, "0")}`}
                     </td>
                     {currentWeekDays.map((currentDayDate, dayIdx) => {
-                      // Find all appointments that overlap with this specific 15-minute slot
                       const currentSlotStartInMinutes = slot.hour * 60 + slot.minute
                       const currentSlotEndInMinutes = currentSlotStartInMinutes + 15
 
@@ -306,30 +364,26 @@ export default function RandevuPlanlamaPage() {
                         const apptStartTimeInMinutes = appt.hour * 60 + appt.minute
                         const apptEndTimeInMinutes = apptStartTimeInMinutes + appt.duration
 
-                        // Check for overlap: (appt_start < slot_end AND appt_end > slot_start)
                         return (
                           apptStartTimeInMinutes < currentSlotEndInMinutes &&
                           apptEndTimeInMinutes > currentSlotStartInMinutes
                         )
                       })
 
-                      // Filter for appointments that *start* exactly at this slot
                       const appointmentsStartingInSlot = overlappingAppts
                         .filter((appt) => {
                           const apptStartTimeInMinutes = appt.hour * 60 + appt.minute
                           return apptStartTimeInMinutes === currentSlotStartInMinutes
                         })
-                        .sort((a, b) => a.psychologistId - b.psychologistId) // Sort by psychologistId for consistent offset
+                        .sort((a, b) => a.psychologistId - b.psychologistId)
 
-                      // Determine which appointment to select when clicking this TD
                       const clickableAppointment =
                         appointmentsStartingInSlot.length > 0
                           ? appointmentsStartingInSlot[0]
                           : overlappingAppts.length > 0
-                            ? overlappingAppts.sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute))[0] // Get the earliest overlapping one
+                            ? overlappingAppts.sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute))[0]
                             : null
 
-                      // TD hover effect logic
                       let tdHoverClasses = ""
                       if (hoveredAppointmentId !== null) {
                         const hoveredAppt = appointments.find((a) => a.id === hoveredAppointmentId)
@@ -342,7 +396,6 @@ export default function RandevuPlanlamaPage() {
                             apptEndTimeInMinutes > currentSlotStartInMinutes
                           ) {
                             const apptColorClasses = getPsychologistColorClasses(hoveredAppt.psychologistId)
-                            // Extract only the hover parts from the full class string
                             const hoverBgMatch = apptColorClasses.match(/hover:bg-[a-z]+-[0-9]+/)
                             const darkHoverBgMatch = apptColorClasses.match(/dark:hover:bg-[a-z]+-[0-9]+/)
                             tdHoverClasses = cn(
@@ -372,10 +425,9 @@ export default function RandevuPlanlamaPage() {
                         >
                           {appointmentsStartingInSlot.map((appt, apptIndex) => {
                             const client = clients.find((c) => c.id === appt.clientId)
-                            const psychologist = psychologists.find((p) => p.id === appt.psychologistId)
+                            const psychologist = psychologists.find((p) => p.id === p.id)
                             const apptHeight = (appt.duration / 15) * SLOT_HEIGHT_PX
                             const offset = apptIndex * 15
-                            // Z-index'i dinamik olarak ayarla: üzerine gelinen en önde
                             const currentZIndex = appt.id === hoveredAppointmentId ? 999 : 100 + apptIndex
                             const colorClasses = getPsychologistColorClasses(appt.psychologistId)
                             const endTime = getEndTime(appt.hour, appt.minute, appt.duration)
@@ -389,7 +441,7 @@ export default function RandevuPlanlamaPage() {
                                   height: `${apptHeight}px`,
                                   width: `calc(100% - ${offset}px)`,
                                   left: `${offset}px`,
-                                  zIndex: currentZIndex, // Dinamik zIndex
+                                  zIndex: currentZIndex,
                                   overflow: "hidden",
                                 }}
                                 draggable
@@ -468,14 +520,14 @@ export default function RandevuPlanlamaPage() {
                 <Button
                   onClick={() => {
                     setIsEditing(true)
-                    setIsAddOrEditDialogOpen(true) // Düzenleme modalını aç
+                    setIsAddOrEditDialogOpen(true)
                   }}
                   className="dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg"
                 >
                   Düzenle
                 </Button>
                 <Button
-                  variant="destructive" // Kırmızı renk için
+                  variant="destructive"
                   onClick={handleDeleteAppointment}
                   className="rounded-lg"
                 >
@@ -492,7 +544,6 @@ export default function RandevuPlanlamaPage() {
           onOpenChange={(open) => {
             setIsAddOrEditDialogOpen(open)
             if (!open) {
-              // Modal kapandığında düzenleme modunu sıfırla ve seçili randevuyu temizle
               setIsEditing(false)
               setSelectedAppointment(null)
             }
@@ -569,7 +620,7 @@ export default function RandevuPlanlamaPage() {
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-700 dark:text-gray-100 rounded-lg">
                     {hours.map((hour) => (
-                      <SelectItem key={hour} value={hour.toString()}>
+                      <SelectItem key={hour} value={hour.toString()} disabled={hour > 18}>
                         {hour}
                       </SelectItem>
                     ))}
@@ -581,7 +632,12 @@ export default function RandevuPlanlamaPage() {
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-700 dark:text-gray-100 rounded-lg">
                     {minutes.map((min) => (
-                      <SelectItem key={min} value={min.toString()}>
+                      <SelectItem
+                        key={min}
+                        value={min.toString()}
+                        // En son 18:30'a randevu koyulabilsin. Yani 18:45'ten itibaren engelleyeceğiz.
+                        disabled={Number(newHour) === 18 && min > 30}
+                      >
                         {min.toString().padStart(2, "0")}
                       </SelectItem>
                     ))}
@@ -633,7 +689,8 @@ export default function RandevuPlanlamaPage() {
                   !newPsychologistId ||
                   !newDate ||
                   newDuration.length === 0 ||
-                  newDesc.trim().length === 0
+                  newDesc.trim().length === 0 ||
+                  (Number(newHour) > 18 || (Number(newHour) === 18 && Number(newMinute) > 30))
                 }
                 className="dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg"
               >
