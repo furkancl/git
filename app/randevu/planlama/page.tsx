@@ -1,13 +1,14 @@
 "use client"
 
 import { Header } from "@/components/header"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { format, startOfWeek, addDays, isSameDay } from "date-fns"
 import { tr } from "date-fns/locale"
+import { cn } from "@/lib/utils" // cn fonksiyonunu import ediyoruz
 
 // Dummy danışan verisi
 const initialClients = [
@@ -133,7 +134,8 @@ export default function RandevuPlanlamaPage() {
   const [psychologists] = useState(initialPsychologists)
   const [appointments, setAppointments] = useState(initialAppointments)
   const [selectedAppointment, setSelectedAppointment] = useState(null as null | (typeof appointments)[0])
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isAddOrEditDialogOpen, setIsAddOrEditDialogOpen] = useState(false) // Hem ekleme hem düzenleme için tek modal
+  const [isEditing, setIsEditing] = useState(false) // Düzenleme modunda mı?
 
   const [newClientId, setNewClientId] = useState<string>("")
   const [newPsychologistId, setNewPsychologistId] = useState<string>("")
@@ -143,37 +145,85 @@ export default function RandevuPlanlamaPage() {
   const [newDuration, setNewDuration] = useState<string>("")
   const [newDesc, setNewDesc] = useState("")
   const [draggedId, setDraggedId] = useState<number | null>(null)
+  const [hoveredAppointmentId, setHoveredAppointmentId] = useState<number | null>(null)
 
   const currentWeekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 })
     return days.map((_, i) => addDays(start, i))
   }, [])
 
-  const handleAddAppointment = () => {
+  // selectedAppointment değiştiğinde form alanlarını doldur
+  useEffect(() => {
+    if (selectedAppointment && isEditing) {
+      setNewClientId(selectedAppointment.clientId.toString())
+      setNewPsychologistId(selectedAppointment.psychologistId.toString())
+      setNewDate(selectedAppointment.date)
+      setNewHour(selectedAppointment.hour.toString())
+      setNewMinute(selectedAppointment.minute.toString())
+      setNewDuration(selectedAppointment.duration.toString())
+      setNewDesc(selectedAppointment.desc)
+      setIsAddOrEditDialogOpen(true)
+    } else if (!selectedAppointment && !isEditing) {
+      // Modal kapandığında veya yeni ekleme moduna geçildiğinde form alanlarını sıfırla
+      setNewClientId("")
+      setNewPsychologistId("")
+      setNewDate(undefined)
+      setNewHour("")
+      setNewMinute("")
+      setNewDuration("")
+      setNewDesc("")
+    }
+  }, [selectedAppointment, isEditing])
+
+  const handleSaveAppointment = () => {
     if (!newClientId || !newPsychologistId || !newDate || newDuration.length === 0 || newDesc.trim().length === 0)
       return
 
-    setAppointments((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        clientId: Number(newClientId),
-        psychologistId: Number(newPsychologistId),
-        date: newDate,
-        hour: newHour.length > 0 ? Number(newHour) : 9,
-        minute: newMinute.length > 0 ? Number(newMinute) : 0,
-        duration: Number(newDuration),
-        desc: newDesc,
-      },
-    ])
-    setIsAddDialogOpen(false)
-    setNewClientId("")
-    setNewPsychologistId("")
-    setNewDate(undefined)
-    setNewHour("")
-    setNewMinute("")
-    setNewDuration("")
-    setNewDesc("")
+    if (isEditing && selectedAppointment) {
+      // Randevu düzenleme
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.id === selectedAppointment.id
+            ? {
+                ...appt,
+                clientId: Number(newClientId),
+                psychologistId: Number(newPsychologistId),
+                date: newDate,
+                hour: Number(newHour),
+                minute: Number(newMinute),
+                duration: Number(newDuration),
+                desc: newDesc,
+              }
+            : appt,
+        ),
+      )
+      setSelectedAppointment(null)
+      setIsEditing(false)
+    } else {
+      // Yeni randevu ekleme
+      setAppointments((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          clientId: Number(newClientId),
+          psychologistId: Number(newPsychologistId),
+          date: newDate,
+          hour: Number(newHour),
+          minute: Number(newMinute),
+          duration: Number(newDuration),
+          desc: newDesc,
+        },
+      ])
+    }
+    setIsAddOrEditDialogOpen(false)
+    // Form alanlarını sıfırlama useEffect tarafından yönetiliyor
+  }
+
+  const handleDeleteAppointment = () => {
+    if (selectedAppointment) {
+      setAppointments((prev) => prev.filter((appt) => appt.id !== selectedAppointment.id))
+      setSelectedAppointment(null) // Modalı kapat
+    }
   }
 
   const handleDragStart = (id: number) => setDraggedId(id)
@@ -200,8 +250,9 @@ export default function RandevuPlanlamaPage() {
           <Button
             className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-md transition-colors"
             onClick={() => {
-              setIsAddDialogOpen(true)
-              setNewDate(currentWeekDays[0])
+              setIsAddOrEditDialogOpen(true)
+              setIsEditing(false) // Yeni randevu ekleme modu
+              setNewDate(currentWeekDays[0]) // Varsayılan olarak haftanın ilk günü
             }}
           >
             + Randevu Planla
@@ -246,82 +297,135 @@ export default function RandevuPlanlamaPage() {
                       {displayTime && `${slot.hour}:${slot.minute.toString().padStart(2, "0")}`}
                     </td>
                     {currentWeekDays.map((currentDayDate, dayIdx) => {
-                      const appointmentsForSlot = appointments
+                      // Find all appointments that overlap with this specific 15-minute slot
+                      const currentSlotStartInMinutes = slot.hour * 60 + slot.minute
+                      const currentSlotEndInMinutes = currentSlotStartInMinutes + 15
+
+                      const overlappingAppts = appointments.filter((appt) => {
+                        if (!isSameDay(appt.date, currentDayDate)) return false
+                        const apptStartTimeInMinutes = appt.hour * 60 + appt.minute
+                        const apptEndTimeInMinutes = apptStartTimeInMinutes + appt.duration
+
+                        // Check for overlap: (appt_start < slot_end AND appt_end > slot_start)
+                        return (
+                          apptStartTimeInMinutes < currentSlotEndInMinutes &&
+                          apptEndTimeInMinutes > currentSlotStartInMinutes
+                        )
+                      })
+
+                      // Filter for appointments that *start* exactly at this slot
+                      const appointmentsStartingInSlot = overlappingAppts
                         .filter((appt) => {
-                          const apptStartTimeInMinutes = appt.hour * 60 + appt.minute;
-                          const apptEndTimeInMinutes = apptStartTimeInMinutes + appt.duration;
-                          const slotStartTimeInMinutes = slot.hour * 60 + slot.minute;
-                          const slotEndTimeInMinutes = slotStartTimeInMinutes + 15; // Assuming 15-minute slots
-
-                          // Check if appointment date matches current day
-                          if (!isSameDay(appt.date, currentDayDate)) {
-                            return false;
-                          }
-
-                          // An appointment should be rendered if its start time matches the slot exactly
-                          // OR if the appointment *begins before* this slot and *ends after or at* this slot's start
-                          // This logic ensures that an appointment is only rendered at its precise start slot
-                          // For other slots it occupies, it should not be rendered as a new div.
-                          return appt.hour === slot.hour && appt.minute === slot.minute;
+                          const apptStartTimeInMinutes = appt.hour * 60 + appt.minute
+                          return apptStartTimeInMinutes === currentSlotStartInMinutes
                         })
-                        .sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute)); // Sort by start time for consistent overlapping
+                        .sort((a, b) => a.psychologistId - b.psychologistId) // Sort by psychologistId for consistent offset
+
+                      // Determine which appointment to select when clicking this TD
+                      const clickableAppointment =
+                        appointmentsStartingInSlot.length > 0
+                          ? appointmentsStartingInSlot[0]
+                          : overlappingAppts.length > 0
+                            ? overlappingAppts.sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute))[0] // Get the earliest overlapping one
+                            : null
+
+                      // TD hover effect logic
+                      let tdHoverClasses = ""
+                      if (hoveredAppointmentId !== null) {
+                        const hoveredAppt = appointments.find((a) => a.id === hoveredAppointmentId)
+                        if (hoveredAppt && isSameDay(hoveredAppt.date, currentDayDate)) {
+                          const apptStartTimeInMinutes = hoveredAppt.hour * 60 + hoveredAppt.minute
+                          const apptEndTimeInMinutes = apptStartTimeInMinutes + hoveredAppt.duration
+
+                          if (
+                            apptStartTimeInMinutes < currentSlotEndInMinutes &&
+                            apptEndTimeInMinutes > currentSlotStartInMinutes
+                          ) {
+                            const apptColorClasses = getPsychologistColorClasses(hoveredAppt.psychologistId)
+                            // Extract only the hover parts from the full class string
+                            const hoverBgMatch = apptColorClasses.match(/hover:bg-[a-z]+-[0-9]+/)
+                            const darkHoverBgMatch = apptColorClasses.match(/dark:hover:bg-[a-z]+-[0-9]+/)
+                            tdHoverClasses = cn(
+                              hoverBgMatch ? hoverBgMatch[0] : "",
+                              darkHoverBgMatch ? darkHoverBgMatch[0] : "",
+                              "transition-colors",
+                            )
+                          }
+                        }
+                      }
 
                       return (
                         <td
                           key={`${dayIdx}-${slotIdx}`}
-                          className="relative z-0 p-0 align-top h-6 border-b border-gray-100 text-center align-middle dark:border-gray-700"
+                          className={cn(
+                            `relative z-0 p-0 align-top h-6 border-b border-gray-100 text-center align-middle dark:border-gray-700`,
+                            tdHoverClasses,
+                          )}
                           onDragOver={(e) => draggedId && e.preventDefault()}
                           onDrop={() => handleDrop(currentDayDate, slot.hour, slot.minute)}
                           style={{ width: 120, minWidth: 120, maxWidth: 120 }}
+                          onClick={() => {
+                            if (clickableAppointment) {
+                              setSelectedAppointment(clickableAppointment)
+                            } else {
+                              // If no appointment overlaps, open add dialog
+                              setIsAddOrEditDialogOpen(true)
+                              setIsEditing(false) // Yeni randevu ekleme modu
+                              setNewDate(currentDayDate)
+                              setNewHour(slot.hour.toString())
+                              setNewMinute(slot.minute.toString())
+                            }
+                          }}
                         >
-                          {appointmentsForSlot.map((appt, apptIndex) => {
-                            const client = clients.find((c) => c.id === appt.clientId);
-                            const psychologist = psychologists.find((p) => p.id === appt.psychologistId);
-                            const apptHeight = (appt.duration / 15) * SLOT_HEIGHT_PX; // Height based on 15-min slots
-                            const offset = apptIndex * 15; // Dynamic offset for overlapping appointments
-                            const zIndex = 100 + apptIndex; // Ensure later appointments are on top
-                            const colorClasses = getPsychologistColorClasses(appt.psychologistId);
-                            const endTime = getEndTime(appt.hour, appt.minute, appt.duration);
+                          {appointmentsStartingInSlot.map((appt, apptIndex) => {
+                            const client = clients.find((c) => c.id === appt.clientId)
+                            const psychologist = psychologists.find((p) => p.id === appt.psychologistId)
+                            const apptHeight = (appt.duration / 15) * SLOT_HEIGHT_PX
+                            const offset = apptIndex * 15
+                            // Z-index'i dinamik olarak ayarla: üzerine gelinen en önde
+                            const currentZIndex = appt.id === hoveredAppointmentId ? 999 : 100 + apptIndex
+                            const colorClasses = getPsychologistColorClasses(appt.psychologistId)
+                            const endTime = getEndTime(appt.hour, appt.minute, appt.duration)
 
                             return (
                               <div
                                 key={appt.id}
-                                className={`absolute rounded-lg py-1 text-xs font-medium cursor-pointer flex justify-center transition-all select-none flex-col px-1 border shadow items-stretch ${colorClasses}`}
+                                className={`absolute rounded-lg py-1 text-xs font-medium cursor-pointer flex justify-center transition-all select-none flex-col px-1 border shadow items-stretch gap-y-0.5 ${colorClasses}`}
                                 style={{
-                                  top: 0, // Always start at the top of the cell
+                                  top: 0,
                                   height: `${apptHeight}px`,
-                                  width: `calc(100% - ${offset}px)`, // Adjust width based on offset
-                                  left: `${offset}px`, // Apply left offset
-                                  zIndex: zIndex,
+                                  width: `calc(100% - ${offset}px)`,
+                                  left: `${offset}px`,
+                                  zIndex: currentZIndex, // Dinamik zIndex
                                   overflow: "hidden",
                                 }}
                                 draggable
                                 onDragStart={() => handleDragStart(appt.id)}
                                 onDragEnd={() => setDraggedId(null)}
-                                onClick={() => setSelectedAppointment(appt)}
+                                onMouseEnter={() => setHoveredAppointmentId(appt.id)}
+                                onMouseLeave={() => setHoveredAppointmentId(null)}
                               >
-                                <div className="truncate font-semibold">
-                                  {client?.name}
-                                </div>
-                                <div className="text-[10px] truncate">
-                                  {psychologist?.name && (
-                                    <span className="block">
-                                      ({psychologist.name})
-                                    </span>
-                                  )}
-                                  {appt.desc}
-                                </div>
+                                {/* Client Name */}
+                                <div className="truncate font-semibold text-sm">{client?.name}</div>
+                                {/* Psychologist Name (eğer varsa) */}
+                                {psychologist?.name && (
+                                  <div className="truncate text-[10px]">({psychologist.name})</div>
+                                )}
+                                {/* Açıklama */}
+                                <div className="truncate text-[10px]">{appt.desc}</div>
+                                {/* Saat Bilgisi */}
                                 <div className="text-[10px] text-gray-500 dark:text-gray-300">
-                                  {appt.hour}:{appt.minute.toString().padStart(2, "0")} - {`${endTime.hour}:${endTime.minute.toString().padStart(2, "0")}`}
+                                  {appt.hour}:{appt.minute.toString().padStart(2, "0")} -{" "}
+                                  {`${endTime.hour}:${endTime.minute.toString().padStart(2, "0")}`}
                                 </div>
                               </div>
-                            );
+                            )
                           })}
                         </td>
-                      );
+                      )
                     })}
                   </tr>
-                );
+                )
               })}
             </tbody>
           </table>
@@ -339,8 +443,7 @@ export default function RandevuPlanlamaPage() {
                   <b>Danışan:</b> {clients.find((c) => c.id === selectedAppointment.clientId)?.name}
                 </div>
                 <div>
-                  <b>Psikolog:</b>{" "}
-                  {psychologists.find((p) => p.id === selectedAppointment.psychologistId)?.name}
+                  <b>Psikolog:</b> {psychologists.find((p) => p.id === selectedAppointment.psychologistId)?.name}
                 </div>
                 <div>
                   <b>Tarih:</b> {format(selectedAppointment.date, "dd MMMM yyyy EEEE", { locale: tr })}
@@ -356,14 +459,57 @@ export default function RandevuPlanlamaPage() {
                 </div>
               </div>
             )}
+            <DialogFooter className="flex justify-between items-center">
+              {" "}
+              {/* Butonları yaymak için */}
+              <Button
+                variant="outline"
+                onClick={() => setSelectedAppointment(null)}
+                className="dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                Kapat
+              </Button>
+              <div className="flex gap-2">
+                {" "}
+                {/* Düzenle ve Sil butonlarını gruplamak için */}
+                <Button
+                  onClick={() => {
+                    setIsEditing(true)
+                    setIsAddOrEditDialogOpen(true) // Düzenleme modalını aç
+                  }}
+                  className="dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg"
+                >
+                  Düzenle
+                </Button>
+                <Button
+                  variant="destructive" // Kırmızı renk için
+                  onClick={handleDeleteAppointment}
+                  className="rounded-lg"
+                >
+                  Sil
+                </Button>
+              </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Randevu Planla Modal */}
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        {/* Randevu Ekle/Düzenle Modal */}
+        <Dialog
+          open={isAddOrEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsAddOrEditDialogOpen(open)
+            if (!open) {
+              // Modal kapandığında düzenleme modunu sıfırla ve seçili randevuyu temizle
+              setIsEditing(false)
+              setSelectedAppointment(null)
+            }
+          }}
+        >
           <DialogContent className="dark:bg-gray-800 rounded-xl shadow-lg">
             <DialogHeader>
-              <DialogTitle className="dark:text-gray-100">Yeni Randevu Planla</DialogTitle>
+              <DialogTitle className="dark:text-gray-100">
+                {isEditing ? "Randevu Düzenle" : "Yeni Randevu Planla"}
+              </DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -482,13 +628,13 @@ export default function RandevuPlanlamaPage() {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setIsAddDialogOpen(false)}
+                onClick={() => setIsAddOrEditDialogOpen(false)}
                 className="dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700 rounded-lg"
               >
                 İptal
               </Button>
               <Button
-                onClick={handleAddAppointment}
+                onClick={handleSaveAppointment}
                 disabled={
                   !newClientId ||
                   !newPsychologistId ||
@@ -498,7 +644,7 @@ export default function RandevuPlanlamaPage() {
                 }
                 className="dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg"
               >
-                Ekle
+                {isEditing ? "Kaydet" : "Ekle"}
               </Button>
             </DialogFooter>
           </DialogContent>
