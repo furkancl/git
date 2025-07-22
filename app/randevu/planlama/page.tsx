@@ -34,7 +34,7 @@ const initialAppointments = [
     clientId: 1,
     psychologistId: 101,
     date: addDays(startOfCurrentWeek, 0),
-    hour: 10,
+    hour: 12,
     minute: 0,
     duration: 60,
     desc: "Bireysel seans",
@@ -83,10 +83,10 @@ const initialAppointments = [
     id: 6,
     clientId: 3,
     psychologistId: 103,
-    date: addDays(startOfCurrentWeek, 0), // Pazartesi
+    date: addDays(startOfCurrentWeek, 4), // Pazartesi
     hour: 10,
     minute: 15,
-    duration: 45,
+    duration: 60,
     desc: "Bireysel Danışmanlık", // Aynı gün, yakın saat
   },
 ]
@@ -367,13 +367,6 @@ export default function RandevuPlanlamaPage() {
                           onClick={() => {
                             if (clickableAppointment) {
                               setSelectedAppointment(clickableAppointment)
-                            } else {
-                              // If no appointment overlaps, open add dialog
-                              setIsAddOrEditDialogOpen(true)
-                              setIsEditing(false) // Yeni randevu ekleme modu
-                              setNewDate(currentDayDate)
-                              setNewHour(slot.hour.toString())
-                              setNewMinute(slot.minute.toString())
                             }
                           }}
                         >
@@ -409,7 +402,7 @@ export default function RandevuPlanlamaPage() {
                                 <div className="truncate font-semibold text-sm">{client?.name}</div>
                                 {/* Psychologist Name (eğer varsa) */}
                                 {psychologist?.name && (
-                                  <div className="truncate text-[10px]">({psychologist.name})</div>
+                                  <div className="truncate text-[12px] italic">{psychologist.name}</div>
                                 )}
                                 {/* Açıklama */}
                                 <div className="truncate text-[10px]">{appt.desc}</div>
