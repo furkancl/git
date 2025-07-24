@@ -186,6 +186,15 @@ export function Header() {
                     Danışan İstatistikleri
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  asChild
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <Link href="/sekreterya/arananlar">
+                    <Users className="h-4 w-4 text-orange-600" />
+                    Arayanlar
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -342,6 +351,13 @@ export function Header() {
                           >
                             <BarChart className="h-4 w-4 text-purple-600" />
                             Danışan İstatistikleri
+                          </Link>
+                          <Link
+                            href="/sekreterya/arananlar"
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          >
+                            <Users className="h-4 w-4 text-orange-600" />
+                            Arayanlar
                           </Link>
                         </div>
                       </AccordionContent>
