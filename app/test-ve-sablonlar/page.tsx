@@ -65,7 +65,7 @@ export default function TestVeSablonlarPage() {
         {/* Şablonlar */}
         <section className="w-full max-w-5xl">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-green-500" />Şablonlar
+            <FileText className="h-6 w-6 text-green-500" /> Şablonlar
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {templates.map((tpl) => (
