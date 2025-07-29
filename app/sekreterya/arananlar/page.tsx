@@ -178,15 +178,26 @@ export default function CallersPage() {
 
   const confirmTransfer = async () => {
     if (currentTransferringCaller) {
-      // "İlk Kayıt" sayfasına/sistemine aktarımı simüle et
-      // Gerçek bir uygulamada, bu veriyi bir backend'e gönderir
-      // ve ardından kullanıcıyı yönlendirir veya uygulamanın farklı bir bölümünü güncellersiniz.
-      console.log("Arayan bilgileri 'İlk Kayıt' sayfasına aktarıldı:", currentTransferringCaller)
-      // Şimdilik, "aktarımdan" sonra bu listeden sileceğiz
-      const { error } = await supabase.from("callers").delete().eq("id", currentTransferringCaller.id)
-
-      if (error) {
-        console.error("Arayan aktarılırken ve silinirken hata oluştu:", error)
+      // 1. Arayanı 'clients' tablosuna ekle
+      const { error: insertError } = await supabase.from("clients").insert({
+        name: currentTransferringCaller.callerName,
+        phone: "", // Arayan kaydında telefon yoksa boş bırak
+        email: "", // Arayan kaydında e-posta yoksa boş bırak
+        psychologist_id:
+          currentTransferringCaller.requestedPsychologist && currentTransferringCaller.requestedPsychologist !== "Fark Etmez"
+            ? null // Burada psikolog id eşlemesi yapılabilir, şimdilik null
+            : null,
+        registration_date: currentTransferringCaller.contactDate,
+      })
+      // 2. Başarılıysa arayanı sil
+      if (insertError) {
+        console.error("Arayan aktarılırken (clients tablosuna eklerken) hata oluştu:", insertError)
+        alert("Arayan aktarılırken bir hata oluştu: " + insertError.message)
+        return
+      }
+      const { error: deleteError } = await supabase.from("callers").delete().eq("id", currentTransferringCaller.id)
+      if (deleteError) {
+        console.error("Arayan aktarılırken ve silinirken hata oluştu:", deleteError)
         alert("Arayan aktarılırken ve silinirken bir hata oluştu.")
       } else {
         alert(
@@ -466,24 +477,26 @@ export default function CallersPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Arayanı İlk Kayıta Aktar</AlertDialogTitle>
               </AlertDialogHeader>
-              <AlertDialogDescription>
-                '{currentTransferringCaller?.callerName}' adlı arayanın bilgilerini ilk kayıt sayfasına aktarmak
-                istediğinizden emin misiniz? Bu işlemden sonra kayıt bu listeden kaldırılacaktır.
-                <br />
-                <br />
-                **Aktarılan Bilgiler:**
-                <ul className="list-disc list-inside mt-2">
-                  <li>**Arayan Adı:** {currentTransferringCaller?.callerName}</li>
-                  <li>**İstenen Psikolog:** {currentTransferringCaller?.requestedPsychologist}</li>
-                  <li>**Sorun Özeti:** {currentTransferringCaller?.issueSummary}</li>
-                  <li>**Görüşme Tipi:** {currentTransferringCaller?.sessionType}</li>
-                  <li>
-                    **İletişim Tarihi:**{" "}
-                    {currentTransferringCaller?.contactDate
-                      ? format(new Date(currentTransferringCaller.contactDate), "PPP HH:mm", { locale: tr })
-                      : "N/A"}
-                  </li>
-                </ul>
+              <AlertDialogDescription asChild>
+                <div>
+                  '{currentTransferringCaller?.callerName}' adlı arayanın bilgilerini ilk kayıt sayfasına aktarmak
+                  istediğinizden emin misiniz? Bu işlemden sonra kayıt bu listeden kaldırılacaktır.
+                  <br />
+                  <br />
+                  <strong>Aktarılan Bilgiler:</strong>
+                  <ul className="list-disc list-inside mt-2">
+                    <li><strong>Arayan Adı:</strong> {currentTransferringCaller?.callerName}</li>
+                    <li><strong>İstenen Psikolog:</strong> {currentTransferringCaller?.requestedPsychologist}</li>
+                    <li><strong>Sorun Özeti:</strong> {currentTransferringCaller?.issueSummary}</li>
+                    <li><strong>Görüşme Tipi:</strong> {currentTransferringCaller?.sessionType}</li>
+                    <li>
+                      <strong>İletişim Tarihi:</strong>{" "}
+                      {currentTransferringCaller?.contactDate
+                        ? format(new Date(currentTransferringCaller.contactDate), "PPP HH:mm", { locale: tr })
+                        : "N/A"}
+                    </li>
+                  </ul>
+                </div>
               </AlertDialogDescription>
               <AlertDialogFooter>
                 <AlertDialogCancel>İptal</AlertDialogCancel>

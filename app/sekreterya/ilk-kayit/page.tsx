@@ -98,8 +98,7 @@ export default function ClientManagementPage() {
       const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('appointments')
         .select('*')
-        .order('date', { ascending: false })
-      
+      // .order('date', { ascending: false }) // Sıralama için uygun bir alan yoksa kaldırıldı
       if (appointmentsError) throw appointmentsError
       
       // Notları yükle
@@ -115,8 +114,22 @@ export default function ClientManagementPage() {
       setAppointments(appointmentsData || [])
       setNotes(notesData || [])
     } catch (error) {
-      console.error('Veri yükleme hatası:', error)
-      alert('Veriler yüklenirken hata oluştu')
+      let errorMsg = ''
+      if (error && typeof error === 'object') {
+        if ('message' in error && typeof (error as any).message === 'string') {
+          errorMsg = (error as any).message
+        } else {
+          try {
+            errorMsg = JSON.stringify(error)
+          } catch {
+            errorMsg = String(error)
+          }
+        }
+      } else {
+        errorMsg = String(error)
+      }
+      console.error('Veri yükleme hatası:', errorMsg)
+      alert('Veriler yüklenirken hata oluştu: ' + errorMsg)
     } finally {
       setLoading(false)
     }
