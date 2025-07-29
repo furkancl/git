@@ -1,6 +1,9 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import type React from "react"
+
+import { AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,112 +25,507 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddEvaluationForm } from "@/components/add-evaluation-form"
-import { EditEvaluationForm } from "@/components/edit-evaluation-form"
 import { Header } from "@/components/header"
+import { supabase } from "@/lib/supabase" // Supabase istemcisini içe aktar
 
-// Define Evaluation Type
+// Supabase tablosuna uygun Evaluation tipi
 interface Evaluation {
-  id: string
-  clientName: string
-  psychologistName: string
-  meetingDate: string // ISO string for consistent parsing
-  clientPostMeetingRequests: string
-  processStatus: "Devam Ediyor" | "Tamamlandı" | "Ara Verildi" | "Beklemede"
-  psychologistOpinions: string
+  id: number
+  client_id: number
+  psychologist_id: number
+  meeting_date: string // ISO string
+  client_post_meeting_requests: string | null
+  process_status: "Devam Ediyor" | "Tamamlandı" | "Ara Verildi" | "Beklemede"
+  psychologist_opinions: string | null
+  created_at: string
+  // Join ile gelen ek alanlar
+  clientName?: string
+  psychologistName?: string
 }
 
-// Mock data for demonstration purposes
-const initialEvaluations: Evaluation[] = [
-  {
-    id: "1",
-    clientName: "Ayşe Yılmaz",
-    psychologistName: "Dr. Elif Can",
-    meetingDate: "2025-07-25T11:00:00",
-    clientPostMeetingRequests: "Bir sonraki seansta aile dinamiklerini konuşmak istiyor.",
-    processStatus: "Devam Ediyor",
-    psychologistOpinions: "Danışan kaygı yönetimi konusunda ilerleme kaydediyor. Ev ödevlerini düzenli yapıyor.",
-  },
-  {
-    id: "2",
-    clientName: "Mehmet Demir",
-    psychologistName: "Dr. Burak Aksoy",
-    meetingDate: "2025-07-26T15:30:00",
-    clientPostMeetingRequests: "İletişim becerileri üzerine daha fazla pratik yapmak istiyor.",
-    processStatus: "Devam Ediyor",
-    psychologistOpinions: "İlişki sorunlarında farkındalığı arttı. Empati egzersizlerine devam edilecek.",
-  },
-  {
-    id: "3",
-    clientName: "Zeynep Kaya",
-    psychologistName: "Dr. Elif Can",
-    meetingDate: "2025-07-27T10:00:00",
-    clientPostMeetingRequests: "Kariyer hedefleri konusunda netleşmek için destek bekliyor.",
-    processStatus: "Beklemede",
-    psychologistOpinions: "Özsaygı konusunda direnç gösteriyor. Küçük başarılarla motive edilmeli.",
-  },
-  {
-    id: "4",
-    clientName: "Canan Erdem",
-    psychologistName: "Dr. Deniz Yılmaz",
-    meetingDate: "2025-07-28T12:00:00",
-    clientPostMeetingRequests: "Yas sürecini daha sağlıklı atlatmak için grup terapisi önerisi istiyor.",
-    processStatus: "Tamamlandı",
-    psychologistOpinions: "Yas sürecinin son aşamalarında. Destek gruplarına yönlendirme yapıldı.",
-  },
-]
+// Supabase'den çekilecek Client ve Psychologist tipleri
+interface Client {
+  id: number
+  name: string
+}
 
-const mockPsychologists = ["Dr. Elif Can", "Dr. Burak Aksoy", "Dr. Deniz Yılmaz"]
+interface Psychologist {
+  id: number
+  name: string
+}
+
 const processStatuses = ["Devam Ediyor", "Tamamlandı", "Ara Verildi", "Beklemede"]
 
 export default function MeetingEvaluationPage() {
-  const [evaluations, setEvaluations] = useState<Evaluation[]>(initialEvaluations)
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [clientNameFilter, setClientNameFilter] = useState("")
-  const [psychologistNameFilter, setPsychologistNameFilter] = useState("all")
+  const [psychologistFilter, setPsychologistFilter] = useState("all") // ID olarak tutulacak
   const [meetingDateRange, setMeetingDateRange] = useState<DateRange | undefined>(undefined)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [currentEditingEvaluation, setCurrentEditingEvaluation] = useState<Evaluation | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [evaluationToDeleteId, setEvaluationToDeleteId] = useState<string | null>(null)
+  const [evaluationToDeleteId, setEvaluationToDeleteId] = useState<number | null>(null)
+
+  // Supabase'den verileri getirme fonksiyonu
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      // Psikologları getir
+      const { data: psychologistsData, error: psychError } = await supabase.from("psychologists").select("id, name")
+      if (psychError) throw psychError
+      setPsychologists(psychologistsData || [])
+
+      // Danışanları getir
+      const { data: clientsData, error: clientError } = await supabase.from("clients").select("id, name")
+      if (clientError) throw clientError
+      setClients(clientsData || [])
+
+      // Değerlendirmeleri getir (client ve psychologist adlarıyla birlikte)
+      const { data: evaluationsData, error: evalError } = await supabase
+        .from("evaluations")
+        .select(`
+          id,
+          client_id,
+          psychologist_id,
+          meeting_date,
+          client_post_meeting_requests,
+          process_status,
+          psychologist_opinions,
+          created_at,
+          clients(name),
+          psychologists(name)
+        `)
+        .order("meeting_date", { ascending: false })
+
+      if (evalError) throw evalError
+
+      const mappedEvaluations: Evaluation[] = evaluationsData.map((item: any) => ({
+        id: item.id,
+        client_id: item.client_id,
+        psychologist_id: item.psychologist_id,
+        meeting_date: item.meeting_date,
+        client_post_meeting_requests: item.client_post_meeting_requests,
+        process_status: item.process_status,
+        psychologist_opinions: item.psychologist_opinions,
+        created_at: item.created_at,
+        clientName: item.clients?.name,
+        psychologistName: item.psychologists?.name,
+      }))
+      setEvaluations(mappedEvaluations)
+    } catch (err: any) {
+      console.error("Veri getirilirken hata oluştu:", err.message)
+      setError("Veriler yüklenirken bir hata oluştu: " + err.message)
+      setEvaluations([])
+      setClients([])
+      setPsychologists([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const filteredEvaluations = useMemo(() => {
     return evaluations.filter((evaluation) => {
-      const matchesClientName = evaluation.clientName.toLowerCase().includes(clientNameFilter.toLowerCase())
-      const matchesPsychologistName =
-        psychologistNameFilter === "all" ? true : evaluation.psychologistName === psychologistNameFilter
+      const matchesClientName = evaluation.clientName?.toLowerCase().includes(clientNameFilter.toLowerCase()) || false
+      const matchesPsychologist =
+        psychologistFilter === "all" ? true : evaluation.psychologist_id === Number(psychologistFilter)
 
-      const meetingDateTime = new Date(evaluation.meetingDate)
+      const meetingDateTime = new Date(evaluation.meeting_date)
       const matchesDateRange = meetingDateRange?.from
         ? meetingDateTime >= meetingDateRange.from && (!meetingDateRange.to || meetingDateTime <= meetingDateRange.to)
         : true
 
-      return matchesClientName && matchesPsychologistName && matchesDateRange
+      return matchesClientName && matchesPsychologist && matchesDateRange
     })
-  }, [evaluations, clientNameFilter, psychologistNameFilter, meetingDateRange])
+  }, [evaluations, clientNameFilter, psychologistFilter, meetingDateRange])
 
-  const handleAddEvaluation = (newEvaluation: Omit<Evaluation, "id">) => {
-    const id = (evaluations.length > 0 ? Math.max(...evaluations.map((e) => Number.parseInt(e.id))) + 1 : 1).toString()
-    setEvaluations((prev) => [...prev, { ...newEvaluation, id }])
-    setIsAddDialogOpen(false)
-  }
+  // Yeni değerlendirme ekleme formu için
+  const AddEvaluationForm = ({
+    onAddEvaluation,
+    clients,
+    psychologists,
+    processStatuses,
+  }: {
+    onAddEvaluation: (
+      newEval: Omit<Evaluation, "id" | "created_at" | "clientName" | "psychologistName">,
+    ) => Promise<void>
+    clients: Client[]
+    psychologists: Psychologist[]
+    processStatuses: string[]
+  }) => {
+    const [clientId, setClientId] = useState<string>("")
+    const [psychologistId, setPsychologistId] = useState<string>("")
+    const [meetingDate, setMeetingDate] = useState<Date | undefined>(undefined)
+    const [meetingTime, setMeetingTime] = useState<string>("") // "HH:mm"
+    const [clientPostMeetingRequests, setClientPostMeetingRequests] = useState<string>("")
+    const [processStatus, setProcessStatus] = useState<string>("")
+    const [psychologistOpinions, setPsychologistOpinions] = useState<string>("")
 
-  const handleEditEvaluation = (updatedEvaluation: Evaluation) => {
-    setEvaluations((prev) =>
-      prev.map((evalItem) => (evalItem.id === updatedEvaluation.id ? updatedEvaluation : evalItem)),
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!clientId || !psychologistId || !meetingDate || !processStatus) {
+        alert("Lütfen tüm zorunlu alanları doldurun.")
+        return
+      }
+
+      // Tarih ve saat birleştirme
+      let meetingDateTime = meetingDate
+      if (meetingDate && meetingTime) {
+        const [hours, minutes] = meetingTime.split(":").map(Number)
+        meetingDateTime = new Date(meetingDate)
+        meetingDateTime.setHours(hours)
+        meetingDateTime.setMinutes(minutes)
+        meetingDateTime.setSeconds(0)
+        meetingDateTime.setMilliseconds(0)
+      }
+      await onAddEvaluation({
+        client_id: Number(clientId),
+        psychologist_id: Number(psychologistId),
+        meeting_date: meetingDateTime ? meetingDateTime.toISOString() : meetingDate?.toISOString(),
+        client_post_meeting_requests: clientPostMeetingRequests || null,
+        process_status: processStatus as "Devam Ediyor" | "Tamamlandı" | "Ara Verildi" | "Beklemede",
+        psychologist_opinions: psychologistOpinions || null,
+      })
+      // Formu sıfırla
+      setClientId("")
+      setPsychologistId("")
+      setMeetingDate(undefined)
+      setClientPostMeetingRequests("")
+      setProcessStatus("")
+      setPsychologistOpinions("")
+      setMeetingTime("")
+    }
+
+    return (
+      <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="client" className="text-right">
+            Danışan
+          </Label>
+          <Select value={clientId} onValueChange={setClientId}>
+            <SelectTrigger id="client" className="col-span-3">
+              <SelectValue placeholder="Danışan Seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id.toString()}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="psychologist" className="text-right">
+            Psikolog
+          </Label>
+          <Select value={psychologistId} onValueChange={setPsychologistId}>
+            <SelectTrigger id="psychologist" className="col-span-3">
+              <SelectValue placeholder="Psikolog Seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {psychologists.map((psych) => (
+                <SelectItem key={psych.id} value={psych.id.toString()}>
+                  {psych.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="meetingDate" className="text-right">
+            Görüşme Tarihi
+          </Label>
+          <div className="col-span-3 flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "justify-start text-left font-normal",
+                    !meetingDate && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {meetingDate ? format(meetingDate, "PPP", { locale: tr }) : <span>Tarih Seçin</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={meetingDate} onSelect={setMeetingDate} initialFocus locale={tr} />
+              </PopoverContent>
+            </Popover>
+            <input
+              type="time"
+              value={meetingTime}
+              onChange={e => setMeetingTime(e.target.value)}
+              className="border rounded px-2 py-1"
+              style={{ minWidth: 90 }}
+              required
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="clientRequests" className="text-right">
+            Danışanın Sonraki İstekleri
+          </Label>
+          <Input
+            id="clientRequests"
+            value={clientPostMeetingRequests}
+            onChange={(e) => setClientPostMeetingRequests(e.target.value)}
+            className="col-span-3"
+          />
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="processStatus" className="text-right">
+            Süreç Durumu
+          </Label>
+          <Select value={processStatus} onValueChange={setProcessStatus}>
+            <SelectTrigger id="processStatus" className="col-span-3">
+              <SelectValue placeholder="Durum Seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {processStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="psychologistOpinions" className="text-right">
+            Psikolog Görüşleri
+          </Label>
+          <Input
+            id="psychologistOpinions"
+            value={psychologistOpinions}
+            onChange={(e) => setPsychologistOpinions(e.target.value)}
+            className="col-span-3"
+          />
+        </div>
+        <Button type="submit" className="w-full">
+          Değerlendirme Ekle
+        </Button>
+      </form>
     )
-    setIsEditDialogOpen(false)
-    setCurrentEditingEvaluation(null)
   }
 
-  const handleDeleteEvaluation = (id: string) => {
-    setEvaluations((prev) => prev.filter((evalItem) => evalItem.id !== id))
-    setIsDeleteDialogOpen(false)
-    setEvaluationToDeleteId(null)
+  // Değerlendirme düzenleme formu için
+  const EditEvaluationForm = ({
+    initialData,
+    onUpdateEvaluation,
+    clients,
+    psychologists,
+    processStatuses,
+  }: {
+    initialData: Evaluation
+    onUpdateEvaluation: (updatedEval: Evaluation) => Promise<void>
+    clients: Client[]
+    psychologists: Psychologist[]
+    processStatuses: string[]
+  }) => {
+    const [clientId, setClientId] = useState<string>(initialData.client_id.toString())
+    const [psychologistId, setPsychologistId] = useState<string>(initialData.psychologist_id.toString())
+    const [meetingDate, setMeetingDate] = useState<Date | undefined>(new Date(initialData.meeting_date))
+    // Saat inputu için ilk değeri ISO stringden al
+    const initialTime = initialData.meeting_date ? new Date(initialData.meeting_date).toISOString().substring(11,16) : ""
+    const [meetingTime, setMeetingTime] = useState<string>(initialTime)
+    const [clientPostMeetingRequests, setClientPostMeetingRequests] = useState<string>(
+      initialData.client_post_meeting_requests || "",
+    )
+    const [processStatus, setProcessStatus] = useState<string>(initialData.process_status)
+    const [psychologistOpinions, setPsychologistOpinions] = useState<string>(initialData.psychologist_opinions || "")
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!clientId || !psychologistId || !meetingDate || !processStatus) {
+        alert("Lütfen tüm zorunlu alanları doldurun.")
+        return
+      }
+
+      // Tarih ve saat birleştirme
+      let meetingDateTime = meetingDate
+      if (meetingDate && meetingTime) {
+        const [hours, minutes] = meetingTime.split(":").map(Number)
+        meetingDateTime = new Date(meetingDate)
+        meetingDateTime.setHours(hours)
+        meetingDateTime.setMinutes(minutes)
+        meetingDateTime.setSeconds(0)
+        meetingDateTime.setMilliseconds(0)
+      }
+      await onUpdateEvaluation({
+        ...initialData,
+        client_id: Number(clientId),
+        psychologist_id: Number(psychologistId),
+        meeting_date: meetingDateTime ? meetingDateTime.toISOString() : meetingDate?.toISOString(),
+        client_post_meeting_requests: clientPostMeetingRequests || null,
+        process_status: processStatus as "Devam Ediyor" | "Tamamlandı" | "Ara Verildi" | "Beklemede",
+        psychologist_opinions: psychologistOpinions || null,
+      })
+    }
+
+    return (
+      <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="client" className="text-right">
+            Danışan
+          </Label>
+          <Select value={clientId} onValueChange={setClientId}>
+            <SelectTrigger id="client" className="col-span-3">
+              <SelectValue placeholder="Danışan Seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id.toString()}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="psychologist" className="text-right">
+            Psikolog
+          </Label>
+          <Select value={psychologistId} onValueChange={setPsychologistId}>
+            <SelectTrigger id="psychologist" className="col-span-3">
+              <SelectValue placeholder="Psikolog Seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {psychologists.map((psych) => (
+                <SelectItem key={psych.id} value={psych.id.toString()}>
+                  {psych.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="meetingDate" className="text-right">
+            Görüşme Tarihi
+          </Label>
+          <div className="col-span-3 flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "justify-start text-left font-normal",
+                    !meetingDate && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {meetingDate ? format(meetingDate, "PPP", { locale: tr }) : <span>Tarih Seçin</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={meetingDate} onSelect={setMeetingDate} initialFocus locale={tr} />
+              </PopoverContent>
+            </Popover>
+            <input
+              type="time"
+              value={meetingTime}
+              onChange={e => setMeetingTime(e.target.value)}
+              className="border rounded px-2 py-1"
+              style={{ minWidth: 90 }}
+              required
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="clientRequests" className="text-right">
+            Danışanın Sonraki İstekleri
+          </Label>
+          <Input
+            id="clientRequests"
+            value={clientPostMeetingRequests}
+            onChange={(e) => setClientPostMeetingRequests(e.target.value)}
+            className="col-span-3"
+          />
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="processStatus" className="text-right">
+            Süreç Durumu
+          </Label>
+          <Select value={processStatus} onValueChange={setProcessStatus}>
+            <SelectTrigger id="processStatus" className="col-span-3">
+              <SelectValue placeholder="Durum Seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {processStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="psychologistOpinions" className="text-right">
+            Psikolog Görüşleri
+          </Label>
+          <Input
+            id="psychologistOpinions"
+            value={psychologistOpinions}
+            onChange={(e) => setPsychologistOpinions(e.target.value)}
+            className="col-span-3"
+          />
+        </div>
+        <Button type="submit" className="w-full">
+          Değerlendirmeyi Güncelle
+        </Button>
+      </form>
+    )
+  }
+
+  const handleAddEvaluation = async (
+    newEval: Omit<Evaluation, "id" | "created_at" | "clientName" | "psychologistName">,
+  ) => {
+    try {
+      setLoading(true)
+      setError(null)
+      // id ve created_at gibi alanları göndermeden ekle
+      const { error } = await supabase
+        .from("evaluations")
+        .insert([
+          {
+            client_id: newEval.client_id,
+            psychologist_id: newEval.psychologist_id,
+            meeting_date: newEval.meeting_date,
+            client_post_meeting_requests: newEval.client_post_meeting_requests,
+            process_status: newEval.process_status,
+            psychologist_opinions: newEval.psychologist_opinions,
+          },
+        ])
+      if (error) throw error
+      setIsAddDialogOpen(false)
+      await fetchData()
+    } catch (err: any) {
+      setError("Kayıt eklenirken hata oluştu: " + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEditEvaluation = async (updatedEval: Evaluation) => {
+    // Implement handleEditEvaluation logic here
+  }
+
+  const handleDeleteEvaluation = async (evaluationId: number) => {
+    // Implement handleDeleteEvaluation logic here
   }
 
   return (
@@ -161,18 +559,18 @@ export default function MeetingEvaluationPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="psychologistNameFilter" className="mb-1">
+                  <Label htmlFor="psychologistFilter" className="mb-1">
                     Psikolog Adı
                   </Label>
-                  <Select value={psychologistNameFilter} onValueChange={setPsychologistNameFilter}>
-                    <SelectTrigger id="psychologistNameFilter">
+                  <Select value={psychologistFilter} onValueChange={setPsychologistFilter}>
+                    <SelectTrigger id="psychologistFilter">
                       <SelectValue placeholder="Psikolog Seçin" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tümü</SelectItem>
-                      {mockPsychologists.map((name) => (
-                        <SelectItem key={name} value={name}>
-                          {name}
+                      {psychologists.map((psych) => (
+                        <SelectItem key={psych.id} value={psych.id.toString()}>
+                          {psych.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -220,16 +618,13 @@ export default function MeetingEvaluationPage() {
                   </Popover>
                 </div>
               </div>
-              {(clientNameFilter ||
-                psychologistNameFilter !== "all" ||
-                meetingDateRange?.from ||
-                meetingDateRange?.to) && (
+              {(clientNameFilter || psychologistFilter !== "all" || meetingDateRange?.from || meetingDateRange?.to) && (
                 <div className="mt-4">
                   <Button
                     variant="outline"
                     onClick={() => {
                       setClientNameFilter("")
-                      setPsychologistNameFilter("all")
+                      setPsychologistFilter("all")
                       setMeetingDateRange(undefined)
                     }}
                   >
@@ -245,63 +640,73 @@ export default function MeetingEvaluationPage() {
               <CardTitle>Görüşme Değerlendirmeleri</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[150px]">Danışan Adı</TableHead>
-                      <TableHead className="min-w-[150px]">Psikolog</TableHead>
-                      <TableHead className="min-w-[180px]">Görüşme Tarihi</TableHead>
-                      <TableHead className="min-w-[250px]">Danışanın Sonraki İstekleri</TableHead>
-                      <TableHead className="min-w-[150px]">Süreç Durumu</TableHead>
-                      <TableHead className="min-w-[300px]">Psikolog Görüşleri</TableHead>
-                      <TableHead className="min-w-[150px]">Aksiyonlar</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredEvaluations.length > 0 ? (
-                      filteredEvaluations.map((evaluation) => (
-                        <TableRow key={evaluation.id}>
-                          <TableCell className="font-medium">{evaluation.clientName}</TableCell>
-                          <TableCell>{evaluation.psychologistName}</TableCell>
-                          <TableCell>{format(new Date(evaluation.meetingDate), "PPP HH:mm", { locale: tr })}</TableCell>
-                          <TableCell className="whitespace-normal">{evaluation.clientPostMeetingRequests}</TableCell>
-                          <TableCell>{evaluation.processStatus}</TableCell>
-                          <TableCell className="whitespace-normal">{evaluation.psychologistOpinions}</TableCell>
-                          <TableCell className="flex flex-col sm:flex-row gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setCurrentEditingEvaluation(evaluation)
-                                setIsEditDialogOpen(true)
-                              }}
-                            >
-                              <EditIcon className="h-4 w-4 mr-1" /> Düzenle
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                setEvaluationToDeleteId(evaluation.id)
-                                setIsDeleteDialogOpen(true)
-                              }}
-                            >
-                              <Trash2Icon className="h-4 w-4 mr-1" /> Sil
-                            </Button>
+              {loading ? (
+                <div className="text-center py-4">Yükleniyor...</div>
+              ) : error ? (
+                <div className="text-center py-4 text-red-500">{error}</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[150px]">Danışan Adı</TableHead>
+                        <TableHead className="min-w-[150px]">Psikolog</TableHead>
+                        <TableHead className="min-w-[180px]">Görüşme Tarihi</TableHead>
+                        <TableHead className="min-w-[250px]">Danışanın Sonraki İstekleri</TableHead>
+                        <TableHead className="min-w-[150px]">Süreç Durumu</TableHead>
+                        <TableHead className="min-w-[300px]">Psikolog Görüşleri</TableHead>
+                        <TableHead className="min-w-[150px]">Aksiyonlar</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEvaluations.length > 0 ? (
+                        filteredEvaluations.map((evaluation) => (
+                          <TableRow key={evaluation.id}>
+                            <TableCell className="font-medium">{evaluation.clientName}</TableCell>
+                            <TableCell>{evaluation.psychologistName}</TableCell>
+                            <TableCell>
+                              {format(new Date(evaluation.meeting_date), "PPP HH:mm", { locale: tr })}
+                            </TableCell>
+                            <TableCell className="whitespace-normal">
+                              {evaluation.client_post_meeting_requests}
+                            </TableCell>
+                            <TableCell>{evaluation.process_status}</TableCell>
+                            <TableCell className="whitespace-normal">{evaluation.psychologist_opinions}</TableCell>
+                            <TableCell className="flex flex-col sm:flex-row gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setCurrentEditingEvaluation(evaluation)
+                                  setIsEditDialogOpen(true)
+                                }}
+                              >
+                                <EditIcon className="h-4 w-4 mr-1" /> Düzenle
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  setEvaluationToDeleteId(evaluation.id)
+                                  setIsDeleteDialogOpen(true)
+                                }}
+                              >
+                                <Trash2Icon className="h-4 w-4 mr-1" /> Sil
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-4">
+                            Gösterilecek değerlendirme bulunamadı.
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-4">
-                          Gösterilecek değerlendirme bulunamadı.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -314,7 +719,8 @@ export default function MeetingEvaluationPage() {
               </DialogHeader>
               <AddEvaluationForm
                 onAddEvaluation={handleAddEvaluation}
-                psychologists={mockPsychologists}
+                clients={clients}
+                psychologists={psychologists}
                 processStatuses={processStatuses}
               />
             </DialogContent>
@@ -331,7 +737,8 @@ export default function MeetingEvaluationPage() {
                 <EditEvaluationForm
                   initialData={currentEditingEvaluation}
                   onUpdateEvaluation={handleEditEvaluation}
-                  psychologists={mockPsychologists}
+                  clients={clients}
+                  psychologists={psychologists}
                   processStatuses={processStatuses}
                 />
               </DialogContent>
@@ -349,7 +756,9 @@ export default function MeetingEvaluationPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>İptal</AlertDialogCancel>
-                <AlertDialogAction onClick={() => evaluationToDeleteId && handleDeleteEvaluation(evaluationToDeleteId)}>
+                <AlertDialogAction
+                  onClick={() => evaluationToDeleteId !== null && handleDeleteEvaluation(evaluationToDeleteId)}
+                >
                   Sil
                 </AlertDialogAction>
               </AlertDialogFooter>
