@@ -30,6 +30,7 @@ import { AddCallerForm } from "@/components/add-caller-form"
 import { EditCallerForm } from "@/components/edit-caller-form"
 import { Header } from "@/components/header"
 import { supabase } from "@/lib/supabase" // Supabase istemcisini içe aktar
+import { toast } from "sonner"
 
 // Arayan Tipini Tanımla - id'yi number olarak güncelledik
 interface Caller {
@@ -123,10 +124,14 @@ export default function CallersPage() {
     })
 
     if (error) {
-      console.error("Arayan eklenirken hata oluştu:", error)
-      alert("Arayan eklenirken bir hata oluştu.")
+      toast.error("Arayan eklenirken hata oluştu!", {
+        description: error.message || "Arayan eklenirken bir hata oluştu.",
+        duration: 4000,
+      })
     } else {
-      alert("Arayan başarıyla eklendi!")
+      toast.success("Arayan başarıyla eklendi!", {
+        description: newCaller.callerName + " kaydı eklendi.",
+      })
       fetchCallers() // Listeyi güncellemek için verileri yeniden getir
       setIsAddDialogOpen(false)
     }
@@ -146,10 +151,14 @@ export default function CallersPage() {
       .eq("id", updatedCaller.id)
 
     if (error) {
-      console.error("Arayan güncellenirken hata oluştu:", error)
-      alert("Arayan güncellenirken bir hata oluştu.")
+      toast.error("Arayan güncellenirken hata oluştu!", {
+        description: error.message || "Arayan güncellenirken bir hata oluştu.",
+        duration: 4000,
+      })
     } else {
-      alert("Arayan başarıyla güncellendi!")
+      toast.success("Arayan başarıyla güncellendi!", {
+        description: updatedCaller.callerName + " kaydı güncellendi.",
+      })
       fetchCallers() // Listeyi güncellemek için verileri yeniden getir
       setIsEditDialogOpen(false)
       setCurrentEditingCaller(null)
@@ -161,10 +170,14 @@ export default function CallersPage() {
     const { error } = await supabase.from("callers").delete().eq("id", id)
 
     if (error) {
-      console.error("Arayan silinirken hata oluştu:", error)
-      alert("Arayan silinirken bir hata oluştu.")
+      toast.error("Arayan silinirken hata oluştu!", {
+        description: error.message || "Arayan silinirken bir hata oluştu.",
+        duration: 4000,
+      })
     } else {
-      alert("Arayan başarıyla silindi!")
+      toast.info("Arayan başarıyla silindi!", {
+        description: "Kayıt silindi.",
+      })
       fetchCallers() // Listeyi güncellemek için verileri yeniden getir
       setIsDeleteDialogOpen(false)
       setCallerToDeleteId(null)
@@ -191,18 +204,22 @@ export default function CallersPage() {
       })
       // 2. Başarılıysa arayanı sil
       if (insertError) {
-        console.error("Arayan aktarılırken (clients tablosuna eklerken) hata oluştu:", insertError)
-        alert("Arayan aktarılırken bir hata oluştu: " + insertError.message)
+        toast.error("Arayan aktarılırken hata oluştu!", {
+          description: insertError.message || "Arayan aktarılırken bir hata oluştu.",
+          duration: 4000,
+        })
         return
       }
       const { error: deleteError } = await supabase.from("callers").delete().eq("id", currentTransferringCaller.id)
       if (deleteError) {
-        console.error("Arayan aktarılırken ve silinirken hata oluştu:", deleteError)
-        alert("Arayan aktarılırken ve silinirken bir hata oluştu.")
+        toast.error("Arayan aktarılırken ve silinirken hata oluştu!", {
+          description: deleteError.message || "Arayan aktarılırken ve silinirken bir hata oluştu.",
+          duration: 4000,
+        })
       } else {
-        alert(
-          `'${currentTransferringCaller.callerName}' adlı arayan bilgileri 'İlk Kayıt' sayfasına aktarıldı ve listeden kaldırıldı.`,
-        )
+        toast.success("Arayan aktarıldı!", {
+          description: `'${currentTransferringCaller.callerName}' adlı arayan bilgileri 'İlk Kayıt' sayfasına aktarıldı ve listeden kaldırıldı.`,
+        })
         fetchCallers() // Listeyi güncellemek için verileri yeniden getir
         setIsTransferDialogOpen(false)
         setCurrentTransferringCaller(null)

@@ -29,6 +29,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Header } from "@/components/header"
 import { supabase } from "@/lib/supabase" // Supabase istemcisini içe aktar
+import { toast } from "sonner"
 
 // Supabase tablosuna uygun Evaluation tipi
 interface Evaluation {
@@ -123,7 +124,10 @@ export default function MeetingEvaluationPage() {
       }))
       setEvaluations(mappedEvaluations)
     } catch (err: any) {
-      console.error("Veri getirilirken hata oluştu:", err.message)
+      toast.error("Veri getirilirken hata oluştu!", {
+        description: err.message || "Veriler yüklenirken bir hata oluştu.",
+        duration: 4000,
+      })
       setError("Veriler yüklenirken bir hata oluştu: " + err.message)
       setEvaluations([])
       setClients([])
@@ -177,7 +181,10 @@ export default function MeetingEvaluationPage() {
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
       if (!clientId || !psychologistId || !meetingDate || !processStatus) {
-        alert("Lütfen tüm zorunlu alanları doldurun.")
+        toast.error("Eksik Alan!", {
+          description: "Lütfen tüm zorunlu alanları doldurun.",
+          duration: 3000,
+        })
         return
       }
 
@@ -352,7 +359,10 @@ export default function MeetingEvaluationPage() {
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
       if (!clientId || !psychologistId || !meetingDate || !processStatus) {
-        alert("Lütfen tüm zorunlu alanları doldurun.")
+        toast.error("Eksik Alan!", {
+          description: "Lütfen tüm zorunlu alanları doldurun.",
+          duration: 3000,
+        })
         return
       }
 

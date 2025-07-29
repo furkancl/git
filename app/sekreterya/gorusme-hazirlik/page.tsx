@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -25,113 +26,136 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddAppointmentForm } from "@/components/add-appointment-form"
-import { EditAppointmentForm } from "@/components/edit-appointment-form"
+import { AddGorusmeHazirlikForm } from "@/components/add-gorusme-hazirlik-form"
+import { EditGorusmeHazirlikForm } from "@/components/edit-gorusme-hazirlik-form"
 import { Header } from "@/components/header"
 
 // Define Appointment Type
-interface Appointment {
+interface GorusmeHazirlik {
   id: string
-  clientName: string
-  appointmentDate: string // ISO string or similar for consistent parsing
-  clientIssues: string
-  psychologistNotes: string
-  psychologistName: string // New field for psychologist
+  client_id?: number
+  client_name: string
+  meeting_date: string // ISO string
+  client_issues: string
+  psychologist_notes: string
+  psychologist_name: string
 }
 
-// Mock data for demonstration purposes
-const initialAppointments: Appointment[] = [
-  {
-    id: "1",
-    clientName: "Ayşe Yılmaz",
-    appointmentDate: "2025-07-25T10:00:00",
-    clientIssues: "Anxiety, stress at work, difficulty sleeping, perfectionism.",
-    psychologistNotes:
-      "Review coping mechanisms, discuss work-life balance strategies, introduce mindfulness exercises.",
-    psychologistName: "Dr. Elif Can",
-  },
-  {
-    id: "2",
-    clientName: "Mehmet Demir",
-    appointmentDate: "2025-07-26T14:30:00",
-    clientIssues: "Relationship problems, communication issues, feeling misunderstood, trust issues.",
-    psychologistNotes: "Focus on active listening, explore attachment styles, suggest couples therapy if applicable.",
-    psychologistName: "Dr. Burak Aksoy",
-  },
-  {
-    id: "3",
-    clientName: "Zeynep Kaya",
-    appointmentDate: "2025-07-27T09:00:00",
-    clientIssues: "Low self-esteem, procrastination, career uncertainty, fear of failure.",
-    psychologistNotes: "Identify strengths, set small achievable goals, discuss cognitive restructuring techniques.",
-    psychologistName: "Dr. Elif Can",
-  },
-  {
-    id: "4",
-    clientName: "Canan Erdem",
-    appointmentDate: "2025-07-28T11:00:00",
-    clientIssues: "Grief and loss, difficulty processing emotions, social withdrawal.",
-    psychologistNotes: "Provide space for emotional expression, explore grief stages, suggest support groups.",
-    psychologistName: "Dr. Burak Aksoy",
-  },
-  {
-    id: "5",
-    clientName: "Burak Akın",
-    appointmentDate: "2025-07-29T16:00:00",
-    clientIssues: "Anger management, impulsivity, family conflict.",
-    psychologistNotes: "Teach anger regulation techniques, explore triggers, discuss family dynamics.",
-    psychologistName: "Dr. Deniz Yılmaz",
-  },
-]
+interface Client {
+  id: number
+  name: string
+}
 
-const mockPsychologists = ["Dr. Elif Can", "Dr. Burak Aksoy", "Dr. Deniz Yılmaz"]
+interface Psychologist {
+  id: number
+  name: string
+}
 
-export default function MeetingPreparationPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments)
-  const [clientNameFilter, setClientNameFilter] = useState("")
-  const [psychologistNameFilter, setPsychologistNameFilter] = useState("all")
+export default function Page() {
+  const [gorusmeler, setGorusmeler] = useState<GorusmeHazirlik[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  // Supabase'den danışan, psikolog ve görüşme hazırlık kayıtlarını çek
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      const { data: clientData } = await supabase.from("clients").select("id, name")
+      const { data: psychologistData } = await supabase.from("psychologists").select("id, name")
+      const { data: hazirlikData } = await supabase
+        .from("gorusme_hazirlik")
+        .select("id, client_name, meeting_date, client_issues, psychologist_notes, psychologist_name")
+      
+      setClients(clientData || [])
+      setPsychologists(psychologistData || [])
+      setGorusmeler(hazirlikData || [])
+      setLoading(false)
+    }
+    fetchData()
+  }, [])
+
+  const [client_name_filter, setClientNameFilter] = useState("")
+  const [psychologist_name_filter, setPsychologistNameFilter] = useState("all")
   const [appointmentDateRange, setAppointmentDateRange] = useState<DateRange | undefined>(undefined)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [currentEditingAppointment, setCurrentEditingAppointment] = useState<Appointment | null>(null)
+  const [currentEditingGorusme, setCurrentEditingGorusme] = useState<GorusmeHazirlik | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [appointmentToDeleteId, setAppointmentToDeleteId] = useState<string | null>(null)
 
-  const filteredAppointments = useMemo(() => {
-    return appointments.filter((appointment) => {
-      const matchesClientName = appointment.clientName.toLowerCase().includes(clientNameFilter.toLowerCase())
+  const filteredGorusmeler = useMemo(() => {
+    return gorusmeler.filter((kayit) => {
+      const matchesClientName = kayit.client_name.toLowerCase().includes(client_name_filter.toLowerCase())
       const matchesPsychologistName =
-        psychologistNameFilter === "all" ? true : appointment.psychologistName === psychologistNameFilter
+        psychologist_name_filter === "all" ? true : kayit.psychologist_name === psychologist_name_filter
 
-      const appointmentDateTime = new Date(appointment.appointmentDate)
+      const meetingDateTime = new Date(kayit.meeting_date)
       const matchesDateRange = appointmentDateRange?.from
-        ? appointmentDateTime >= appointmentDateRange.from &&
-          (!appointmentDateRange.to || appointmentDateTime <= appointmentDateRange.to)
+        ? meetingDateTime >= appointmentDateRange.from &&
+          (!appointmentDateRange.to || meetingDateTime <= appointmentDateRange.to)
         : true
 
       return matchesClientName && matchesPsychologistName && matchesDateRange
     })
-  }, [appointments, clientNameFilter, psychologistNameFilter, appointmentDateRange])
+  }, [gorusmeler, client_name_filter, psychologist_name_filter, appointmentDateRange])
 
-  const handleAddAppointment = (newAppointment: Omit<Appointment, "id">) => {
-    const id = (
-      appointments.length > 0 ? Math.max(...appointments.map((a) => Number.parseInt(a.id))) + 1 : 1
-    ).toString()
-    setAppointments((prev) => [...prev, { ...newAppointment, id }])
-    setIsAddDialogOpen(false)
+  const handleAddGorusme = async (newGorusme: Omit<GorusmeHazirlik, "id">) => {
+    const { data, error } = await supabase
+      .from("gorusme_hazirlik")
+      .insert([{
+        client_name: newGorusme.client_name,
+        meeting_date: newGorusme.meeting_date,
+        client_issues: newGorusme.client_issues,
+        psychologist_notes: newGorusme.psychologist_notes,
+        psychologist_name: newGorusme.psychologist_name
+      }])
+      .select()
+    
+    if (!error && data && data[0]) {
+      setGorusmeler((prev) => [...prev, data[0]])
+      setIsAddDialogOpen(false)
+    } else {
+      console.error("Supabase ekleme hatası:", error)
+      alert("Kayıt eklenirken hata oluştu: " + (error?.message || "Bilinmeyen hata"))
+    }
   }
 
-  const handleEditAppointment = (updatedAppointment: Appointment) => {
-    setAppointments((prev) => prev.map((app) => (app.id === updatedAppointment.id ? updatedAppointment : app)))
-    setIsEditDialogOpen(false)
-    setCurrentEditingAppointment(null)
+  const handleEditGorusme = async (updatedGorusme: GorusmeHazirlik) => {
+    const { error } = await supabase
+      .from("gorusme_hazirlik")
+      .update({
+        client_name: updatedGorusme.client_name,
+        meeting_date: updatedGorusme.meeting_date,
+        client_issues: updatedGorusme.client_issues,
+        psychologist_notes: updatedGorusme.psychologist_notes,
+        psychologist_name: updatedGorusme.psychologist_name,
+      })
+      .eq("id", updatedGorusme.id)
+    
+    if (!error) {
+      setGorusmeler((prev) => prev.map((g) => (g.id === updatedGorusme.id ? updatedGorusme : g)))
+      setIsEditDialogOpen(false)
+      setCurrentEditingGorusme(null)
+    } else {
+      alert("Kayıt güncellenirken hata oluştu: " + error.message)
+    }
   }
 
-  const handleDeleteAppointment = (id: string) => {
-    setAppointments((prev) => prev.filter((app) => app.id !== id))
-    setIsDeleteDialogOpen(false)
-    setAppointmentToDeleteId(null)
+  const handleDeleteGorusme = async (id: string) => {
+    const { error } = await supabase
+      .from("gorusme_hazirlik")
+      .delete()
+      .eq("id", id)
+    
+    if (!error) {
+      setGorusmeler((prev) => prev.filter((g) => g.id !== id))
+      setIsDeleteDialogOpen(false)
+      setAppointmentToDeleteId(null)
+    } else {
+      alert("Kayıt silinirken hata oluştu: " + error.message)
+    }
   }
 
   return (
@@ -158,9 +182,9 @@ export default function MeetingPreparationPage() {
                     Danışan Adı
                   </Label>
                   <Input
-                    id="clientNameFilter"
+                    id="client_name_filter"
                     placeholder="Danışan adına göre filtrele..."
-                    value={clientNameFilter}
+                    value={client_name_filter}
                     onChange={(e) => setClientNameFilter(e.target.value)}
                   />
                 </div>
@@ -168,15 +192,15 @@ export default function MeetingPreparationPage() {
                   <Label htmlFor="psychologistNameFilter" className="mb-1">
                     Psikolog Adı
                   </Label>
-                  <Select value={psychologistNameFilter} onValueChange={setPsychologistNameFilter}>
-                    <SelectTrigger id="psychologistNameFilter">
+                  <Select value={psychologist_name_filter} onValueChange={setPsychologistNameFilter}>
+                    <SelectTrigger id="psychologist_name_filter">
                       <SelectValue placeholder="Psikolog Seçin" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tümü</SelectItem>
-                      {mockPsychologists.map((name) => (
-                        <SelectItem key={name} value={name}>
-                          {name}
+                      {psychologists.map((p) => (
+                        <SelectItem key={p.id} value={p.name}>
+                          {p.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -224,8 +248,8 @@ export default function MeetingPreparationPage() {
                   </Popover>
                 </div>
               </div>
-              {(clientNameFilter ||
-                psychologistNameFilter !== "all" ||
+              {(client_name_filter ||
+                psychologist_name_filter !== "all" ||
                 appointmentDateRange?.from ||
                 appointmentDateRange?.to) && (
                 <div className="mt-4">
@@ -246,7 +270,7 @@ export default function MeetingPreparationPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Yaklaşan Randevular ve Hazırlık Notları</CardTitle>
+              <CardTitle>Yaklaşan Görüşmeler ve Hazırlık Notları</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -254,7 +278,7 @@ export default function MeetingPreparationPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="min-w-[150px]">Danışan Adı</TableHead>
-                      <TableHead className="min-w-[180px]">Randevu Günü</TableHead>
+                      <TableHead className="min-w-[180px]">Görüşme Günü</TableHead>
                       <TableHead className="min-w-[150px]">Psikolog</TableHead>
                       <TableHead className="min-w-[300px]">Danışanın Sıkıntıları / Görüşmek İstedikleri</TableHead>
                       <TableHead className="min-w-[300px]">Psikolog Notu</TableHead>
@@ -262,22 +286,28 @@ export default function MeetingPreparationPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAppointments.length > 0 ? (
-                      filteredAppointments.map((appointment) => (
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4">
+                          Yükleniyor...
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredGorusmeler.length > 0 ? (
+                      filteredGorusmeler.map((appointment) => (
                         <TableRow key={appointment.id}>
-                          <TableCell className="font-medium">{appointment.clientName}</TableCell>
+                          <TableCell className="font-medium">{appointment.client_name}</TableCell>
                           <TableCell>
-                            {format(new Date(appointment.appointmentDate), "PPP HH:mm", { locale: tr })}
+                            {format(new Date(appointment.meeting_date), "PPP HH:mm", { locale: tr })}
                           </TableCell>
-                          <TableCell>{appointment.psychologistName}</TableCell>
-                          <TableCell className="whitespace-normal">{appointment.clientIssues}</TableCell>
-                          <TableCell className="whitespace-normal">{appointment.psychologistNotes}</TableCell>
+                          <TableCell>{appointment.psychologist_name}</TableCell>
+                          <TableCell className="whitespace-normal">{appointment.client_issues}</TableCell>
+                          <TableCell className="whitespace-normal">{appointment.psychologist_notes}</TableCell>
                           <TableCell className="flex flex-col sm:flex-row gap-2">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                setCurrentEditingAppointment(appointment)
+                                setCurrentEditingGorusme(appointment)
                                 setIsEditDialogOpen(true)
                               }}
                             >
@@ -309,47 +339,47 @@ export default function MeetingPreparationPage() {
             </CardContent>
           </Card>
 
-          {/* Add Appointment Dialog */}
+          {/* Görüşme Hazırlık Ekle Dialog */}
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle>Yeni Randevu Ekle</DialogTitle>
-                <DialogDescription>Yeni bir randevu kaydı oluşturun.</DialogDescription>
+                <DialogTitle>Yeni Görüşme Hazırlık Kaydı Ekle</DialogTitle>
+                <DialogDescription>Yeni bir görüşme hazırlık kaydı oluşturun.</DialogDescription>
               </DialogHeader>
-              <AddAppointmentForm onAddAppointment={handleAddAppointment} psychologists={mockPsychologists} />
+              <AddGorusmeHazirlikForm onAddGorusme={handleAddGorusme} psychologists={psychologists} clients={clients} />
             </DialogContent>
           </Dialog>
 
-          {/* Edit Appointment Dialog */}
-          {currentEditingAppointment && (
+          {/* Görüşme Hazırlık Düzenle Dialog */}
+          {currentEditingGorusme && (
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle>Randevuyu Düzenle</DialogTitle>
-                  <DialogDescription>Randevu bilgilerini güncelleyin.</DialogDescription>
+                  <DialogTitle>Görüşme Hazırlık Kaydını Düzenle</DialogTitle>
+                  <DialogDescription>Görüşme hazırlık bilgilerini güncelleyin.</DialogDescription>
                 </DialogHeader>
-                <EditAppointmentForm
-                  initialData={currentEditingAppointment}
-                  onUpdateAppointment={handleEditAppointment}
-                  psychologists={mockPsychologists}
+                <EditGorusmeHazirlikForm
+                  initialData={currentEditingGorusme}
+                  onUpdateGorusme={handleEditGorusme}
+                  psychologists={psychologists}
                 />
               </DialogContent>
             </Dialog>
           )}
 
-          {/* Delete Confirmation Dialog */}
+          {/* Silme Onay Dialog */}
           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Bu randevu kaydı kalıcı olarak silinecektir. Bu işlemi geri alamazsınız.
+                  Bu görüşme hazırlık kaydı kalıcı olarak silinecektir. Bu işlemi geri alamazsınız.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>İptal</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => appointmentToDeleteId && handleDeleteAppointment(appointmentToDeleteId)}
+                  onClick={() => appointmentToDeleteId && handleDeleteGorusme(appointmentToDeleteId)}
                 >
                   Sil
                 </AlertDialogAction>

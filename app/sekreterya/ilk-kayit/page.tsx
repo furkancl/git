@@ -12,6 +12,7 @@ import { format, startOfWeek, addDays } from "date-fns"
 import { tr } from "date-fns/locale"
 import { UserPlus, Phone, Mail, CalendarCheck, Edit, Trash2, CheckIcon, Search, User } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { toast } from "sonner"
 
 // Tip tanımlamaları
 interface Client {
@@ -128,8 +129,10 @@ export default function ClientManagementPage() {
       } else {
         errorMsg = String(error)
       }
-      console.error('Veri yükleme hatası:', errorMsg)
-      alert('Veriler yüklenirken hata oluştu: ' + errorMsg)
+      toast.error('Veri yüklenirken hata oluştu!', {
+        description: errorMsg,
+        duration: 4000,
+      })
     } finally {
       setLoading(false)
     }
@@ -177,7 +180,10 @@ export default function ClientManagementPage() {
 
   const handleSaveClient = async () => {
     if (!newClientName.trim() || !newClientPhone.trim() || !newClientEmail.trim()) {
-      alert("Lütfen tüm alanları doldurun.")
+      toast.error("Eksik Alan!", {
+        description: "Lütfen tüm alanları doldurun.",
+        duration: 3000,
+      })
       return
     }
 
@@ -238,8 +244,10 @@ export default function ClientManagementPage() {
       setIsAddClientModalOpen(false)
       setIsEditingClient(false)
     } catch (error) {
-      console.error('Danışan kaydetme hatası:', error)
-      alert('Danışan kaydedilirken hata oluştu')
+      toast.error('Danışan kaydedilirken hata oluştu!', {
+        description: (error as any)?.message || String(error),
+        duration: 4000,
+      })
     }
   }
 
@@ -257,8 +265,10 @@ export default function ClientManagementPage() {
         setIsClientDetailModalOpen(false)
         setSelectedClient(null)
       } catch (error) {
-        console.error('Danışan silme hatası:', error)
-        alert('Danışan silinirken hata oluştu')
+        toast.error('Danışan silinirken hata oluştu!', {
+          description: (error as any)?.message || String(error),
+          duration: 4000,
+        })
       }
     }
   }
