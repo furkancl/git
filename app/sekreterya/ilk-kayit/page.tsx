@@ -31,17 +31,6 @@ interface Psychologist {
   created_at: string
 }
 
-interface Appointment {
-  id: number
-  client_id: number
-  psychologist_id: number
-  date: string
-  hour: number
-  minute: number
-  duration: number
-  desc: string
-  created_at: string
-}
 
 interface Note {
   id: number
@@ -55,7 +44,7 @@ interface Note {
 export default function ClientManagementPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [psychologists, setPsychologists] = useState<Psychologist[]>([])
-  const [appointments, setAppointments] = useState<Appointment[]>([])
+  // appointments state removed
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -95,12 +84,7 @@ export default function ClientManagementPage() {
       
       if (psychologistsError) throw psychologistsError
       
-      // Randevuları yükle
-      const { data: appointmentsData, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('*')
-      // .order('date', { ascending: false }) // Sıralama için uygun bir alan yoksa kaldırıldı
-      if (appointmentsError) throw appointmentsError
+      // appointments fetch removed
       
       // Notları yükle
       const { data: notesData, error: notesError } = await supabase
@@ -112,7 +96,7 @@ export default function ClientManagementPage() {
 
       setClients(clientsData || [])
       setPsychologists(psychologistsData || [])
-      setAppointments(appointmentsData || [])
+      // setAppointments removed
       setNotes(notesData || [])
     } catch (error) {
       let errorMsg = ''
@@ -147,13 +131,7 @@ export default function ClientManagementPage() {
     return clients.filter((client) => client.name.toLowerCase().includes(lowerCaseSearchTerm))
   }, [clients, searchTerm])
 
-  // Seçili danışanın son randevusunu bul
-  const lastAppointment = useMemo(() => {
-    if (!selectedClient) return null
-    const clientAppointments = appointments.filter((appt) => appt.client_id === selectedClient.id)
-    if (clientAppointments.length === 0) return null
-    return clientAppointments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
-  }, [selectedClient, appointments])
+  // lastAppointment removed
 
   // Seçili danışanın son notunu bul
   const lastNote = useMemo(() => {
@@ -346,18 +324,7 @@ export default function ClientManagementPage() {
                             ? psychologists.find((p) => p.id === client.psychologist_id)?.name
                             : "Psikolog Atanmadı"}
                         </div>
-                        {appointments.filter((appt) => appt.client_id === client.id).length > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            <CalendarCheck className="h-3 w-3" /> Son Randevu:{" "}
-                            {format(
-                              new Date(appointments
-                                .filter((appt) => appt.client_id === client.id)
-                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date),
-                              "dd MMM yyyy",
-                              { locale: tr },
-                            )}
-                          </div>
-                        )}
+                        {/* Son randevu bilgisi kaldırıldı */}
                       </div>
                       {selectedClient?.id === client.id && <CheckIcon className="ml-2 h-4 w-4" />}
                     </Button>
@@ -424,31 +391,7 @@ export default function ClientManagementPage() {
 
                 {/* Sağ Taraf: Randevular ve Notlar */}
                 <div className="space-y-6">
-                  {/* Son Randevu */}
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Son Randevu</h3>
-                    {lastAppointment ? (
-                      <Card className="dark:bg-gray-700 dark:border-gray-600 shadow-sm rounded-lg">
-                        <CardContent className="p-4 text-sm text-gray-700 dark:text-gray-200">
-                          <p>
-                            <b>Tarih:</b> {format(new Date(lastAppointment.date), "dd MMMM yyyy EEEE", { locale: tr })}
-                          </p>
-                          <p>
-                            <b>Saat:</b> {lastAppointment.hour}:{lastAppointment.minute.toString().padStart(2, "0")}
-                          </p>
-                          <p>
-                            <b>Psikolog:</b>{" "}
-                            {psychologists.find((p) => p.id === lastAppointment.psychologist_id)?.name}
-                          </p>
-                          <p>
-                            <b>Açıklama:</b> {lastAppointment.desc}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400">Randevu bulunamadı.</p>
-                    )}
-                  </div>
+                  {/* Son Randevu bölümü kaldırıldı */}
 
                   {/* Son Not */}
                   <div className="space-y-2">

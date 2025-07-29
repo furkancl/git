@@ -19,10 +19,15 @@ interface Caller {
   contactDate: string // ISO string for consistent parsing
 }
 
+interface Psychologist {
+  id: number
+  name: string
+  created_at: string
+}
 interface EditCallerFormProps {
   initialData: Caller
   onUpdateCaller: (caller: Caller) => void
-  psychologists: string[]
+  psychologists: Psychologist[]
   contactMethods: string[]
   sessionTypes: string[]
 }
@@ -94,18 +99,19 @@ export function EditCallerForm({
       </div>
       <div>
         <Label htmlFor="editRequestedPsychologist">İstenen Psikolog</Label>
-        <Select value={requestedPsychologist} onValueChange={setRequestedPsychologist}>
-          <SelectTrigger id="editRequestedPsychologist">
-            <SelectValue placeholder="Psikolog Seçin" />
-          </SelectTrigger>
-          <SelectContent>
-            {psychologists.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+  <Select value={requestedPsychologist} onValueChange={setRequestedPsychologist}>
+    <SelectTrigger id="editRequestedPsychologist">
+      <SelectValue placeholder="Psikolog Seçin" />
+    </SelectTrigger>
+    <SelectContent>
+      {psychologists.map((psych) => (
+        <SelectItem key={psych.id} value={psych.name}>
+          {psych.name}
+        </SelectItem>
+      ))}
+      <SelectItem value="Fark Etmez">Fark Etmez</SelectItem>
+    </SelectContent>
+  </Select>
       </div>
       <div>
         <Label htmlFor="editIssueSummary">Sorun Detayı</Label>

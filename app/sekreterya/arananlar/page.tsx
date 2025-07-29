@@ -43,13 +43,20 @@ interface Caller {
   contactDate: string // Tutarlı ayrıştırma için ISO string
 }
 
-// Psikologlar, İletişim Yöntemleri ve Seans Tipleri için statik veriler
-const mockPsychologists = ["Dr. Elif Can", "Dr. Burak Aksoy", "Dr. Deniz Yılmaz", "Fark Etmez"]
+
 const contactMethods = ["Telefon", "E-posta", "Web Sitesi", "Tavsiye", "Diğer"]
 const sessionTypes = ["Bireysel", "Çift", "Aile", "Çocuk", "Grup", "Diğer"]
 
+// Psikologlar Supabase'den dinamik olarak yüklenecek
+interface Psychologist {
+  id: number
+  name: string
+  created_at: string
+}
+
 export default function CallersPage() {
-  const [callers, setCallers] = useState<Caller[]>([]) // Boş dizi ile başlat
+  const [callers, setCallers] = useState<Caller[]>([])
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([])
   const [loading, setLoading] = useState(true) // Yükleme durumu eklendi
   const [error, setError] = useState<string | null>(null) // Hata durumu eklendi
 
@@ -66,11 +73,14 @@ export default function CallersPage() {
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
   const [currentTransferringCaller, setCurrentTransferringCaller] = useState<Caller | null>(null)
 
-  // Supabase'den arayanları getirme fonksiyonu
+  // Supabase'den arayanları ve psikologları getirme fonksiyonu
   const fetchCallers = useCallback(async () => {
     setLoading(true)
     setError(null)
+    // Arayanlar
     const { data, error } = await supabase.from("callers").select("*").order("contact_date", { ascending: false })
+    // Psikologlar
+    const { data: psychologistsData, error: psychologistsError } = await supabase.from("psychologists").select("*").order("name")
 
     if (error) {
       console.error("Arayanlar getirilirken hata oluştu:", error)
@@ -88,6 +98,11 @@ export default function CallersPage() {
         contactDate: item.contact_date, // Supabase ISO string döndürür
       }))
       setCallers(mappedData)
+    }
+    if (psychologistsError) {
+      setPsychologists([])
+    } else {
+      setPsychologists(psychologistsData || [])
     }
     setLoading(false)
   }, [])
@@ -267,11 +282,12 @@ export default function CallersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tümü</SelectItem>
-                      {mockPsychologists.map((name) => (
-                        <SelectItem key={name} value={name}>
-                          {name}
+                      {psychologists.map((psych) => (
+                        <SelectItem key={psych.id} value={psych.name}>
+                          {psych.name}
                         </SelectItem>
                       ))}
+                      <SelectItem value="Fark Etmez">Fark Etmez</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -444,7 +460,7 @@ export default function CallersPage() {
               </DialogHeader>
               <AddCallerForm
                 onAddCaller={handleAddCaller}
-                psychologists={mockPsychologists}
+                psychologists={psychologists}
                 contactMethods={contactMethods}
                 sessionTypes={sessionTypes}
               />
@@ -462,7 +478,7 @@ export default function CallersPage() {
                 <EditCallerForm
                   initialData={currentEditingCaller}
                   onUpdateCaller={handleEditCaller}
-                  psychologists={mockPsychologists}
+                  psychologists={psychologists}
                   contactMethods={contactMethods}
                   sessionTypes={sessionTypes}
                 />

@@ -8,10 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 // Import the Caller type from its definition file (adjust path as needed)
 import type { Caller } from '../app/page'; // Assuming 'Caller' is defined in src/app/page.tsx
 
+interface Psychologist {
+  id: number
+  name: string
+  created_at: string
+}
 interface AddCallerFormProps {
-  // Update the type of the 'caller' parameter to Omit<Caller, "id">
   onAddCaller?: (caller: Omit<Caller, "id">) => void
-  psychologists: string[]
+  psychologists: Psychologist[]
   contactMethods: string[]
   sessionTypes: string[]
 }
@@ -24,7 +28,7 @@ export function AddCallerForm({
 }: AddCallerFormProps) {
   const [callerName, setCallerName] = useState("")
   const [contactMethod, setContactMethod] = useState<Caller['contactMethod']>(contactMethods[0] as Caller['contactMethod'] || "")
-  const [requestedPsychologist, setRequestedPsychologist] = useState<Caller['requestedPsychologist']>(psychologists[0] as Caller['requestedPsychologist'] || "")
+  const [requestedPsychologist, setRequestedPsychologist] = useState<Caller['requestedPsychologist']>(psychologists[0]?.name || "")
   const [issueSummary, setIssueSummary] = useState("")
   const [sessionType, setSessionType] = useState<Caller['sessionType']>(sessionTypes[0] as Caller['sessionType'] || "")
   const [contactDate, setContactDate] = useState("")
@@ -49,7 +53,7 @@ export function AddCallerForm({
     // Reset form fields
     setCallerName("")
     setContactMethod(contactMethods[0] as Caller['contactMethod'] || "")
-    setRequestedPsychologist(psychologists[0] as Caller['requestedPsychologist'] || "")
+    setRequestedPsychologist(psychologists[0]?.name || "")
     setIssueSummary("")
     setSessionType(sessionTypes[0] as Caller['sessionType'] || "")
     setContactDate("")
@@ -85,18 +89,19 @@ export function AddCallerForm({
       <div>
         <Label htmlFor="requestedPsychologist">İstenen Psikolog</Label>
         {/* Using Shadcn Select component for consistency */}
-        <Select value={requestedPsychologist} onValueChange={(value) => setRequestedPsychologist(value as Caller['requestedPsychologist'])}>
-          <SelectTrigger id="requestedPsychologist">
-            <SelectValue placeholder="Psikolog Seçin" />
-          </SelectTrigger>
-          <SelectContent>
-            {psychologists.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+  <Select value={requestedPsychologist} onValueChange={(value) => setRequestedPsychologist(value as Caller['requestedPsychologist'])}>
+    <SelectTrigger id="requestedPsychologist">
+      <SelectValue placeholder="Psikolog Seçin" />
+    </SelectTrigger>
+    <SelectContent>
+      {psychologists.map((psych) => (
+        <SelectItem key={psych.id} value={psych.name}>
+          {psych.name}
+        </SelectItem>
+      ))}
+      <SelectItem value="Fark Etmez">Fark Etmez</SelectItem>
+    </SelectContent>
+  </Select>
       </div>
       <div>
         <Label htmlFor="issueSummary">Sorun Detayı</Label>
