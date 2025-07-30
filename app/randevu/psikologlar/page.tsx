@@ -1,177 +1,277 @@
-"use client"
+"use client"; // Bu satır, useEffect ve useState gibi hook'ları kullanmak için ZORUNLUDUR!
 
-import { Header } from "@/components/header"
-import { useState, useMemo, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Edit, Trash2, UserPlus, User, CalendarCheck, CheckIcon, Search, CalendarIcon, DollarSign, Phone, Mail } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns"
-import { tr } from "date-fns/locale"
-import type { DateRange } from "react-day-picker"
+import { Header } from "@/components/header";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Edit, Trash2, UserPlus, Search, CalendarIcon, Loader2, Users, CalendarCheck, DollarSign } from "lucide-react"; // Mail ve Phone ikonları kaldırıldı
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
+import { tr } from "date-fns/locale"; // Türkçe lokalizasyon için
+import type { DateRange } from "react-day-picker";
+import { supabase } from "@/lib/supabase"; // Supabase import'u
 
-// Dummy psikolog verisi
+// Supabase tablolarınıza uygun olarak tipleri güncelliyoruz
+// Psychologist tipinden email ve phone kaldırıldı
 type Psychologist = {
-  id: number
-  name: string
-  email: string
-  phone: string
-}
+  id: string; // Supabase UUID'leri string olur
+  name: string;
+  created_at?: string; // Supabase'den gelecek
+};
 
-const initialPsychologists: Psychologist[] = [
-  { id: 101, name: "Dr. Elif Yılmaz", email: "elif.yilmaz@example.com", phone: "555-1111" },
-  { id: 102, name: "Uzm. Psk. Can Demir", email: "can.demir@example.com", phone: "555-2222" },
-  { id: 103, name: "Psk. Zeynep Akın", email: "zeynep.akin@example.com", phone: "555-3333" },
-]
-
-// Dummy randevu verisi
 type Appointment = {
-  id: number
-  psychologistId: number
-  date: Date
-  desc: string
-}
-const initialAppointments: Appointment[] = [
-  { id: 1, psychologistId: 101, date: new Date(2024, 3, 10), desc: "Bireysel seans" },
-  { id: 2, psychologistId: 102, date: new Date(2024, 3, 11), desc: "Aile danışmanlığı" },
-  { id: 3, psychologistId: 101, date: new Date(2024, 3, 12), desc: "Çocuk seansı" },
-  { id: 4, psychologistId: 103, date: new Date(2024, 3, 13), desc: "Takip görüşmesi" },
-  { id: 5, psychologistId: 102, date: new Date(2024, 3, 14), desc: "Grup Terapisi" },
-  { id: 6, psychologistId: 101, date: new Date(2024, 4, 1), desc: "Bireysel seans" },
-  { id: 7, psychologistId: 102, date: new Date(2024, 4, 2), desc: "Çift terapisi" },
-  { id: 8, psychologistId: 103, date: new Date(2024, 4, 3), desc: "Ergen danışmanlığı" },
-  // Yeni eklenen randevular (örnek olarak bugünden sonraki tarihler)
-  { id: 9, psychologistId: 101, date: new Date(2025, 7, 28), desc: "Online Terapi" },
-  { id: 10, psychologistId: 102, date: new Date(2025, 8, 5), desc: "Yetişkin Danışmanlığı" },
-  { id: 11, psychologistId: 103, date: new Date(2025, 7, 30), desc: "Kısa Süreli Çözüm Odaklı Terapi" },
-]
+  id: string; // Supabase UUID'leri string olur
+  psychologist_id: string; // Foreign Key de UUID
+  appointment_date: string; // Supabase'den string olarak gelir, Date objesine çevireceğiz
+  description: string;
+  created_at?: string; // Supabase'den gelecek
+};
 
 // Sabit seans ücreti (örnek olarak)
-const SESSION_FEE = 500 // TL
+const SESSION_FEE = 500; // TL
 
 export default function PsychologistsPage() {
-  const [psychologists, setPsychologists] = useState<Psychologist[]>(initialPsychologists)
-  const [appointments] = useState<Appointment[]>(initialAppointments)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [selectedPsychologist, setSelectedPsychologist] = useState<Psychologist | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]); // Randevuları da Supabase'den çekeceğiz
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedPsychologist, setSelectedPsychologist] = useState<Psychologist | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true); // Yükleme durumu
+  const [error, setError] = useState<string | null>(null); // Hata durumu
+  const [isSaving, setIsSaving] = useState(false); // Kaydetme sırasında yükleme
+  const [isDeleting, setIsDeleting] = useState(false); // Silme sırasında yükleme
 
-  // Form state
-  const [formName, setFormName] = useState("")
-  const [formEmail, setFormEmail] = useState("")
-  const [formPhone, setFormPhone] = useState("")
+  // Form state - sadece name kaldı
+  const [formName, setFormName] = useState("");
 
   // Tarih aralığı filtresi
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
-  })
+  });
+
+  // Verileri Supabase'den çekmek için fonksiyon
+  const fetchPsychologistsAndAppointments = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Psikologları çek
+      const { data: psychData, error: psychError } = await supabase
+        .from("psychologists")
+        .select("id, name, created_at"); // Sadece var olan sütunları seçiyoruz
+      if (psychError) throw psychError;
+      setPsychologists(psychData || []);
+
+      // Randevuları çek
+      const { data: apptData, error: apptError } = await supabase
+        .from("appointments")
+        .select("*");
+      if (apptError) throw apptError;
+      setAppointments(apptData || []);
+
+    } catch (err: any) {
+      console.error("Veri çekme hatası:", err.message);
+      setError("Veriler yüklenirken bir hata oluştu: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Bileşen yüklendiğinde verileri çek
+  useEffect(() => {
+    fetchPsychologistsAndAppointments();
+  }, [fetchPsychologistsAndAppointments]);
 
   // Tarih aralığına göre filtrelenmiş randevular
   const filteredAppointmentsByDate = useMemo(() => {
-    if (!dateRange?.from) return appointments
-    const start = startOfDay(dateRange.from)
-    const end = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from)
-    return appointments.filter((appt) => isWithinInterval(appt.date, { start, end }))
-  }, [appointments, dateRange])
+    if (appointments.length === 0) return [];
+    if (!dateRange?.from) {
+      // Randevu tarihlerini Date objesine çevirerek döndür (görüntüleme için)
+      return appointments.map(appt => ({
+        ...appt,
+        date: new Date(appt.appointment_date)
+      }));
+    }
+
+    const start = startOfDay(dateRange.from);
+    const end = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+
+    return appointments
+      .filter((appt) => {
+        const apptDate = new Date(appt.appointment_date); // Supabase'den gelen string tarihi Date objesine çevir
+        return isWithinInterval(apptDate, { start, end });
+      })
+      .map(appt => ({ // Randevu objelerine `date` alanını ekle (kendi yapınız için)
+        ...appt,
+        date: new Date(appt.appointment_date)
+      }));
+  }, [appointments, dateRange]);
 
   // Filtreli psikolog listesi (arama terimine göre)
   const filteredPsychologists = useMemo(() => {
-    if (!searchTerm) return psychologists
-    return psychologists.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-  }, [psychologists, searchTerm])
+    if (!searchTerm) return psychologists;
+    return psychologists.filter((p) =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [psychologists, searchTerm]);
 
   // Seçili psikoloğun son randevusu (tarih filtresine göre)
   const lastAppointment = useMemo(() => {
-    if (!selectedPsychologist) return null
-    const psychAppointments = filteredAppointmentsByDate.filter((a) => a.psychologistId === selectedPsychologist.id)
-    if (psychAppointments.length === 0) return null
-    return psychAppointments.sort((a, b) => b.date.getTime() - a.date.getTime())[0]
-  }, [selectedPsychologist, filteredAppointmentsByDate])
+    if (!selectedPsychologist) return null;
+    const psychAppointments = filteredAppointmentsByDate.filter((a) => a.psychologist_id === selectedPsychologist.id);
+    if (psychAppointments.length === 0) return null;
+    // `date` alanı zaten Date objesi olduğu için doğrudan sıralayabiliriz
+    return psychAppointments.sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+  }, [selectedPsychologist, filteredAppointmentsByDate]);
 
   // Seçili psikoloğun bir sonraki randevusu (tarih filtresine göre)
   const nextAppointment = useMemo(() => {
-    if (!selectedPsychologist) return null
-    const now = new Date()
+    if (!selectedPsychologist) return null;
+    const now = new Date();
     const psychAppointments = filteredAppointmentsByDate.filter(
-      (a) => a.psychologistId === selectedPsychologist.id && a.date > now,
-    )
-    if (psychAppointments.length === 0) return null
-    return psychAppointments.sort((a, b) => a.date.getTime() - b.date.getTime())[0]
-  }, [selectedPsychologist, filteredAppointmentsByDate])
+      (a) => a.psychologist_id === selectedPsychologist.id && a.date > now,
+    );
+    if (psychAppointments.length === 0) return null;
+    // `date` alanı zaten Date objesi olduğu için doğrudan sıralayabiliriz
+    return psychAppointments.sort((a, b) => a.date.getTime() - b.date.getTime())[0];
+  }, [selectedPsychologist, filteredAppointmentsByDate]);
 
   // Seçili psikoloğun danışanları (tarih filtresine göre)
   const filteredClients = useMemo(() => {
-    if (!selectedPsychologist) return []
-    const psychAppointments = filteredAppointmentsByDate.filter((a) => a.psychologistId === selectedPsychologist.id)
-    // Dummy danışan isimleri (id'den üret)
-    const clientNames = psychAppointments.map((appt) => `Danışan #${appt.id}`)
-    // Benzersiz danışanlar (id ile)
-    const uniqueClients = Array.from(new Set(clientNames))
-    return uniqueClients
-  }, [selectedPsychologist, filteredAppointmentsByDate])
+    if (!selectedPsychologist) return [];
+    const psychAppointments = filteredAppointmentsByDate.filter((a) => a.psychologist_id === selectedPsychologist.id);
+    // Gerçek danışan verisi olmadığı için dummy olarak appointment description kullanabiliriz
+    // Ya da randevu tablonuzda 'client_name' gibi bir alan varsa onu kullanın.
+    const clientNames = psychAppointments.map((appt) => appt.description || `Randevu ID: ${appt.id}`);
+    const uniqueClients = Array.from(new Set(clientNames)); // Tekrar eden isimleri kaldır
+    return uniqueClients;
+  }, [selectedPsychologist, filteredAppointmentsByDate]);
 
   // Toplam randevu sayısı ve gelir (tarih filtresine göre)
-  const totalAppointmentsCount = useMemo(() => filteredAppointmentsByDate.length, [filteredAppointmentsByDate])
-  const totalIncome = useMemo(() => totalAppointmentsCount * SESSION_FEE, [totalAppointmentsCount])
+  const totalAppointmentsCount = useMemo(() => filteredAppointmentsByDate.length, [filteredAppointmentsByDate]);
+  const totalIncome = useMemo(() => totalAppointmentsCount * SESSION_FEE, [totalAppointmentsCount]);
 
   // Her psikolog için seans sayısı ve gelir (tarih filtresine göre)
   const psychologistStats = useMemo(() => {
-    const stats: { [key: number]: { appointmentCount: number; income: number } } = {}
+    const stats: { [key: string]: { appointmentCount: number; income: number } } = {}; // id artık string
     psychologists.forEach((psych) => {
-      const psychAppointments = filteredAppointmentsByDate.filter((appt) => appt.psychologistId === psych.id)
+      const psychAppointments = filteredAppointmentsByDate.filter((appt) => appt.psychologist_id === psych.id);
       stats[psych.id] = {
         appointmentCount: psychAppointments.length,
         income: psychAppointments.length * SESSION_FEE,
-      }
-    })
-    return stats
-  }, [psychologists, filteredAppointmentsByDate])
+      };
+    });
+    return stats;
+  }, [psychologists, filteredAppointmentsByDate]);
 
   // Modal açıldığında formu doldur
   useEffect(() => {
     if (isEditing && selectedPsychologist) {
-      setFormName(selectedPsychologist.name)
-      setFormEmail(selectedPsychologist.email)
-      setFormPhone(selectedPsychologist.phone)
+      setFormName(selectedPsychologist.name);
     } else {
-      setFormName("")
-      setFormEmail("")
-      setFormPhone("")
+      setFormName("");
     }
-  }, [isEditing, selectedPsychologist])
+  }, [isEditing, selectedPsychologist]);
 
   // Ekle/düzenle işlemi
-  const handleSave = () => {
-    if (!formName.trim() || !formEmail.trim() || !formPhone.trim()) {
-      alert("Lütfen tüm alanları doldurun.")
-      return
+  const handleSave = async () => {
+    if (!formName.trim()) { // Sadece name kontrolü
+      alert("Lütfen Ad Soyad alanını doldurun.");
+      return;
     }
-    if (isEditing && selectedPsychologist) {
-      setPsychologists((prev) =>
-        prev.map((p) =>
-          p.id === selectedPsychologist.id ? { ...p, name: formName, email: formEmail, phone: formPhone } : p,
-        ),
-      )
-      setSelectedPsychologist({ ...selectedPsychologist, name: formName, email: formEmail, phone: formPhone })
-    } else {
-      setPsychologists((prev) => [...prev, { id: Date.now(), name: formName, email: formEmail, phone: formPhone }])
+
+    setIsSaving(true);
+    try {
+      if (isEditing && selectedPsychologist) {
+        // Psikolog güncelleme - sadece name güncelleniyor
+        const { data, error } = await supabase
+          .from("psychologists")
+          .update({ name: formName })
+          .eq("id", selectedPsychologist.id)
+          .select("id, name, created_at") // Sadece var olan sütunları seçiyoruz
+          .single();
+        if (error) throw error;
+
+        // State'i güncellenen veriyle senkronize et
+        setPsychologists((prev) =>
+          prev.map((p) => (p.id === selectedPsychologist.id ? (data as Psychologist) : p))
+        );
+        setSelectedPsychologist(data as Psychologist); // Seçili psikoloğu güncel data ile tazele
+        alert("Psikolog başarıyla güncellendi!");
+      } else {
+        // Yeni psikolog ekleme - sadece name ekleniyor
+        const { data, error } = await supabase
+          .from("psychologists")
+          .insert({ name: formName })
+          .select("id, name, created_at") // Sadece var olan sütunları seçiyoruz
+          .single();
+        if (error) throw error;
+
+        setPsychologists((prev) => [...prev, (data as Psychologist)]);
+        alert("Psikolog başarıyla eklendi!");
+      }
+      setIsAddModalOpen(false);
+      setIsEditing(false);
+    } catch (err: any) {
+      console.error("Kaydetme hatası:", err.message);
+      alert("Kaydetme sırasında bir hata oluştu: " + err.message);
+    } finally {
+      setIsSaving(false);
     }
-    setIsAddModalOpen(false)
-    setIsEditing(false)
-  }
+  };
 
   // Silme işlemi
-  const handleDelete = (id: number) => {
-    if (window.confirm("Bu psikoloğu silmek istediğinizden emin misiniz?")) {
-      setPsychologists((prev) => prev.filter((p) => p.id !== id))
-      setSelectedPsychologist(null)
+  const handleDelete = async (id: string) => { // id tipi string oldu
+    if (!window.confirm("Bu psikoloğu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+      return;
     }
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("psychologists")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+
+      setPsychologists((prev) => prev.filter((p) => p.id !== id));
+      // Seçili psikolog silinirse seçimi sıfırla
+      if (selectedPsychologist?.id === id) {
+        setSelectedPsychologist(null);
+      }
+      alert("Psikolog başarıyla silindi!");
+    } catch (err: any) {
+      console.error("Silme hatası:", err.message);
+      alert("Silme sırasında bir hata oluştu: " + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+        <p className="mt-4 text-lg text-slate-700 dark:text-slate-300">Veriler yükleniyor...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <p className="text-red-500 text-xl font-semibold">Hata oluştu!</p>
+        <p className="mt-2 text-slate-700 dark:text-slate-300">{error}</p>
+        <Button onClick={fetchPsychologistsAndAppointments} className="mt-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl">
+          Tekrar Dene
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -190,8 +290,8 @@ export default function PsychologistsPage() {
                   size="sm"
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
                   onClick={() => {
-                    setIsAddModalOpen(true)
-                    setIsEditing(false)
+                    setIsAddModalOpen(true);
+                    setIsEditing(false);
                   }}
                 >
                   <UserPlus className="h-4 w-4 mr-1" />
@@ -211,7 +311,7 @@ export default function PsychologistsPage() {
                   className="pl-10 bg-white/60 dark:bg-slate-700/60 border-slate-200/50 dark:border-slate-600/50 focus:bg-white dark:focus:bg-slate-700 transition-all duration-300 rounded-xl"
                 />
               </div>
-              
+
               <ScrollArea className="h-[400px] md:h-[calc(100vh-300px)]">
                 <div className="space-y-2">
                   {filteredPsychologists.length === 0 ? (
@@ -222,15 +322,15 @@ export default function PsychologistsPage() {
                         key={psych.id}
                         onClick={() => {
                           if (selectedPsychologist?.id === psych.id) {
-                            setSelectedPsychologist(null)
+                            setSelectedPsychologist(null);
                           } else {
-                            setSelectedPsychologist(psych)
+                            setSelectedPsychologist(psych);
                           }
                         }}
                         className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
                           selectedPsychologist?.id === psych.id
-                            ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-2 border-blue-500/30 shadow-lg'
-                            : 'bg-white/40 dark:bg-slate-700/40 hover:bg-white/60 dark:hover:bg-slate-700/60 border border-slate-200/30 dark:border-slate-600/30 hover:shadow-md'
+                            ? "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-2 border-blue-500/30 shadow-lg"
+                            : "bg-white/40 dark:bg-slate-700/40 hover:bg-white/60 dark:hover:bg-slate-700/60 border border-slate-200/30 dark:border-slate-600/30 hover:shadow-md"
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -238,11 +338,7 @@ export default function PsychologistsPage() {
                             <h3 className="font-medium text-slate-800 dark:text-slate-100 mb-2">
                               {psych.name}
                             </h3>
-
                           </div>
-                          {selectedPsychologist?.id === psych.id && (
-                            <CheckIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                          )}
                         </div>
                       </div>
                     ))
@@ -270,9 +366,13 @@ export default function PsychologistsPage() {
                       <CalendarIcon className="h-4 w-4 mr-2" />
                       {dateRange?.from
                         ? dateRange.to
-                          ? `${format(dateRange.from, "dd MMM", { locale: tr })} - ${format(dateRange.to, "dd MMM", { locale: tr })}`
+                          ? `${format(dateRange.from, "dd MMM", { locale: tr })} - ${format(
+                              dateRange.to,
+                              "dd MMM",
+                              { locale: tr },
+                            )}`
                           : format(dateRange.from, "dd MMM yyyy", { locale: tr })
-                        : "Tarih Seç"}
+                        : "Tarih Aralığı Seç"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-0 shadow-2xl rounded-2xl" align="end">
@@ -297,24 +397,25 @@ export default function PsychologistsPage() {
                   <div className="space-y-6">
                     <div className="p-6 rounded-2xl bg-gradient-to-br from-white/60 to-blue-50/60 dark:from-slate-700/60 dark:to-slate-800/60 border border-slate-200/30 dark:border-slate-600/30">
                       <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
-                        İletişim Bilgileri
+                        Psikolog Bilgileri
                       </h3>
                       <div className="space-y-3">
+                        {/* Sadece isim gösteriliyor, email/phone yok */}
                         <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
-                          <Mail className="h-5 w-5 text-blue-500" />
-                          <span>{selectedPsychologist.email}</span>
+                          {/* İkonlar kaldırıldı */}
+                          <span>{selectedPsychologist.name}</span>
                         </div>
                         <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
-                          <Phone className="h-5 w-5 text-green-500" />
-                          <span>{selectedPsychologist.phone}</span>
+                          <CalendarCheck className="h-5 w-5 text-gray-500" />
+                          <span>Kayıt Tarihi: {new Date(selectedPsychologist.created_at || '').toLocaleDateString("tr-TR")}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 mt-6">
                         <Button
                           size="sm"
                           onClick={() => {
-                            setIsEditing(true)
-                            setIsAddModalOpen(true)
+                            setIsEditing(true);
+                            setIsAddModalOpen(true);
                           }}
                           className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl"
                         >
@@ -326,9 +427,10 @@ export default function PsychologistsPage() {
                           variant="outline"
                           onClick={() => handleDelete(selectedPsychologist.id)}
                           className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 rounded-xl"
+                          disabled={isDeleting} // Silme sırasında butonu devre dışı bırak
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Sil
+                          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
+                          {isDeleting ? "Siliniyor..." : "Sil"}
                         </Button>
                       </div>
                     </div>
@@ -339,7 +441,7 @@ export default function PsychologistsPage() {
                         Danışanlar ({filteredClients.length})
                       </h3>
                       {filteredClients.length === 0 ? (
-                        <p className="text-slate-400">Danışan bulunamadı.</p>
+                        <p className="text-slate-400">Bu tarih aralığında danışan bulunamadı.</p>
                       ) : (
                         <div className="space-y-2">
                           {filteredClients.slice(0, 5).map((client, idx) => (
@@ -362,6 +464,7 @@ export default function PsychologistsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-200/30 dark:border-blue-800/30">
                         <div className="flex items-center gap-2 mb-2">
+                          <Users className="h-5 w-5 text-blue-500" />
                           <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Toplam Seans</span>
                         </div>
                         <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -370,10 +473,11 @@ export default function PsychologistsPage() {
                       </div>
                       <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-200/30 dark:border-green-800/30">
                         <div className="flex items-center gap-2 mb-2">
+                          <DollarSign className="h-5 w-5 text-green-500" />
                           <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Toplam Gelir</span>
                         </div>
                         <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                          {psychologistStats[selectedPsychologist.id]?.income || 0} ₺
+                          {(psychologistStats[selectedPsychologist.id]?.income || 0).toLocaleString()} ₺
                         </p>
                       </div>
                     </div>
@@ -385,14 +489,14 @@ export default function PsychologistsPage() {
                         {lastAppointment ? (
                           <div className="space-y-2">
                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                              <span className="font-medium">Tarih:</span> {lastAppointment.date.toLocaleDateString("tr-TR")}
+                              <span className="font-medium">Tarih:</span> {new Date(lastAppointment.appointment_date).toLocaleDateString("tr-TR")}
                             </p>
                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                              <span className="font-medium">Açıklama:</span> {lastAppointment.desc}
+                              <span className="font-medium">Açıklama:</span> {lastAppointment.description}
                             </p>
                           </div>
                         ) : (
-                          <p className="text-slate-400 text-sm">Randevu bulunamadı.</p>
+                          <p className="text-slate-400 text-sm">Bu tarih aralığında son randevu bulunamadı.</p>
                         )}
                       </div>
 
@@ -401,14 +505,14 @@ export default function PsychologistsPage() {
                         {nextAppointment ? (
                           <div className="space-y-2">
                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                              <span className="font-medium">Tarih:</span> {nextAppointment.date.toLocaleDateString("tr-TR")}
+                              <span className="font-medium">Tarih:</span> {new Date(nextAppointment.appointment_date).toLocaleDateString("tr-TR")}
                             </p>
                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                              <span className="font-medium">Açıklama:</span> {nextAppointment.desc}
+                              <span className="font-medium">Açıklama:</span> {nextAppointment.description}
                             </p>
                           </div>
                         ) : (
-                          <p className="text-slate-400 text-sm">Sonraki randevu bulunamadı.</p>
+                          <p className="text-slate-400 text-sm">Bu tarih aralığında sonraki randevu bulunamadı.</p>
                         )}
                       </div>
                     </div>
@@ -423,10 +527,10 @@ export default function PsychologistsPage() {
                         Genel İstatistikler
                       </h2>
                       <p className="text-slate-500 dark:text-slate-400">
-                        Tüm psikologların performans özeti
+                        Tüm psikologların ve randevuların performans özeti
                       </p>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
                       <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-500/10 via-blue-600/10 to-indigo-600/10 border-2 border-blue-200/30 dark:border-blue-800/30 shadow-xl backdrop-blur-sm">
                         <p className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">Toplam Randevu</p>
@@ -434,7 +538,7 @@ export default function PsychologistsPage() {
                           {totalAppointmentsCount}
                         </p>
                       </div>
-                      
+
                       <div className="p-8 rounded-3xl bg-gradient-to-br from-green-500/10 via-green-600/10 to-emerald-600/10 border-2 border-green-200/30 dark:border-green-800/30 shadow-xl backdrop-blur-sm">
                         <p className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">Toplam Gelir</p>
                         <p className="text-4xl font-bold text-green-600 dark:text-green-400">
@@ -451,10 +555,10 @@ export default function PsychologistsPage() {
                         Psikolog Performansı
                       </h3>
                       <p className="text-slate-500 dark:text-slate-400">
-                        Her psikoloğun detaylı istatistikleri
+                        Her psikologun tarih aralığına göre seans ve gelir istatistikleri
                       </p>
                     </div>
-                    
+
                     <div className="grid gap-4 max-w-4xl mx-auto">
                       {psychologists.map((psych) => (
                         <div
@@ -470,18 +574,23 @@ export default function PsychologistsPage() {
                                 <h4 className="font-semibold text-slate-800 dark:text-slate-100">
                                   {psych.name}
                                 </h4>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                  {psych.email}
-                                </p>
+                                {/* Email/Phone burada gösterilmiyor */}
                               </div>
                             </div>
-                            
+
                             <div className="flex gap-6 text-sm">
                               <div className="text-center">
-                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-semibold">
-                                  {(psychologistStats[psych.id]?.income || 0).toLocaleString()}
+                                <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold">
+                                  <Users className="h-4 w-4" />
+                                  {psychologistStats[psych.id]?.appointmentCount || 0} Seans
                                 </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">TL</p>
+                                <div className="text-center mt-1">
+                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-semibold">
+                                        <DollarSign className="h-4 w-4" />
+                                        {(psychologistStats[psych.id]?.income || 0).toLocaleString()} ₺
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Toplam Gelir</p>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -501,12 +610,13 @@ export default function PsychologistsPage() {
           </Card>
         </div>
 
-        {/* Modal */}
+        {/* Ekle/Düzenle Modalı */}
         <Dialog
           open={isAddModalOpen}
           onOpenChange={(open) => {
-            setIsAddModalOpen(open)
-            if (!open) setIsEditing(false)
+            setIsAddModalOpen(open);
+            // Modal kapandığında eğer düzenleme modunda değilsek seçimi sıfırla
+            if (!open && !isEditing) setSelectedPsychologist(null);
           }}
         >
           <DialogContent className="backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 border-0 shadow-2xl rounded-2xl max-w-md">
@@ -515,7 +625,7 @@ export default function PsychologistsPage() {
                 {isEditing ? "Psikoloğu Düzenle" : "Yeni Psikolog Ekle"}
               </DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-6 py-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -528,33 +638,10 @@ export default function PsychologistsPage() {
                   placeholder="Dr. Ahmet Yılmaz"
                 />
               </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  E-posta
-                </label>
-                <Input
-                  type="email"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  className="bg-white/60 dark:bg-slate-700/60 border-slate-200/50 dark:border-slate-600/50 focus:bg-white dark:focus:bg-slate-700 rounded-xl"
-                  placeholder="ahmet@example.com"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Telefon
-                </label>
-                <Input
-                  value={formPhone}
-                  onChange={(e) => setFormPhone(e.target.value)}
-                  className="bg-white/60 dark:bg-slate-700/60 border-slate-200/50 dark:border-slate-600/50 focus:bg-white dark:focus:bg-slate-700 rounded-xl"
-                  placeholder="555-1234"
-                />
-              </div>
+
+              {/* Email ve Telefon giriş alanları kaldırıldı */}
             </div>
-            
+
             <DialogFooter className="gap-2">
               <Button
                 variant="outline"
@@ -565,15 +652,16 @@ export default function PsychologistsPage() {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!formName.trim() || !formEmail.trim() || !formPhone.trim()}
+                disabled={isSaving || !formName.trim()} // Sadece formName kontrolü
                 className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl"
               >
-                {isEditing ? "Kaydet" : "Ekle"}
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {isEditing ? (isSaving ? "Kaydediliyor..." : "Kaydet") : (isSaving ? "Ekleniyor..." : "Ekle")}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </main>
     </div>
-  )
+  );
 }
