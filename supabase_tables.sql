@@ -19,16 +19,17 @@ CREATE TABLE clients (
 );
 
 -- 3. Randevular Tablosu
-CREATE TABLE appointments (
-  id SERIAL PRIMARY KEY,
-  client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  psychologist_id INTEGER NOT NULL REFERENCES psychologists(id) ON DELETE CASCADE,
-  date DATE NOT NULL,
-  hour INTEGER NOT NULL CHECK (hour >= 0 AND hour <= 23),
-  minute INTEGER NOT NULL CHECK (minute >= 0 AND minute <= 59),
-  duration INTEGER NOT NULL DEFAULT 60,
-  desc TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+create table if not exists appointments (
+  id serial primary key,
+  client_id integer references clients(id) on delete set null,
+  psychologist_id integer references psychologists(id) on delete set null,
+  appointment_date timestamp not null,
+  hour integer not null,
+  minute integer not null,
+  duration integer not null,
+  description text,
+  fee integer,
+  created_at timestamp with time zone default timezone('utc'::text, now())
 );
 
 -- 4. Notlar Tablosu

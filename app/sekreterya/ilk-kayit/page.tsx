@@ -44,7 +44,6 @@ interface Note {
 export default function ClientManagementPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [psychologists, setPsychologists] = useState<Psychologist[]>([])
-  // appointments state removed
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -83,9 +82,7 @@ export default function ClientManagementPage() {
         .order('name')
       
       if (psychologistsError) throw psychologistsError
-      
-      // appointments fetch removed
-      
+            
       // Notları yükle
       const { data: notesData, error: notesError } = await supabase
         .from('notes')
@@ -96,7 +93,6 @@ export default function ClientManagementPage() {
 
       setClients(clientsData || [])
       setPsychologists(psychologistsData || [])
-      // setAppointments removed
       setNotes(notesData || [])
     } catch (error) {
       let errorMsg = ''

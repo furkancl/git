@@ -6,91 +6,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { format, startOfWeek, addDays, isSameDay } from "date-fns"
+import { format, startOfWeek, addDays, isSameDay, setHours, setMinutes } from "date-fns"
 import { tr } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { toast } from 'sonner' // Sonner'dan toast'ı import edin!
 
-// Dummy danışan verisi
-const initialClients = [
-  { id: 1, name: "Ayşe Yılmaz" },
-  { id: 2, name: "Mehmet Demir" },
-  { id: 3, name: "Zeynep Kaya" },
-]
 
-// Dummy psikolog verisi
-const initialPsychologists = [
-  { id: 101, name: "Dr. Elif Yılmaz" },
-  { id: 102, name: "Uzm. Psk. Can Demir" },
-  { id: 103, name: "Psk. Zeynep Akın" },
-]
+import { supabase } from "@/lib/supabase"
 
-// Dummy randevu verisi
-const today = new Date()
-const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }) // Haftanın başlangıcı Pazartesi (1)
-
-const initialAppointments = [
-  {
-    id: 1,
-    clientId: 1,
-    psychologistId: 101,
-    date: addDays(startOfCurrentWeek, 0),
-    hour: 12,
-    minute: 0,
-    duration: 60,
-    desc: "Bireysel seans",
-  }, // Pazartesi 12:00-13:00
-  {
-    id: 2,
-    clientId: 2,
-    psychologistId: 102,
-    date: addDays(startOfCurrentWeek, 2),
-    hour: 14,
-    minute: 30,
-    duration: 90,
-    desc: "Aile danışmanlığı",
-  }, // Çarşamba 14:30-16:00
-  {
-    id: 3,
-    clientId: 3,
-    psychologistId: 101,
-    date: addDays(startOfCurrentWeek, 4),
-    hour: 11,
-    minute: 0,
-    duration: 60,
-    desc: "Çocuk seansı",
-  }, // Cuma 11:00-12:00
-  {
-    id: 4,
-    clientId: 1,
-    psychologistId: 103,
-    date: addDays(startOfCurrentWeek, 1),
-    hour: 16,
-    minute: 0,
-    duration: 60,
-    desc: "Takip görüşmesi",
-  }, // Salı 16:00-17:00
-  {
-    id: 5,
-    clientId: 2,
-    psychologistId: 102,
-    date: addDays(startOfCurrentWeek, 0), // Pazartesi
-    hour: 10,
-    minute: 0,
-    duration: 60,
-    desc: "Grup Terapisi", // Aynı saatte farklı psikolog
-  },
-  {
-    id: 6,
-    clientId: 3,
-    psychologistId: 103,
-    date: addDays(startOfCurrentWeek, 4), // Pazartesi
-    hour: 10,
-    minute: 15,
-    duration: 60,
-    desc: "Bireysel Danışmanlık", // Aynı gün, yakın saat
-  },
-]
+// Tipler
+type Client = {
+  id: string;
+  name: string;
+};
+type Psychologist = {
+  id: string;
+  name: string;
+};
+type Appointment = {
+  id: string;
+  client_id: string;
+  psychologist_id: string;
+  appointment_date: string;
+  hour: number;
+  minute: number;
+  duration: number;
+  description: string;
+  fee: number;
+};
 
 const days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
@@ -138,9 +81,9 @@ function getPsychologistColorClasses(psychologistId: number) {
 }
 
 export default function RandevuPlanlamaPage() {
-  const [clients] = useState(initialClients)
-  const [psychologists] = useState(initialPsychologists)
-  const [appointments, setAppointments] = useState(initialAppointments)
+  const [clients, setClients] = useState<Client[]>([])
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [selectedAppointment, setSelectedAppointment] = useState(null as null | (typeof appointments)[0])
   const [isAddOrEditDialogOpen, setIsAddOrEditDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -151,24 +94,39 @@ export default function RandevuPlanlamaPage() {
   const [newHour, setNewHour] = useState<string>("")
   const [newMinute, setNewMinute] = useState<string>("")
   const [newDuration, setNewDuration] = useState<string>("")
-  const [newDesc, setNewDesc] = useState("")
-  const [draggedId, setDraggedId] = useState<number | null>(null)
-  const [hoveredAppointmentId, setHoveredAppointmentId] = useState<number | null>(null)
+  const [newDescription, setNewDescription] = useState("")
+  const [newFee, setNewFee] = useState<string>("")
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [hoveredAppointmentId, setHoveredAppointmentId] = useState<string | null>(null)
 
   const currentWeekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 })
     return days.map((_, i) => addDays(start, i))
   }, [])
 
+  // Supabase'den verileri çek
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: clientsData } = await supabase.from("clients").select("id, name")
+      setClients(clientsData || [])
+      const { data: psychsData } = await supabase.from("psychologists").select("id, name")
+      setPsychologists(psychsData || [])
+      const { data: apptsData } = await supabase.from("appointments").select("id, client_id, psychologist_id, appointment_date, hour, minute, duration, description, fee")
+      setAppointments((apptsData || []).map(a => ({ ...a, appointment_date: a.appointment_date })))
+    }
+    fetchData()
+  }, [])
+
   useEffect(() => {
     if (selectedAppointment && isEditing) {
-      setNewClientId(selectedAppointment.clientId.toString())
-      setNewPsychologistId(selectedAppointment.psychologistId.toString())
-      setNewDate(selectedAppointment.date)
+      setNewClientId(selectedAppointment.client_id)
+      setNewPsychologistId(selectedAppointment.psychologist_id)
+      setNewDate(new Date(selectedAppointment.appointment_date))
       setNewHour(selectedAppointment.hour.toString())
       setNewMinute(selectedAppointment.minute.toString())
       setNewDuration(selectedAppointment.duration.toString())
-      setNewDesc(selectedAppointment.desc)
+      setNewDescription(selectedAppointment.description)
+      setNewFee(selectedAppointment.fee?.toString() || "")
       setIsAddOrEditDialogOpen(true)
     } else if (!selectedAppointment && !isEditing) {
       setNewClientId("")
@@ -177,19 +135,20 @@ export default function RandevuPlanlamaPage() {
       setNewHour("")
       setNewMinute("")
       setNewDuration("")
-      setNewDesc("")
+      setNewDescription("")
+      setNewFee("")
     }
   }, [selectedAppointment, isEditing])
 
-  const handleSaveAppointment = () => {
+  const handleSaveAppointment = async () => {
     if (
       !newClientId ||
       !newPsychologistId ||
       !newDate ||
       newDuration.length === 0 ||
-      newDesc.trim().length === 0
+      newDescription.trim().length === 0 ||
+      newFee.length === 0
     ) {
-      // HATA MESAJI: Tüm alanların doldurulması gerekli
       toast.error("Gerekli Alanlar Eksik!", {
         description: "Lütfen randevu bilgilerinin tümünü doldurun.",
         duration: 3000,
@@ -199,9 +158,9 @@ export default function RandevuPlanlamaPage() {
 
     const selectedHour = Number(newHour);
     const selectedMinute = Number(newMinute);
+    const fee = Number(newFee);
 
     if (selectedHour > 18 || (selectedHour === 18 && selectedMinute > 30)) {
-      // UYARI MESAJI: Randevu saati kısıtlaması
       toast.warning("Geçersiz Randevu Saati!", {
         description: "En son 18:30'da başlayan bir randevu oluşturabilirsiniz. Lütfen daha erken bir saat seçin.",
         duration: 5000,
@@ -209,69 +168,94 @@ export default function RandevuPlanlamaPage() {
       return;
     }
 
-    if (isEditing && selectedAppointment) {
-      setAppointments((prev) =>
-        prev.map((appt) =>
-          appt.id === selectedAppointment.id
-            ? {
-                ...appt,
-                clientId: Number(newClientId),
-                psychologistId: Number(newPsychologistId),
-                date: newDate,
-                hour: Number(newHour),
-                minute: Number(newMinute),
-                duration: Number(newDuration),
-                desc: newDesc,
-              }
-            : appt,
-        ),
-      )
-      setSelectedAppointment(null)
-      setIsEditing(false)
-      // BAŞARI MESAJI: Randevu güncellendi
-      toast.success("Randevu Başarıyla Güncellendi!", {
-        description: `${clients.find(c => c.id === Number(newClientId))?.name} için randevu güncellendi.`,
-      });
-    } else {
-      setAppointments((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          clientId: Number(newClientId),
-          psychologistId: Number(newPsychologistId),
-          date: newDate,
-          hour: Number(newHour),
-          minute: Number(newMinute),
-          duration: Number(newDuration),
-          desc: newDesc,
-        },
-      ])
-      // BAŞARI MESAJI: Yeni randevu eklendi
-      toast.success("Yeni Randevu Eklendi!", {
-        description: `${clients.find(c => c.id === Number(newClientId))?.name} için yeni bir randevu oluşturuldu.`,
-      });
+    try {
+      if (isEditing && selectedAppointment) {
+        // Güncelleme
+        const { error } = await supabase
+          .from("appointments")
+          .update({
+            client_id: newClientId,
+            psychologist_id: newPsychologistId,
+            appointment_date: newDate.toISOString(),
+            hour: selectedHour,
+            minute: selectedMinute,
+            duration: Number(newDuration),
+            description: newDescription,
+            fee: fee,
+          })
+          .eq("id", selectedAppointment.id)
+        if (error) throw error
+        // Yeniden fetch
+        const { data: apptsData } = await supabase.from("appointments").select("id, client_id, psychologist_id, appointment_date, hour, minute, duration, description, fee")
+        setAppointments((apptsData || []).map(a => ({ ...a, date: new Date(a.appointment_date) })))
+        setSelectedAppointment(null)
+        setIsEditing(false)
+        
+        // Toast mesajı için güvenli client name alma
+        const clientName = clients.find(c => c.id === newClientId)?.name;
+        toast.success("Randevu Başarıyla Güncellendi!", {
+          description: clientName 
+            ? `${clientName} için randevu güncellendi.`
+            : "Randevu başarıyla güncellendi.",
+        });
+      } else {
+        // Yeni ekleme
+        const { error } = await supabase
+          .from("appointments")
+          .insert({
+            client_id: newClientId,
+            psychologist_id: newPsychologistId,
+            appointment_date: newDate.toISOString(),
+            hour: selectedHour,
+            minute: selectedMinute,
+            duration: Number(newDuration),
+            description: newDescription,
+            fee: fee,
+          })
+        if (error) throw error
+        // Yeniden fetch
+        const { data: apptsData } = await supabase.from("appointments").select("id, client_id, psychologist_id, appointment_date, hour, minute, duration, description, fee")
+        setAppointments((apptsData || []).map(a => ({ ...a, appointment_date: a.appointment_date })))
+        setSelectedAppointment(null)
+        
+        // Toast mesajı için güvenli client name alma
+        const clientName = clients.find(c => c.id === newClientId)?.name;
+        toast.success("Yeni Randevu Eklendi!", {
+          description: clientName 
+            ? `${clientName} için yeni bir randevu oluşturuldu.`
+            : "Randevu başarıyla oluşturuldu.",
+        });
+      }
+    } catch (err: any) {
+      toast.error("Hata!", { description: err.message })
     }
-    setIsAddOrEditDialogOpen(false)
-  };
+  }
 
-  const handleDeleteAppointment = () => {
+  const handleDeleteAppointment = async () => {
     if (selectedAppointment) {
-      const clientName = clients.find(c => c.id === selectedAppointment.clientId)?.name;
-      setAppointments((prev) => prev.filter((appt) => appt.id !== selectedAppointment.id))
+      // Toast mesajı için güvenli client name alma
+      const clientName = clients.find(c => c.id === selectedAppointment.client_id)?.name;
+      
+      // Supabase'den sil
+      await supabase.from("appointments").delete().eq("id", selectedAppointment.id)
+      // Yeniden fetch
+      const { data: apptsData } = await supabase.from("appointments").select("id, client_id, psychologist_id, appointment_date, hour, minute, duration, description, fee")
+      setAppointments((apptsData || []).map(a => ({ ...a, appointment_date: a.appointment_date })))
       setSelectedAppointment(null)
-      // BİLGİ MESAJI: Randevu silindi
+      
       toast.info("Randevu Silindi!", {
-        description: `${clientName} ile olan randevu iptal edildi.`,
+        description: clientName 
+          ? `${clientName} ile olan randevu iptal edildi.`
+          : "Randevu başarıyla iptal edildi.",
       });
     }
   };
 
-  const handleDragStart = (id: number) => setDraggedId(id)
-  const handleDrop = (targetDate: Date, hour: number, minute: number) => {
+  const handleDragStart = (id: string) => setDraggedId(id)
+  const handleDrop = async (targetDate: Date, hour: number, minute: number) => {
     if (draggedId == null) return
 
     if (hour > 18 || (hour === 18 && minute > 30)) {
-      // UYARI MESAJI: Sürükle-bırak kısıtlaması
       toast.warning("Randevu Taşınamaz!", {
         description: "18:30'dan sonra başlayan randevu oluşturulamaz veya taşınamaz.",
         duration: 5000,
@@ -280,15 +264,27 @@ export default function RandevuPlanlamaPage() {
       return;
     }
 
-    setAppointments((prev) =>
-      prev.map((appt) => (appt.id === draggedId ? { ...appt, date: targetDate, hour, minute } : appt)),
-    )
-    // BAŞARI MESAJI: Randevu taşındı
+    // Yeni randevu tarihini ve saatini doğru bir şekilde oluştur
+    const newAppointmentDate = setMinutes(setHours(targetDate, hour), minute);
+
+    // Supabase'de güncelle
+    await supabase.from("appointments").update({
+      appointment_date: newAppointmentDate.toISOString(), // Corrected to use newAppointmentDate
+      hour,
+      minute,
+    }).eq("id", draggedId)
+    // Yeniden fetch
+    const { data: apptsData } = await supabase.from("appointments").select("id, client_id, psychologist_id, appointment_date, hour, minute, duration, description, fee")
+    setAppointments((apptsData || []).map(a => ({ ...a, appointment_date: a.appointment_date })))
+    
+    // BAŞARI MESAJI: Randevu taşındı - güvenli client name alma
     const movedAppt = appointments.find(appt => appt.id === draggedId);
     if(movedAppt) {
-      const clientName = clients.find(c => c.id === movedAppt.clientId)?.name;
+      const clientName = clients.find(c => c.id === movedAppt.client_id)?.name;
       toast.success("Randevu Taşındı!", {
-        description: `${clientName} randevusu başarıyla yeni saate/güne taşındı.`,
+        description: clientName 
+          ? `${clientName} randevusu başarıyla yeni saate/güne taşındı.`
+          : "Randevu başarıyla taşındı.",
       });
     }
     setDraggedId(null);
@@ -360,10 +356,9 @@ export default function RandevuPlanlamaPage() {
                       const currentSlotEndInMinutes = currentSlotStartInMinutes + 15
 
                       const overlappingAppts = appointments.filter((appt) => {
-                        if (!isSameDay(appt.date, currentDayDate)) return false
+                        if (!isSameDay(new Date(appt.appointment_date), currentDayDate)) return false
                         const apptStartTimeInMinutes = appt.hour * 60 + appt.minute
                         const apptEndTimeInMinutes = apptStartTimeInMinutes + appt.duration
-
                         return (
                           apptStartTimeInMinutes < currentSlotEndInMinutes &&
                           apptEndTimeInMinutes > currentSlotStartInMinutes
@@ -375,7 +370,7 @@ export default function RandevuPlanlamaPage() {
                           const apptStartTimeInMinutes = appt.hour * 60 + appt.minute
                           return apptStartTimeInMinutes === currentSlotStartInMinutes
                         })
-                        .sort((a, b) => a.psychologistId - b.psychologistId)
+                        .sort((a, b) => String(a.psychologist_id).localeCompare(String(b.psychologist_id)))
 
                       const clickableAppointment =
                         appointmentsStartingInSlot.length > 0
@@ -387,7 +382,7 @@ export default function RandevuPlanlamaPage() {
                       let tdHoverClasses = ""
                       if (hoveredAppointmentId !== null) {
                         const hoveredAppt = appointments.find((a) => a.id === hoveredAppointmentId)
-                        if (hoveredAppt && isSameDay(hoveredAppt.date, currentDayDate)) {
+                        if (hoveredAppt && isSameDay(new Date(hoveredAppt.appointment_date), currentDayDate)) {
                           const apptStartTimeInMinutes = hoveredAppt.hour * 60 + hoveredAppt.minute
                           const apptEndTimeInMinutes = apptStartTimeInMinutes + hoveredAppt.duration
 
@@ -395,7 +390,7 @@ export default function RandevuPlanlamaPage() {
                             apptStartTimeInMinutes < currentSlotEndInMinutes &&
                             apptEndTimeInMinutes > currentSlotStartInMinutes
                           ) {
-                            const apptColorClasses = getPsychologistColorClasses(hoveredAppt.psychologistId)
+                            const apptColorClasses = getPsychologistColorClasses(Number(hoveredAppt.psychologist_id))
                             const hoverBgMatch = apptColorClasses.match(/hover:bg-[a-z]+-[0-9]+/)
                             const darkHoverBgMatch = apptColorClasses.match(/dark:hover:bg-[a-z]+-[0-9]+/)
                             tdHoverClasses = cn(
@@ -424,12 +419,12 @@ export default function RandevuPlanlamaPage() {
                           }}
                         >
                           {appointmentsStartingInSlot.map((appt, apptIndex) => {
-                            const client = clients.find((c) => c.id === appt.clientId)
-                            const psychologist = psychologists.find((p) => p.id === p.id)
+                            const client = clients.find((c) => c.id === appt.client_id)
+                            const psychologist = psychologists.find((p) => p.id === appt.psychologist_id)
                             const apptHeight = (appt.duration / 15) * SLOT_HEIGHT_PX
                             const offset = apptIndex * 15
                             const currentZIndex = appt.id === hoveredAppointmentId ? 999 : 100 + apptIndex
-                            const colorClasses = getPsychologistColorClasses(appt.psychologistId)
+                            const colorClasses = getPsychologistColorClasses(Number(appt.psychologist_id))
                             const endTime = getEndTime(appt.hour, appt.minute, appt.duration)
 
                             return (
@@ -457,7 +452,7 @@ export default function RandevuPlanlamaPage() {
                                   <div className="truncate text-[12px] italic">{psychologist.name}</div>
                                 )}
                                 {/* Açıklama */}
-                                <div className="truncate text-[10px]">{appt.desc}</div>
+                                <div className="truncate text-[10px]">{appt.description}</div>
                                 {/* Saat Bilgisi */}
                                 <div className="text-[10px] text-gray-500 dark:text-gray-300">
                                   {appt.hour}:{appt.minute.toString().padStart(2, "0")} -{" "}
@@ -485,13 +480,13 @@ export default function RandevuPlanlamaPage() {
             {selectedAppointment && (
               <div className="space-y-2 text-gray-700 dark:text-gray-200">
                 <div>
-                  <b>Danışan:</b> {clients.find((c) => c.id === selectedAppointment.clientId)?.name}
+                  <b>Danışan:</b> {clients.find((c) => c.id === selectedAppointment.client_id)?.name}
                 </div>
                 <div>
-                  <b>Psikolog:</b> {psychologists.find((p) => p.id === selectedAppointment.psychologistId)?.name}
+                  <b>Psikolog:</b> {psychologists.find((p) => p.id === selectedAppointment.psychologist_id)?.name}
                 </div>
                 <div>
-                  <b>Tarih:</b> {format(selectedAppointment.date, "dd MMMM yyyy EEEE", { locale: tr })}
+                  <b>Tarih:</b> {format(new Date(selectedAppointment.appointment_date), "dd MMMM yyyy EEEE", { locale: tr })}
                 </div>
                 <div>
                   <b>Saat:</b> {selectedAppointment.hour}:{selectedAppointment.minute.toString().padStart(2, "0")}
@@ -500,7 +495,10 @@ export default function RandevuPlanlamaPage() {
                   <b>Süre:</b> {selectedAppointment.duration} dk
                 </div>
                 <div>
-                  <b>Açıklama:</b> {selectedAppointment.desc}
+                  <b>Ücret:</b> {selectedAppointment.fee} ₺
+                </div>
+                <div>
+                  <b>Açıklama:</b> {selectedAppointment.description}
                 </div>
               </div>
             )}
@@ -662,13 +660,27 @@ export default function RandevuPlanlamaPage() {
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="desc" className="text-right font-medium text-gray-700 dark:text-gray-200">
+                <label htmlFor="fee" className="text-right font-medium text-gray-700 dark:text-gray-200">
+                  Randevu Ücreti (₺)
+                </label>
+                <input
+                  id="fee"
+                  type="number"
+                  value={newFee}
+                  onChange={e => setNewFee(e.target.value)}
+                  className="col-span-3 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg px-2 py-1 border border-gray-300"
+                  placeholder="Ücret"
+                  min={0}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="description" className="text-right font-medium text-gray-700 dark:text-gray-200">
                   Açıklama
                 </label>
                 <Textarea
-                  id="desc"
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
+                  id="description"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
                   className="col-span-3 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg"
                   placeholder="Randevu açıklaması"
                 />
@@ -689,7 +701,7 @@ export default function RandevuPlanlamaPage() {
                   !newPsychologistId ||
                   !newDate ||
                   newDuration.length === 0 ||
-                  newDesc.trim().length === 0 ||
+                  newDescription.trim().length === 0 ||
                   (Number(newHour) > 18 || (Number(newHour) === 18 && Number(newMinute) > 30))
                 }
                 className="dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg"
