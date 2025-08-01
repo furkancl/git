@@ -1,16 +1,49 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, Users, Clock, TrendingUp, ChevronLeft, ChevronRight, User } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { supabase } from "@/lib/supabase"
+
+// Same types as randevu planlama page
+type Appointment = {
+  id: string;
+  client_id: string;
+  psychologist_id: string;
+  appointment_date: string;
+  hour: number;
+  minute: number;
+  duration: number;
+  description: string;
+  fee: number;
+  clients: {
+    id: string;
+    name: string;
+  } | null;
+  psychologists: {
+    id: string;
+    name: string;
+    renk_kodu?: string;
+  } | null;
+};
+
+type Psychologist = {
+  id: string;
+  name: string;
+  renk_kodu?: string;
+};
 
 export function HomePage() {
   const [loading, setLoading] = useState(true)
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [selectedPsychologist, setSelectedPsychologist] = useState("Tüm Psikologlar")
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([])
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   // Helper to format date to YYYY-MM-DD string using local date components
   const formatDate = (date: Date) => {
@@ -20,14 +53,101 @@ export function HomePage() {
     return `${year}-${month}-${day}`
   }
 
-  // State for selected date on calendar, defaults to today
-  const [selectedDate, setSelectedDate] = useState<string | null>(formatDate(new Date()))
+  // Dashboard card calculations based on appointment data
+  const todayAppointments = useMemo(() => {
+    if (!mounted) return 0
+    return appointments.filter((app) => {
+      const appointmentDate = formatDate(new Date(app.appointment_date))
+      return appointmentDate === formatDate(new Date()) && app.psychologists?.name
+    }).length
+  }, [appointments, mounted])
 
+  const activeClients = useMemo(() => {
+    if (!mounted) return 0
+    // Unique clients from appointments in the last 30 days
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const recentAppointments = appointments.filter((app) => {
+      const appointmentDate = new Date(app.appointment_date)
+      return appointmentDate >= thirtyDaysAgo && app.clients?.id
+    })
+    const uniqueClientIds = new Set(recentAppointments.map(app => app.clients?.id).filter(Boolean))
+    return uniqueClientIds.size
+  }, [appointments, mounted])
+
+  const thisWeekAppointments = useMemo(() => {
+    if (!mounted) return 0
+    const today = new Date()
+    const startOfWeek = new Date(today)
+    startOfWeek.setDate(today.getDate() - today.getDay() + 1) // Monday
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6) // Sunday
+    
+    return appointments.filter((app) => {
+      const appointmentDate = new Date(app.appointment_date)
+      return appointmentDate >= startOfWeek && appointmentDate <= endOfWeek && app.psychologists?.name
+    }).length
+  }, [appointments, mounted])
+
+  const monthlyRevenue = useMemo(() => {
+    if (!mounted) return 0
+    const today = new Date()
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    
+    return appointments.filter((app) => {
+      const appointmentDate = new Date(app.appointment_date)
+      return appointmentDate >= startOfMonth && appointmentDate <= endOfMonth && app.fee
+    }).reduce((sum, app) => sum + (app.fee || 0), 0)
+  }, [appointments, mounted])
+
+
+
+  // Set today's date on client-side to avoid hydration mismatch
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1500)
-    return () => clearTimeout(timer)
+    setMounted(true)
+    setSelectedDate(formatDate(new Date()))
+  }, [])
+
+  // Fetch appointments and psychologists from Supabase
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch appointments with related client and psychologist data
+        const { data: appointmentsData, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            clients(id, name),
+            psychologists(id, name, renk_kodu)
+          `)
+          .order('appointment_date', { ascending: true })
+
+        if (appointmentsError) {
+          console.error('Randevular çekilirken hata:', appointmentsError)
+        } else {
+          setAppointments(appointmentsData || [])
+        }
+
+        // Fetch psychologists for dropdown
+        const { data: psychologistsData, error: psychologistsError } = await supabase
+          .from('psychologists')
+          .select('*')
+          .order('name')
+
+        if (psychologistsError) {
+          console.error('Psikologlar çekilirken hata:', psychologistsError)
+        } else {
+          setPsychologists(psychologistsData || [])
+        }
+      } catch (error) {
+        console.error('Veri çekilirken genel hata:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const getDaysInMonth = (year: number, month: number) => {
@@ -79,557 +199,16 @@ export function HomePage() {
   ]
   const dayNames = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"] // Adjusted for Monday start
 
-  // Define psychologist colors
-  const psychologistColors: { [key: string]: string } = {
-    "Dr. Elif Yılmaz": "bg-blue-500",
-    "Uzm. Psk. Can Demir": "bg-green-500",
-    "Psk. Zeynep Kaya": "bg-purple-500",
-    "Dr. Ayşe Güneş": "bg-red-500",
-    "Uzm. Psk. Burak Akın": "bg-yellow-500",
-    "Psk. Cemil Yıldız": "bg-indigo-500",
+  // Get psychologist color from Supabase renk_kodu (now using inline styles)
+  const getPsychologistColor = (appointment: Appointment) => {
+    if (appointment.psychologists?.renk_kodu?.startsWith('#')) {
+      return appointment.psychologists.renk_kodu
+    }
+    // Fallback color for appointments without psychologist or color
+    return '#6b7280' // gray-500
   }
 
-  // --- Sabit Randevu ve Etkinlik Verileri Başlangıcı ---
-  const allAppointments = [
-    // Temmuz 2025 için sabit randevular ve etkinlikler
-    // Not: formatDate fonksiyonu mevcut yıla göre çalışır, bu yüzden randevu tarihlerini buna göre ayarladım.
-    // Gerçek bir uygulamada bu veriler bir veritabanından gelmelidir.
-
-    // 1 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 1)),
-      time: "09:00",
-      client: "Ayşe Yılmaz",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Dr. Elif Yılmaz",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 1)),
-      time: "11:00",
-      client: "Ekip Toplantısı",
-      type: "Toplantı",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 1)),
-      time: "14:00",
-      client: "Can Demir",
-      type: "Çift Terapisi",
-      status: "pending",
-      psychologist: "Uzm. Psk. Can Demir",
-    },
-
-    // 2 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 2)),
-      time: "10:00",
-      client: "Zeynep Kaya",
-      type: "Online Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Zeynep Kaya",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 2)),
-      time: "15:00",
-      client: "Mehmet Aksoy",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Dr. Ayşe Güneş",
-    },
-
-    // 3 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 3)),
-      time: "09:30",
-      client: "Seminer Hazırlığı",
-      type: "Hazırlık",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 3)),
-      time: "13:00",
-      client: "Elif Can",
-      type: "Aile Terapisi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Burak Akın",
-    },
-
-    // 4 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 4)),
-      time: "10:30",
-      client: "Burak Yıldız",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Cemil Yıldız",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 4)),
-      time: "16:00",
-      client: "Gizem Kara",
-      type: "Çocuk Terapisi",
-      status: "pending",
-      psychologist: "Dr. Elif Yılmaz",
-    },
-
-    // 5 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 5)),
-      time: "11:00",
-      client: "Ofis Bakımı",
-      type: "Bakım",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 5)),
-      time: "14:30",
-      client: "Deniz Arslan",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Can Demir",
-    },
-
-    // 6 Temmuz (Hafta Sonu)
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 6)),
-      time: "10:00",
-      client: "Hafta Sonu Etkinliği",
-      type: "Etkinlik",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-
-    // 7 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 7)),
-      time: "09:00",
-      client: "Aslı Güneş",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Zeynep Kaya",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 7)),
-      time: "14:00",
-      client: "Kerem Demir",
-      type: "Çift Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Ayşe Güneş",
-    },
-
-    // 8 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 8)),
-      time: "10:00",
-      client: "Eğitim Semineri",
-      type: "Eğitim",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 8)),
-      time: "11:30",
-      client: "Selin Akın",
-      type: "Online Terapi",
-      status: "pending",
-      psychologist: "Uzm. Psk. Burak Akın",
-    },
-
-    // 9 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 9)),
-      time: "10:00",
-      client: "Cemil Yılmaz",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Cemil Yıldız",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 9)),
-      time: "15:00",
-      client: "Fatma Can",
-      type: "Aile Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Elif Yılmaz",
-    },
-
-    // 10 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 10)),
-      time: "09:00",
-      client: "Murat Kaya",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Can Demir",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 10)),
-      time: "14:00",
-      client: "Webinar Katılımı",
-      type: "Webinar",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-
-    // 11 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 11)),
-      time: "10:30",
-      client: "İrem Özkan",
-      type: "Çocuk Terapisi",
-      status: "confirmed",
-      psychologist: "Psk. Zeynep Kaya",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 11)),
-      time: "16:00",
-      client: "Hakan Şahin",
-      type: "Bireysel Terapi",
-      status: "pending",
-      psychologist: "Dr. Ayşe Güneş",
-    },
-
-    // 12 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 12)),
-      time: "11:00",
-      client: "Danışmanlık Görüşmesi",
-      type: "Danışmanlık",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 12)),
-      time: "14:30",
-      client: "Ebru Çelik",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Burak Akın",
-    },
-
-    // 13 Temmuz (Hafta Sonu)
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 13)),
-      time: "10:00",
-      client: "Hafta Sonu Etkinliği 2",
-      type: "Etkinlik",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-
-    // 14 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 14)),
-      time: "09:00",
-      client: "Ozan Yılmaz",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Cemil Yıldız",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 14)),
-      time: "14:00",
-      client: "Pınar Aksoy",
-      type: "Çift Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Elif Yılmaz",
-    },
-
-    // 15 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 15)),
-      time: "10:00",
-      client: "Resmi Tatil",
-      type: "Resmi Tatil",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 15)),
-      time: "11:30",
-      client: "Canan Demir",
-      type: "Online Terapi",
-      status: "pending",
-      psychologist: "Uzm. Psk. Can Demir",
-    },
-
-    // 16 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 16)),
-      time: "09:00",
-      client: "Gülşen Kaya",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Zeynep Kaya",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 16)),
-      time: "15:00",
-      client: "Ali Veli",
-      type: "Aile Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Ayşe Güneş",
-    },
-
-    // 17 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 17)),
-      time: "10:00",
-      client: "Ekip Toplantısı",
-      type: "Toplantı",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 17)),
-      time: "13:00",
-      client: "Deniz Can",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Burak Akın",
-    },
-
-    // 18 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 18)),
-      time: "10:30",
-      client: "Efe Yıldız",
-      type: "Çocuk Terapisi",
-      status: "confirmed",
-      psychologist: "Psk. Cemil Yıldız",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 18)),
-      time: "16:00",
-      client: "Zeynep Akın",
-      type: "Bireysel Terapi",
-      status: "pending",
-      psychologist: "Dr. Elif Yılmaz",
-    },
-
-    // 19 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 19)),
-      time: "11:00",
-      client: "Ofis Bakımı",
-      type: "Bakım",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 19)),
-      time: "14:30",
-      client: "Cenk Arslan",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Can Demir",
-    },
-
-    // 20 Temmuz (Hafta Sonu)
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 20)),
-      time: "10:00",
-      client: "Hafta Sonu Etkinliği 3",
-      type: "Etkinlik",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-
-    // 21 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 21)),
-      time: "09:00",
-      client: "Aslı Demir",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Zeynep Kaya",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 21)),
-      time: "14:00",
-      client: "Kerem Güneş",
-      type: "Çift Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Ayşe Güneş",
-    },
-
-    // 22 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 22)),
-      time: "10:00",
-      client: "Eğitim Semineri",
-      type: "Eğitim",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 22)),
-      time: "11:30",
-      client: "Selin Can",
-      type: "Online Terapi",
-      status: "pending",
-      psychologist: "Uzm. Psk. Burak Akın",
-    },
-
-    // 23 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 23)),
-      time: "10:00",
-      client: "Cemil Kaya",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Cemil Yıldız",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 23)),
-      time: "15:00",
-      client: "Fatma Yılmaz",
-      type: "Aile Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Elif Yılmaz",
-    },
-
-    // 24 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 24)),
-      time: "09:00",
-      client: "Murat Aksoy",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Can Demir",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 24)),
-      time: "14:00",
-      client: "Webinar Katılımı",
-      type: "Webinar",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-
-    // 25 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 25)),
-      time: "10:30",
-      client: "İrem Demir",
-      type: "Çocuk Terapisi",
-      status: "confirmed",
-      psychologist: "Psk. Zeynep Kaya",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 25)),
-      time: "16:00",
-      client: "Hakan Can",
-      type: "Bireysel Terapi",
-      status: "pending",
-      psychologist: "Dr. Ayşe Güneş",
-    },
-
-    // 26 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 26)),
-      time: "11:00",
-      client: "Danışmanlık Görüşmesi",
-      type: "Danışmanlık",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 26)),
-      time: "14:30",
-      client: "Ebru Yılmaz",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Burak Akın",
-    },
-
-    // 27 Temmuz (Hafta Sonu)
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 27)),
-      time: "10:00",
-      client: "Hafta Sonu Etkinliği 4",
-      type: "Etkinlik",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-
-    // 28 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 28)),
-      time: "09:00",
-      client: "Ozan Aksoy",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Cemil Yıldız",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 28)),
-      time: "14:00",
-      client: "Pınar Demir",
-      type: "Çift Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Elif Yılmaz",
-    },
-
-    // 29 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 29)),
-      time: "10:00",
-      client: "Resmi Tatil",
-      type: "Resmi Tatil",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 29)),
-      time: "11:30",
-      client: "Canan Kaya",
-      type: "Online Terapi",
-      status: "pending",
-      psychologist: "Uzm. Psk. Can Demir",
-    },
-
-    // 30 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 30)),
-      time: "09:00",
-      client: "Gülşen Demir",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Psk. Zeynep Kaya",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 30)),
-      time: "15:00",
-      client: "Ali Can",
-      type: "Aile Terapisi",
-      status: "confirmed",
-      psychologist: "Dr. Ayşe Güneş",
-    },
-
-    // 31 Temmuz
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 31)),
-      time: "10:00",
-      client: "Ekip Toplantısı",
-      type: "Toplantı",
-      status: "confirmed",
-      psychologist: "Diğer",
-    },
-    {
-      date: formatDate(new Date(currentYear, currentMonth, 31)),
-      time: "13:00",
-      client: "Deniz Yılmaz",
-      type: "Bireysel Terapi",
-      status: "confirmed",
-      psychologist: "Uzm. Psk. Burak Akın",
-    },
-  ]
-  // --- Sabit Randevu ve Etkinlik Verileri Sonu ---
+  // Calendar rendering logic
 
   const calendarDays = []
   for (let i = 0; i < firstDay; i++) {
@@ -638,36 +217,54 @@ export function HomePage() {
   for (let i = 1; i <= daysInMonth; i++) {
     const dayDate = new Date(currentYear, currentMonth, i)
     const dayDateString = formatDate(dayDate)
-    const isToday = dayDateString === formatDate(new Date())
+    const isToday = mounted && dayDateString === formatDate(new Date())
     const isSelected = selectedDate === dayDateString
 
-    // Filter appointments/events for this specific day
-    const itemsForDay = allAppointments.filter((app) => app.date === dayDateString)
+    // Filter appointments for this specific day from Supabase data
+    const appointmentsForDay = appointments.filter((app) => {
+      const appointmentDate = formatDate(new Date(app.appointment_date))
+      return appointmentDate === dayDateString
+    })
 
-    // Determine if there are "Diğer" items or psychologist appointments for the day
-    // psychologistsForDay sadece "Diğer" olmayan psikologları içerir.
+    // Get unique psychologists for this day (excluding appointments without psychologist)
     const psychologistsForDay = Array.from(
-      new Set(itemsForDay.filter((item) => item.psychologist !== "Diğer").map((app) => app.psychologist)),
+      new Set(
+        appointmentsForDay
+          .filter((app) => app.psychologists?.name)
+          .map((app) => app.psychologists!.name)
+      )
     )
 
     calendarDays.push(
       <div
         key={`day-${i}`}
-        className={`relative p-1 rounded-md cursor-pointer transition-colors duration-200 text-sm flex flex-col items-center justify-center overflow-hidden ${
-          isToday ? "bg-blue-600 text-white font-bold shadow-md" : "hover:bg-blue-50 text-gray-800"
-        } ${isSelected ? "border-2 border-blue-700" : ""}`}
+        className={`relative p-1 rounded-md cursor-pointer transition-colors duration-200 text-sm flex flex-col items-center justify-center overflow-hidden border-2 ${
+          isSelected && !isToday 
+            ? "bg-blue-100 text-blue-900 font-semibold border-blue-500" 
+            : isSelected && isToday 
+            ? "bg-blue-700 text-white font-bold shadow-lg border-blue-800" 
+            : isToday 
+            ? "bg-blue-600 text-white font-bold shadow-md border-blue-600" 
+            : "hover:bg-blue-50 text-gray-800 border-transparent"
+        }`}
         onClick={() => setSelectedDate(dayDateString)}
       >
         {i}
-        {/* Sadece "Diğer" olmayan psikologlar için göstergeler */}
-        <div className="flex gap-0.5 mt-1 z-10">
-          {psychologistsForDay.map((psy) => (
-            <div
-              key={psy}
-              className={`w-1.5 h-1.5 rounded-full ${psychologistColors[psy] || "bg-gray-400"}`}
-              title={psy}
-            ></div>
-          ))}
+        {/* Psikolog renk göstergeleri - her randevu için bir nokta */}
+        <div className="flex flex-wrap gap-0.5 mt-1 z-10 justify-center">
+          {appointmentsForDay.map((app, idx) => {
+            const psychologistColor = app.psychologists?.renk_kodu
+            const backgroundColor = psychologistColor?.startsWith('#') ? psychologistColor : '#6b7280' // fallback gray
+            
+            return (
+              <div
+                key={`${app.id}-${idx}`}
+                className="w-2 h-2 rounded-full border border-white shadow-sm"
+                style={{ backgroundColor }}
+                title={`${app.psychologists?.name || 'Psikolog atanmamış'} - ${app.hour.toString().padStart(2, '0')}:${app.minute.toString().padStart(2, '0')}`}
+              ></div>
+            )
+          })}
         </div>
       </div>,
     )
@@ -684,31 +281,28 @@ export function HomePage() {
     )
   }
 
-  // Updated psychologists list including "Diğer"
-  const psychologists = [
+  // Create psychologist dropdown options from Supabase data
+  const psychologistOptions = [
     "Tüm Psikologlar",
-    "Dr. Elif Yılmaz",
-    "Uzm. Psk. Can Demir",
-    "Psk. Zeynep Kaya",
-    "Dr. Ayşe Güneş",
-    "Uzm. Psk. Burak Akın",
-    "Psk. Cemil Yıldız",
-    "Diğer", // Changed from "Etkinlikler" to "Diğer"
+    ...psychologists.map(p => p.name),
+    "Diğer"
   ]
 
-  const filteredAppointments = allAppointments.filter((app) => {
-    const matchesDate = !selectedDate || app.date === selectedDate
-    let matchesPsychologistOrEvent = false
-
+  // Filter appointments based on selected date and psychologist
+  const filteredAppointments = appointments.filter((app) => {
+    const appointmentDate = formatDate(new Date(app.appointment_date))
+    const matchesDate = !selectedDate || appointmentDate === selectedDate
+    
+    let matchesPsychologist = false
     if (selectedPsychologist === "Tüm Psikologlar") {
-      matchesPsychologistOrEvent = true // Show all appointments and "Diğer" items
+      matchesPsychologist = true
     } else if (selectedPsychologist === "Diğer") {
-      matchesPsychologistOrEvent = app.psychologist === "Diğer" // Show only "Diğer" items
+      matchesPsychologist = !app.psychologists // Appointments without psychologist
     } else {
-      matchesPsychologistOrEvent = app.psychologist === selectedPsychologist && app.psychologist !== "Diğer" // Show specific psychologist's appointments, excluding "Diğer"
+      matchesPsychologist = app.psychologists?.name === selectedPsychologist
     }
 
-    return matchesDate && matchesPsychologistOrEvent
+    return matchesDate && matchesPsychologist
   })
 
   return (
@@ -719,12 +313,7 @@ export function HomePage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Bugünkü Seanslar</p>
-              <p className="text-2xl font-bold text-blue-700">
-                {
-                  allAppointments.filter((app) => app.date === formatDate(new Date()) && app.psychologist !== "Diğer")
-                    .length
-                }
-              </p>
+              <p className="text-2xl font-bold text-blue-700">{todayAppointments}</p>
             </div>
             <Calendar className="h-8 w-8 text-blue-500 opacity-70" />
           </CardContent>
@@ -733,7 +322,7 @@ export function HomePage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Aktif Danışanlar</p>
-              <p className="text-2xl font-bold text-green-700">28</p>
+              <p className="text-2xl font-bold text-green-700">{activeClients}</p>
             </div>
             <Users className="h-8 w-8 text-green-500 opacity-70" />
           </CardContent>
@@ -742,7 +331,7 @@ export function HomePage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Bu Hafta</p>
-              <p className="text-2xl font-bold text-orange-700">18</p>
+              <p className="text-2xl font-bold text-orange-700">{thisWeekAppointments}</p>
             </div>
             <Clock className="h-8 w-8 text-orange-500 opacity-70" />
           </CardContent>
@@ -751,7 +340,7 @@ export function HomePage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Aylık Gelir</p>
-              <p className="text-2xl font-bold text-red-700">₺12,450</p>
+              <p className="text-2xl font-bold text-red-700">₺{monthlyRevenue.toLocaleString()}</p>
             </div>
             <TrendingUp className="h-8 w-8 text-red-500 opacity-70" />
           </CardContent>
@@ -810,7 +399,7 @@ export function HomePage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
-                    {psychologists.map((psychologist) => (
+                    {psychologistOptions.map((psychologist) => (
                       <DropdownMenuItem key={psychologist} onClick={() => setSelectedPsychologist(psychologist)}>
                         {psychologist}
                       </DropdownMenuItem>
@@ -822,39 +411,40 @@ export function HomePage() {
               <div className="space-y-2 flex-grow overflow-y-auto overflow-x-hidden max-h-[calc(100vh-400px)]">
                 {/* max-h değeri ekran yüksekliğine göre ayarlandı */}
                 {filteredAppointments.length > 0 ? (
-                  filteredAppointments.map((appointment, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-blue-50 rounded-lg shadow-xs text-sm"
-                    >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <div className="text-center flex-shrink-0">
-                          <div className="text-base font-semibold text-blue-700">{appointment.time}</div>
+                  filteredAppointments.map((appointment, index) => {
+                    // Format time from hour and minute
+                    const appointmentTime = `${appointment.hour.toString().padStart(2, '0')}:${appointment.minute.toString().padStart(2, '0')}`
+                    
+                    return (
+                      <div
+                        key={appointment.id}
+                        className="flex items-center justify-between p-3 bg-blue-50 rounded-lg shadow-xs text-sm"
+                      >
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <div className="text-center flex-shrink-0">
+                            <div className="text-base font-semibold text-blue-700">{appointmentTime}</div>
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <h3 className="font-medium text-gray-900 truncate">
+                              {appointment.clients?.name || 'Müşteri bilgisi yok'}
+                            </h3>
+                            <p className="text-xs text-gray-600 truncate">{appointment.description || 'Açıklama yok'}</p>
+                            {appointment.psychologists?.name && (
+                              <p className="text-xs text-gray-500 truncate">{appointment.psychologists.name}</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-grow min-w-0">
-                          <h3 className="font-medium text-gray-900 truncate">{appointment.client}</h3>
-                          <p className="text-xs text-gray-600 truncate">{appointment.type}</p>
-                          {appointment.psychologist !== "Diğer" && (
-                            <p className="text-xs text-gray-500 truncate">{appointment.psychologist}</p>
-                          )}
+                        <div className="flex items-center space-x-1 flex-shrink-0">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Onaylandı
+                          </span>
+                          <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-100 h-8 w-8 p-0">
+                            Detay
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1 flex-shrink-0">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            appointment.status === "confirmed"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {appointment.status === "confirmed" ? "Onaylandı" : "Bekliyor"}
-                        </span>
-                        <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-100 h-8 w-8 p-0">
-                          Detay
-                        </Button>
-                      </div>
-                    </div>
-                  ))
+                    )
+                  })
                 ) : (
                   <p className="text-center text-gray-500 text-sm">
                     {selectedDate ? "Seçilen gün için randevu bulunmamaktadır." : "Bugün için randevu bulunmamaktadır."}

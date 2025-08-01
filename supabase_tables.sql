@@ -4,7 +4,8 @@
 CREATE TABLE psychologists (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  renk_kodu TEXT
 );
 
 -- 2. Danışanlar Tablosu
@@ -44,14 +45,14 @@ CREATE TABLE notes (
 
 -- Örnek Veriler Ekleme
 
--- Psikologlar
-INSERT INTO psychologists (name) VALUES 
-  ('Dr. Elif Yılmaz'),
-  ('Uzm. Psk. Can Demir'),
-  ('Psk. Zeynep Kaya'),
-  ('Dr. Ayşe Güneş'),
-  ('Uzm. Psk. Burak Akın'),
-  ('Psk. Cemil Yıldız');
+-- Psikologlar (renk kodları ile)
+INSERT INTO psychologists (name, renk_kodu) VALUES 
+  ('Dr. Elif Yılmaz', 'bg-blue-500'),
+  ('Uzm. Psk. Can Demir', 'bg-green-500'),
+  ('Psk. Zeynep Kaya', 'bg-purple-500'),
+  ('Dr. Ayşe Güneş', 'bg-red-500'),
+  ('Uzm. Psk. Burak Akın', 'bg-yellow-500'),
+  ('Psk. Cemil Yıldız', 'bg-indigo-500');
 
 -- Danışanlar
 INSERT INTO clients (name, phone, email, psychologist_id) VALUES 

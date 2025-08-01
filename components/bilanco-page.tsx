@@ -4,13 +4,13 @@ import type React from "react"
 
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowUpCircle, ArrowDownCircle, Wallet, CalendarIcon } from "lucide-react"
+import { ArrowUpCircle, ArrowDownCircle, Wallet, CalendarIcon, User, BookOpen, BabyIcon as Child, FileText, Users, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format, parseISO, isWithinInterval } from "date-fns"
 import { tr } from "date-fns/locale"
-import { User, BookOpen, BabyIcon as Child, FileText, Users, MoreHorizontal } from "lucide-react" // Kategori ikonları
+import type { DateRange } from "react-day-picker"
 
 interface Transaction {
   id: string
@@ -70,11 +70,12 @@ const PieChart = ({ data, onHover }: { data: CategoryData[]; onHover: (categoryN
         key={index}
         d={pathData}
         fill={item.color}
-        title={`${item.name}: ₺${item.value.toLocaleString()} (${((item.value / total) * 100).toFixed(1)}%)`}
         className="transition-transform duration-200 hover:scale-105 origin-center"
         onMouseEnter={() => onHover(item.name)} // Hover başlangıcı
         onMouseLeave={() => onHover(null)} // Hover bitişi
-      />
+      >
+        <title>{`${item.name}: ₺${item.value.toLocaleString()} (${((item.value / total) * 100).toFixed(1)}%)`}</title>
+      </path>
     )
   })
 
@@ -87,7 +88,7 @@ const PieChart = ({ data, onHover }: { data: CategoryData[]; onHover: (categoryN
 
 export function BilancoPage() {
   const [loading, setLoading] = useState(true)
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [selectedChartType, setSelectedChartType] = useState<"income" | "expense">("income")
   const [hoveredCategoryName, setHoveredCategoryName] = useState<string | null>(null) // Yeni state
 
@@ -296,14 +297,32 @@ export function BilancoPage() {
 
   // Tarih aralığına göre işlemleri filtrele
   const filteredTransactions = useMemo(() => {
+    if (!dateRange?.from && !dateRange?.to) {
+      return allTransactions
+    }
+    
     return allTransactions.filter((transaction) => {
       const transactionDate = parseISO(transaction.date)
-      return (
-        (!dateRange.from ||
-          isWithinInterval(transactionDate, { start: dateRange.from, end: dateRange.to || new Date() })) &&
-        (!dateRange.to ||
-          isWithinInterval(transactionDate, { start: dateRange.from || new Date(0), end: dateRange.to }))
-      )
+      
+      // If only 'from' date is selected, filter from that date onwards
+      if (dateRange?.from && !dateRange?.to) {
+        return transactionDate >= dateRange.from
+      }
+      
+      // If only 'to' date is selected, filter up to that date
+      if (!dateRange?.from && dateRange?.to) {
+        return transactionDate <= dateRange.to
+      }
+      
+      // If both dates are selected, use interval check
+      if (dateRange?.from && dateRange?.to) {
+        return isWithinInterval(transactionDate, { 
+          start: dateRange.from, 
+          end: dateRange.to 
+        })
+      }
+      
+      return true
     })
   }, [allTransactions, dateRange])
 
@@ -388,11 +407,11 @@ export function BilancoPage() {
             <Button
               variant={"outline"}
               className={`w-full md:w-[280px] justify-start text-left font-normal ${
-                !dateRange.from && !dateRange.to && "text-muted-foreground"
+                !dateRange?.from && !dateRange?.to && "text-muted-foreground"
               }`}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange.from ? (
+              {dateRange?.from ? (
                 dateRange.to ? (
                   `${format(dateRange.from, "dd/MM/yyyy", { locale: tr })} - ${format(dateRange.to, "dd/MM/yyyy", {
                     locale: tr,

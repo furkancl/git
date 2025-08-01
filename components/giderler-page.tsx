@@ -14,6 +14,7 @@ import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { tr } from "date-fns/locale"
 import { isWithinInterval, parseISO } from "date-fns"
+import { DateRange } from "react-day-picker"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -37,7 +38,7 @@ export function GiderlerPage() {
   ])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("all")
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newExpenseDescription, setNewExpenseDescription] = useState("")
   const [newExpenseAmount, setNewExpenseAmount] = useState("")
@@ -53,9 +54,25 @@ export function GiderlerPage() {
     const matchesCategory = filterCategory === "all" || transaction.category === filterCategory
     // Tarih aralığı filtresi
     const transactionDate = parseISO(transaction.date)
-    const matchesDate =
-      (!dateRange.from || isWithinInterval(transactionDate, { start: dateRange.from, end: dateRange.to || new Date() })) &&
-      (!dateRange.to || isWithinInterval(transactionDate, { start: dateRange.from || new Date(0), end: dateRange.to }))
+    let matchesDate = true
+    
+    if (dateRange?.from || dateRange?.to) {
+      // If only 'from' date is selected, filter from that date onwards
+      if (dateRange?.from && !dateRange?.to) {
+        matchesDate = transactionDate >= dateRange.from
+      }
+      // If only 'to' date is selected, filter up to that date
+      else if (!dateRange?.from && dateRange?.to) {
+        matchesDate = transactionDate <= dateRange.to
+      }
+      // If both dates are selected, use interval check
+      else if (dateRange?.from && dateRange?.to) {
+        matchesDate = isWithinInterval(transactionDate, { 
+          start: dateRange.from, 
+          end: dateRange.to 
+        })
+      }
+    }
     return matchesSearch && matchesCategory && matchesDate
   })
 
@@ -263,7 +280,7 @@ export function GiderlerPage() {
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full md:w-[220px] justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange.from && dateRange.to
+                    {dateRange?.from && dateRange?.to
                       ? `${format(dateRange.from, "dd.MM.yyyy")} - ${format(dateRange.to, "dd.MM.yyyy")}`
                       : "Tarih Aralığı Seç"}
                   </Button>

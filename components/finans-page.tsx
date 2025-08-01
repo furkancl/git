@@ -1,5 +1,6 @@
 "use client"
 
+import type { DateRange } from "react-day-picker"
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
@@ -30,7 +31,7 @@ const dummyData = {
 }
 
 export default function FinansPage() {
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [selectedCategoryType, setSelectedCategoryType] = useState<"income" | "expense">("income")
   const [hoveredCategoryName, setHoveredCategoryName] = useState<string | null>(null)
 
@@ -104,12 +105,12 @@ export default function FinansPage() {
                 variant={"outline"}
                 className={cn(
                   "w-[240px] justify-start text-left font-normal",
-                  !dateRange.from && "text-muted-foreground",
+                  !dateRange?.from && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange.from ? (
-                  dateRange.to ? (
+                {dateRange?.from ? (
+                  dateRange?.to ? (
                     <>
                       {format(dateRange.from, "LLL dd, y", { locale: tr })} -{" "}
                       {format(dateRange.to, "LLL dd, y", { locale: tr })}
@@ -126,9 +127,9 @@ export default function FinansPage() {
               <Calendar
                 initialFocus
                 mode="range"
-                defaultMonth={dateRange.from}
-                selected={dateRange as any}
-                onSelect={setDateRange as any}
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={(range) => setDateRange(range)}
                 numberOfMonths={2}
                 locale={tr}
               />

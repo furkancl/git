@@ -138,12 +138,25 @@ export default function RandevuNotlariPage() {
     }
 
     // Tarih aralığı filtresi uygula
-    if (selectedDateFilter?.from) {
-      // Eğer sadece 'from' seçiliyse, 'to' tarihini 'from' tarihi olarak kabul et
-      const endDate = selectedDateFilter.to || selectedDateFilter.from
-      notesToDisplay = notesToDisplay.filter((note) =>
-        isWithinInterval(note.date, { start: selectedDateFilter.from!, end: endDate }),
-      )
+    if (selectedDateFilter?.from || selectedDateFilter?.to) {
+      notesToDisplay = notesToDisplay.filter((note) => {
+        // If only 'from' date is selected, filter from that date onwards
+        if (selectedDateFilter?.from && !selectedDateFilter?.to) {
+          return note.date >= selectedDateFilter.from
+        }
+        // If only 'to' date is selected, filter up to that date
+        else if (!selectedDateFilter?.from && selectedDateFilter?.to) {
+          return note.date <= selectedDateFilter.to
+        }
+        // If both dates are selected, use interval check
+        else if (selectedDateFilter?.from && selectedDateFilter?.to) {
+          return isWithinInterval(note.date, { 
+            start: selectedDateFilter.from, 
+            end: selectedDateFilter.to 
+          })
+        }
+        return true
+      })
     }
 
     // Danışan seçiliyse, sadece o danışanın notlarını göster

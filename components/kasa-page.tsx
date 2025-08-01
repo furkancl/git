@@ -6,14 +6,7 @@ import { Button } from "@/components/ui/button"
 import { PlusCircle, Wallet, CreditCard, Banknote, ChevronDown, CalendarIcon, Search, Filter } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,6 +17,7 @@ import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { isWithinInterval, parseISO } from "date-fns"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DateRange } from "react-day-picker"
 
 interface Transaction {
   id: string
@@ -46,7 +40,7 @@ export function KasaPage() {
   const [newTransactionAmount, setNewTransactionAmount] = useState("")
   const [newTransactionDate, setNewTransactionDate] = useState<Date | undefined>(new Date())
   const [newTransactionBankAccount, setNewTransactionBankAccount] = useState<"Banka 1" | "Banka 2" | null>(null)
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
 
   // Tüm işlemleri tek bir state'te tutuyoruz
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([
@@ -258,13 +252,29 @@ export function KasaPage() {
     if (filterType !== "all") {
       filtered = filtered.filter((transaction) => transaction.type === filterType)
     }
-    if (dateRange.from || dateRange.to) {
+    if (dateRange?.from || dateRange?.to) {
       filtered = filtered.filter((transaction) => {
         const transactionDate = parseISO(transaction.date)
-        return (
-          (!dateRange.from || isWithinInterval(transactionDate, { start: dateRange.from, end: dateRange.to || new Date() })) &&
-          (!dateRange.to || isWithinInterval(transactionDate, { start: dateRange.from || new Date(0), end: dateRange.to }))
-        )
+        
+        // If only 'from' date is selected, filter from that date onwards
+        if (dateRange?.from && !dateRange?.to) {
+          return transactionDate >= dateRange.from
+        }
+        
+        // If only 'to' date is selected, filter up to that date
+        if (!dateRange?.from && dateRange?.to) {
+          return transactionDate <= dateRange.to
+        }
+        
+        // If both dates are selected, use interval check
+        if (dateRange?.from && dateRange?.to) {
+          return isWithinInterval(transactionDate, { 
+            start: dateRange.from, 
+            end: dateRange.to 
+          })
+        }
+        
+        return true
       })
     }
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -450,7 +460,7 @@ export function KasaPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full md:w-[220px] justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from && dateRange.to
+                  {dateRange?.from && dateRange?.to
                     ? `${format(dateRange.from, "dd.MM.yyyy")} - ${format(dateRange.to, "dd.MM.yyyy")}`
                     : "Tarih Aralığı Seç"}
                 </Button>
@@ -460,7 +470,7 @@ export function KasaPage() {
                   initialFocus
                   mode="range"
                   selected={dateRange}
-                  onSelect={setDateRange}
+                  onSelect={(range) => setDateRange(range)}
                   numberOfMonths={2}
                   locale={tr}
                 />

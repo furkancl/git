@@ -473,7 +473,6 @@ export default function PsychologistsPage() {
                       </div>
                       <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-200/30 dark:border-green-800/30">
                         <div className="flex items-center gap-2 mb-2">
-                          <DollarSign className="h-5 w-5 text-green-500" />
                           <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Toplam Gelir</span>
                         </div>
                         <p className="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -552,7 +551,7 @@ export default function PsychologistsPage() {
                   <div className="space-y-6">
                     <div className="text-center">
                       <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-                        Psikolog Performansı
+                        Psikolog Değerlemesi
                       </h3>
                       <p className="text-slate-500 dark:text-slate-400">
                         Her psikologun tarih aralığına göre seans ve gelir istatistikleri
@@ -586,7 +585,6 @@ export default function PsychologistsPage() {
                                 </div>
                                 <div className="text-center mt-1">
                                     <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-semibold">
-                                        <DollarSign className="h-4 w-4" />
                                         {(psychologistStats[psych.id]?.income || 0).toLocaleString()} ₺
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">Toplam Gelir</p>
