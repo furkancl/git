@@ -91,14 +91,35 @@ export function HomePage() {
 
   const monthlyRevenue = useMemo(() => {
     if (!mounted) return 0
-    const today = new Date()
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
     
-    return appointments.filter((app) => {
-      const appointmentDate = new Date(app.appointment_date)
-      return appointmentDate >= startOfMonth && appointmentDate <= endOfMonth && app.fee
-    }).reduce((sum, app) => sum + (app.fee || 0), 0)
+    const now = new Date()
+    // Get start of current month (00:00:00 local time)
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    // Get end of current month (23:59:59.999 local time)
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+    
+    return appointments
+      .filter((app) => {
+        if (!app.appointment_date || app.fee === undefined || app.fee === null) return false
+        
+        // Create date in local timezone
+        const appointmentDate = new Date(app.appointment_date)
+        // Reset time components to handle pure date comparison
+        const appDateOnly = new Date(
+          appointmentDate.getFullYear(),
+          appointmentDate.getMonth(),
+          appointmentDate.getDate()
+        )
+        
+        return (
+          appDateOnly >= new Date(startOfMonth.getFullYear(), startOfMonth.getMonth(), startOfMonth.getDate()) &&
+          appDateOnly <= new Date(endOfMonth.getFullYear(), endOfMonth.getMonth(), endOfMonth.getDate())
+        )
+      })
+      .reduce((sum, app) => {
+        const fee = Number(app.fee)
+        return isNaN(fee) ? sum : sum + fee
+      }, 0)
   }, [appointments, mounted])
 
 

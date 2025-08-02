@@ -89,6 +89,8 @@ export default function RandevuPlanlamaPage() {
   const [newFee, setNewFee] = useState<string>("")
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [hoveredAppointmentId, setHoveredAppointmentId] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null)
 
   const currentWeekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 })
@@ -141,6 +143,36 @@ export default function RandevuPlanlamaPage() {
       setNewFee("")
     }
   }, [selectedAppointment, isEditing]); // Bağımlılıklara dikkat edin
+
+  const handleDeleteAppointment = async () => {
+    if (!appointmentToDelete) {
+      toast.error("Silinecek randevu bulunamadı");
+      setShowDeleteConfirm(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .delete()
+        .eq("id", appointmentToDelete.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setAppointments(prev => prev.filter(a => a.id !== appointmentToDelete.id));
+      
+      // Close the dialog and reset state
+      setShowDeleteConfirm(false);
+      setAppointmentToDelete(null);
+      
+      // Show success message
+      toast.success("Randevu başarıyla silindi");
+    } catch (error) {
+      console.error("Randevu silinirken hata:", error);
+      toast.error("Randevu silinirken bir hata oluştu");
+    }
+  };
 
   const handleSaveAppointment = async () => {
     if (
@@ -236,24 +268,9 @@ export default function RandevuPlanlamaPage() {
     }
   }
 
-  const handleDeleteAppointment = async () => {
-    if (selectedAppointment) {
-      // Toast mesajı için güvenli client name alma
-      const clientName = clients.find(c => c.id === selectedAppointment.client_id)?.name;
-
-      // Supabase'den sil
-      await supabase.from("appointments").delete().eq("id", selectedAppointment.id)
-      // Yeniden fetch - burada da psikolog bilgilerini çekmeyi unutmayın
-      const { data: apptsData } = await supabase.from("appointments").select("*, psychologists(id, name, renk_kodu)")
-      setAppointments((apptsData || []).map(a => ({ ...a, appointment_date: a.appointment_date })))
-      setSelectedAppointment(null)
-
-      toast.info("Randevu Silindi!", {
-        description: clientName
-          ? `${clientName} ile olan randevu iptal edildi.`
-          : "Randevu başarıyla iptal edildi.",
-      });
-    }
+  const confirmDeleteAppointment = (appointment: Appointment) => {
+    setAppointmentToDelete(appointment);
+    setShowDeleteConfirm(true);
   };
 
   const handleDragStart = (id: string) => setDraggedId(id)
@@ -309,25 +326,36 @@ export default function RandevuPlanlamaPage() {
 
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <Header />
-      <main className="flex-grow flex flex-col items-center justify-start p-4 md:p-8">
-        <div className="w-full max-w-5xl flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Randevu Planlama</h1>
-          <Button
-            className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-md transition-colors"
-            onClick={() => {
-              setIsAddOrEditDialogOpen(true)
-              setIsEditing(false)
-              setNewDate(currentWeekDays[0])
-            }}
-          >
-            + Randevu Planla
-          </Button>
+      <main className="flex-grow flex flex-col items-center justify-start p-6 md:p-8">
+        <div className="w-full max-w-6xl mb-8">
+          <div className="backdrop-blur-xl bg-white/30 dark:bg-slate-800/30 border border-white/20 dark:border-slate-700/30 rounded-3xl p-8 shadow-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-200 bg-clip-text text-transparent mb-2">
+                  Randevu Planlama
+                </h1>
+                <p className="text-slate-600 dark:text-slate-300 text-lg">
+                  Haftalık randevu takvimi ve yönetimi
+                </p>
+              </div>
+              <Button
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-4 rounded-2xl shadow-xl transition-all duration-300 transform hover:scale-105 border-0 text-lg font-semibold"
+                onClick={() => {
+                  setIsAddOrEditDialogOpen(true)
+                  setIsEditing(false)
+                  setNewDate(currentWeekDays[0])
+                }}
+              >
+                + Randevu Planla
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Haftalık Randevu Tablosu */}
-        <div className="overflow-x-auto w-full max-w-5xl border border-gray-100 rounded-xl shadow-md bg-white dark:bg-gray-800 dark:border-gray-700">
+        <div className="overflow-x-auto w-full max-w-6xl backdrop-blur-xl bg-white/40 dark:bg-slate-800/40 border border-white/30 dark:border-slate-700/30 rounded-3xl shadow-2xl">
           <table className="min-w-full">
             <colgroup>
               <col style={{ width: "60px" }} />
@@ -337,15 +365,19 @@ export default function RandevuPlanlamaPage() {
             </colgroup>
             <thead>
               <tr>
-                <th className="sticky top-0 left-0 z-20 bg-gray-50 border-b border-r border-gray-100 h-10 w-15 dark:bg-gray-700 dark:border-gray-600" />
+                <th className="sticky top-0 left-0 z-20 backdrop-blur-sm bg-white/60 dark:bg-slate-800/60 border-b border-r border-white/30 dark:border-slate-600/30 h-12 w-15 rounded-tl-3xl" />
                 {currentWeekDays.map((date, i) => (
                   <th
                     key={i}
-                    className="sticky top-0 z-20 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-600 h-10 px-2 text-center dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                    className={cn(
+                      "sticky top-0 z-20 backdrop-blur-sm bg-white/60 dark:bg-slate-800/60 border-b border-white/30 dark:border-slate-600/30 text-sm font-bold text-slate-700 dark:text-slate-200 h-12 px-3 text-center transition-all duration-200",
+                      i === days.length - 1 && "rounded-tr-3xl"
+                    )}
                   >
-                    {days[i]}
-                    <br />
-                    <span className="font-normal text-[10px]">{format(date, "dd MMM", { locale: tr })}</span>
+                    <div className="font-bold text-slate-800 dark:text-slate-100">{days[i]}</div>
+                    <div className="font-normal text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {format(date, "dd MMM", { locale: tr })}
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -385,7 +417,6 @@ export default function RandevuPlanlamaPage() {
                         // psikolog ID'sine göre sıralayarak çakışmalarda tutarlı bir görünüm sağlarız
                         .sort((a, b) => String(a.psychologist_id).localeCompare(String(b.psychologist_id)))
 
-
                       const clickableAppointment =
                         appointmentsStartingInSlot.length > 0
                           ? appointmentsStartingInSlot[0]
@@ -419,8 +450,9 @@ export default function RandevuPlanlamaPage() {
                         <td
                           key={`${dayIdx}-${slotIdx}`}
                           className={cn(
-                            `relative z-0 p-0 align-top h-6 border-b border-gray-100 text-center align-middle dark:border-gray-700`,
-                            // tdHoverClasses burada şimdilik kaldırılıyor, zira dinamik renkler doğrudan stil ile verilecek
+                            `relative z-0 p-0 align-top h-6 border-b border-white/20 dark:border-slate-600/20 text-center align-middle transition-all duration-300`,
+                            // Eğer bu slotta bir randevu varsa, randevu kutusundaki aynı efektleri ekle
+                            overlappingAppts.length > 0 ? "cursor-pointer hover:shadow-2xl hover:scale-105 hover:z-50" : "hover:bg-white/20 dark:hover:bg-slate-700/20"
                           )}
                           onDragOver={(e) => draggedId && e.preventDefault()}
                           onDrop={() => handleDrop(currentDayDate, slot.hour, slot.minute)}
@@ -428,6 +460,30 @@ export default function RandevuPlanlamaPage() {
                           onClick={() => {
                             if (clickableAppointment) {
                               setSelectedAppointment(clickableAppointment)
+                            }
+                          }}
+                          onMouseEnter={() => {
+                            // Eğer bu slotta bir randevu varsa, o randevuyu hover et
+                            if (overlappingAppts.length > 0) {
+                              setHoveredAppointmentId(overlappingAppts[0].id)
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            // Hover'dan çıkınca hover'i temizle
+                            if (overlappingAppts.length > 0) {
+                              setHoveredAppointmentId(null)
+                            }
+                          }}
+                          // Eğer bu slotta randevu varsa, drag işlemlerini ekle
+                          draggable={overlappingAppts.length > 0}
+                          onDragStart={() => {
+                            if (overlappingAppts.length > 0) {
+                              handleDragStart(overlappingAppts[0].id)
+                            }
+                          }}
+                          onDragEnd={() => {
+                            if (overlappingAppts.length > 0) {
+                              setDraggedId(null)
                             }
                           }}
                         >
@@ -446,7 +502,9 @@ export default function RandevuPlanlamaPage() {
                             return (
                               <div
                                 key={appt.id}
-                                className={`absolute rounded-lg py-1 text-xs font-medium cursor-pointer flex justify-center transition-all select-none flex-col px-1 border shadow items-stretch gap-y-0.5`}
+                                className={`absolute rounded-2xl py-2 text-xs font-medium cursor-pointer flex justify-center transition-all duration-300 select-none flex-col px-2 backdrop-blur-sm border border-white/30 shadow-xl items-stretch gap-y-1 ${
+                                  hoveredAppointmentId === appt.id ? 'shadow-2xl scale-105 z-50' : 'hover:shadow-2xl hover:scale-105'
+                                }`}
                                 style={{
                                   top: 0,
                                   height: `${apptHeight}px`,
@@ -463,6 +521,10 @@ export default function RandevuPlanlamaPage() {
                                 onDragEnd={() => setDraggedId(null)}
                                 onMouseEnter={() => setHoveredAppointmentId(appt.id)}
                                 onMouseLeave={() => setHoveredAppointmentId(null)}
+                                onClick={(e) => {
+                                  e.stopPropagation() // Tablo hücresinin tıklama olayını engelle
+                                  setSelectedAppointment(appt)
+                                }}
                               >
                                 {/* Client Name */}
                                 <div className="truncate font-semibold text-sm">{client?.name}</div>
@@ -546,7 +608,14 @@ export default function RandevuPlanlamaPage() {
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={handleDeleteAppointment}
+                  onClick={() => {
+                    if (selectedAppointment) {
+                      setAppointmentToDelete(selectedAppointment);
+                      setShowDeleteConfirm(true);
+                    } else {
+                      toast.error("Lütfen silinecek bir randevu seçin");
+                    }
+                  }}
                   className="rounded-lg"
                 >
                   Sil
@@ -567,9 +636,9 @@ export default function RandevuPlanlamaPage() {
             }
           }}
         >
-          <DialogContent className="dark:bg-gray-800 rounded-xl shadow-lg">
+          <DialogContent className="backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 border-0 shadow-2xl rounded-3xl max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="dark:text-gray-100">
+              <DialogTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">
                 {isEditing ? "Randevu Düzenle" : "Yeni Randevu Planla"}
               </DialogTitle>
             </DialogHeader>
@@ -716,6 +785,86 @@ export default function RandevuPlanlamaPage() {
               </Button>
               <Button onClick={handleSaveAppointment} className="dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg">
                 {isEditing ? "Kaydet" : "Ekle"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Silme Onay Diyaloğu */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 border-0 shadow-2xl rounded-3xl max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                Randevuyu Sil
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-gray-700 dark:text-gray-200">Bu randevuyu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+              {appointmentToDelete && (
+                <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-700 rounded-md">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {clients.find(c => c.id === appointmentToDelete.client_id)?.name || 'Bilinmeyen Danışan'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                    {`${String(appointmentToDelete.hour).padStart(2, '0')}:${String(appointmentToDelete.minute).padStart(2, '0')} - ${getEndTime(appointmentToDelete.hour, appointmentToDelete.minute, appointmentToDelete.duration).hour}:${String(getEndTime(appointmentToDelete.hour, appointmentToDelete.minute, appointmentToDelete.duration).minute).padStart(2, '0')}`}
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                İptal
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleDeleteAppointment}
+                className="bg-red-600 hover:bg-red-700 rounded-lg"
+              >
+                Sil
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Silme Onay Diyaloğu */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 border-0 shadow-2xl rounded-3xl max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                Randevuyu Sil
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-gray-700 dark:text-gray-200">Bu randevuyu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+              {appointmentToDelete && (
+                <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-700 rounded-md">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {clients.find(c => c.id === appointmentToDelete.client_id)?.name || 'Bilinmeyen Danışan'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                    {`${String(appointmentToDelete.hour).padStart(2, '0')}:${String(appointmentToDelete.minute).padStart(2, '0')} - ${getEndTime(appointmentToDelete.hour, appointmentToDelete.minute, appointmentToDelete.duration).hour}:${String(getEndTime(appointmentToDelete.hour, appointmentToDelete.minute, appointmentToDelete.duration).minute).padStart(2, '0')}`}
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                İptal
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleDeleteAppointment}
+                className="bg-red-600 hover:bg-red-700 rounded-lg"
+              >
+                Sil
               </Button>
             </DialogFooter>
           </DialogContent>

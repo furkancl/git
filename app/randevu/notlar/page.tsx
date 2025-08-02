@@ -1,113 +1,145 @@
 "use client"
 
 import { Header } from "@/components/header"
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { format, startOfWeek, addDays, isWithinInterval } from "date-fns"
+import { format, startOfWeek, addDays, isWithinInterval, startOfDay, endOfDay } from "date-fns"
 import { tr } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { CheckIcon, CalendarIcon } from "lucide-react"
+import { CheckIcon, CalendarIcon, Loader2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import type { DateRange } from "react-day-picker"
+import { supabase } from "@/lib/supabase"
+import { toast } from "sonner"
 
-// Dummy danışan verisi
-const initialClients = [
-  { id: 1, name: "Ayşe Yılmaz" },
-  { id: 2, name: "Mehmet Demir" },
-  { id: 3, name: "Zeynep Kaya" },
-]
+// Supabase tipleri
+type Client = {
+  id: number
+  name: string
+  created_at?: string
+}
 
-// Dummy psikolog verisi
-const initialPsychologists = [
-  { id: 101, name: "Dr. Elif Yılmaz" },
-  { id: 102, name: "Uzm. Psk. Can Demir" },
-  { id: 103, name: "Psk. Zeynep Akın" },
-]
+type Psychologist = {
+  id: string
+  name: string
+  renk_kodu?: string
+  created_at?: string
+}
 
-// Dummy not verisi
-const today = new Date()
-const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }) // Haftanın başlangıcı Pazartesi (1)
-
-const initialNotes = [
-  {
-    id: 1,
-    clientId: 1,
-    psychologistId: 101,
-    date: addDays(startOfCurrentWeek, 0), // Pazartesi
-    content:
-      "İlk seans notları: Danışan oldukça gergin, uyum sorunları yaşıyor. Gelecek seans için hedefler belirlendi.",
-  },
-  {
-    id: 2,
-    clientId: 2,
-    psychologistId: 102,
-    date: addDays(startOfCurrentWeek, 2), // Çarşamba
-    content:
-      "Aile danışmanlığı seansı. İletişim problemleri üzerinde duruldu. Çiftin birbirini dinlemesi teşvik edildi.",
-  },
-  {
-    id: 3,
-    clientId: 1,
-    psychologistId: 101,
-    date: addDays(startOfCurrentWeek, 0), // Pazartesi (aynı danışan, aynı gün, farklı not)
-    content: "Ek not: Danışanın ev ödevlerini tamamladığı görüldü. İlerleme kaydediliyor.",
-  },
-  {
-    id: 4,
-    clientId: 3,
-    psychologistId: 103,
-    date: addDays(startOfCurrentWeek, 4), // Cuma
-    content: "Çocuk seansı. Oyun terapisi ile ilerleme kaydedildi. Aile ile geri bildirim paylaşıldı.",
-  },
-  {
-    id: 5,
-    clientId: 2,
-    psychologistId: 102,
-    date: addDays(startOfCurrentWeek, 0), // Pazartesi
-    content: "Grup terapisi notları: Katılımcıların etkileşimi olumlu. Yeni üyeler gruba adapte oluyor.",
-  },
-  {
-    id: 6,
-    clientId: 1,
-    psychologistId: 101,
-    date: addDays(startOfCurrentWeek, 1), // Salı
-    content:
-      "Takip seansı: Danışanın kaygı seviyesinde düşüş gözlemlendi. Yeni başa çıkma stratejileri üzerinde duruldu.",
-  },
-  {
-    id: 7,
-    clientId: 1,
-    psychologistId: 101,
-    date: addDays(startOfCurrentWeek, 3), // Perşembe
-    content: "Online seans: Danışan evden katıldı. Ortamın rahatlatıcı etkisi oldu. İleriye dönük planlar yapıldı.",
-  },
-]
+interface Note {
+  id: number
+  client_id: number
+  psychologist_id: number
+  content: string
+  note_date?: string
+  date?: string
+  created_at: string
+  updated_at?: string
+}
 
 const days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
 export default function RandevuNotlariPage() {
-  const [clients] = useState(initialClients)
-  const [psychologists] = useState(initialPsychologists)
-  const [notes, setNotes] = useState(initialNotes)
+  const [clients, setClients] = useState<Client[]>([])
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([])
+  const [notes, setNotes] = useState<Note[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
-  const [selectedPsychologistFilter, setSelectedPsychologistFilter] = useState<string>("all")
-  const [selectedDateFilter, setSelectedDateFilter] = useState<DateRange | undefined>(undefined) // DateRange tipini kullanıyoruz
-  const [selectedClient, setSelectedClient] = useState<(typeof initialClients)[0] | null>(null)
+  const [selectedPsychologistFilter, setSelectedPsychologistFilter] = useState<number | "all">("all")
+  const [selectedDateFilter, setSelectedDateFilter] = useState<DateRange | undefined>(undefined)
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
   const [isAddOrEditNoteModalOpen, setIsAddOrEditNoteModalOpen] = useState(false)
   const [isEditingNote, setIsEditingNote] = useState(false)
   const [currentNoteId, setCurrentNoteId] = useState<number | null>(null)
 
-  const [newNoteClientId, setNewNoteClientId] = useState<string>("")
-  const [newNotePsychologistId, setNewNotePsychologistId] = useState<string>("")
+  const [newNoteClientId, setNewNoteClientId] = useState<number | "">("")
+  const [newNotePsychologistId, setNewNotePsychologistId] = useState<number | "">("")
   const [newNoteDate, setNewNoteDate] = useState<Date | undefined>(undefined)
   const [newNoteContent, setNewNoteContent] = useState("")
+  const [searchTerm, setSearchTerm] = useState<string>("")
+
+  // Form sıfırlama fonksiyonu
+  const resetForm = () => {
+    setNewNoteClientId("")
+    setNewNotePsychologistId("")
+    setNewNoteDate(undefined)
+    setNewNoteContent("")
+    setCurrentNoteId(null)
+    setIsEditingNote(false)
+  }
+
+  // Verileri Supabase'den çekmek için fonksiyon
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      // Danışanları çek
+      const { data: clientsData, error: clientsError } = await supabase
+        .from("clients")
+        .select("id, name, created_at")
+      if (clientsError) throw clientsError
+      setClients(clientsData || [])
+
+      // Psikologları çek
+      const { data: psychologistsData, error: psychologistsError } = await supabase
+        .from("psychologists")
+        .select("id, name, renk_kodu, created_at")
+      if (psychologistsError) throw psychologistsError
+      setPsychologists(psychologistsData || [])
+      
+      // Psikolog ID'lerini konsola yazdır
+      console.log("Mevcut psikologlar:", psychologistsData?.map(p => ({
+        id: p.id,
+        name: p.name,
+        type: typeof p.id
+      })))
+
+      // Notes tablosundan verileri çek
+      const { data: notesData, error: notesError } = await supabase
+        .from("notes")
+        .select("*")
+      
+      if (notesError) {
+        console.error("Notes error:", notesError)
+        throw notesError
+      }
+      
+      // Notlardaki psikolog ID'lerini kontrol et
+      if (notesData && notesData.length > 0) {
+        console.log("Notlardaki benzersiz psikolog ID'leri:", 
+          [...new Set(notesData.map(n => n.psychologist_id))]
+        )
+        console.log("İlk notun yapısı:", {
+          ...notesData[0],
+          psychologist_id_type: typeof notesData[0]?.psychologist_id
+        })
+      }
+      
+      setNotes(notesData || [])
+
+    } catch (err: any) {
+      console.error("Veri çekme hatası:", err.message)
+      setError("Veriler yüklenirken bir hata oluştu: " + err.message)
+      toast.error("Veriler yüklenirken bir hata oluştu")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Bileşen yüklendiğinde verileri çek
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const currentWeekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 })
@@ -119,173 +151,296 @@ export default function RandevuNotlariPage() {
     if (selectedPsychologistFilter === "all") {
       return clients
     }
+    const psychologistId = Number(selectedPsychologistFilter)
     const clientsWithNotesForPsychologist = new Set(
       notes
-        .filter((note) => note.psychologistId.toString() === selectedPsychologistFilter)
-        .map((note) => note.clientId),
+        .filter((note: Note) => note.psychologist_id === psychologistId)
+        .map((note: Note) => note.client_id),
     )
-    return clients.filter((client) => clientsWithNotesForPsychologist.has(client.id))
+    return clients.filter((client: Client) => clientsWithNotesForPsychologist.has(client.id))
   }, [clients, notes, selectedPsychologistFilter])
+
+  // Seçili psikolog bilgisini al
+  const selectedPsychologistInfo = useMemo(() => {
+    if (selectedPsychologistFilter === "all") return null
+    
+    // Hem string hem number karşılaştırması yap
+    return psychologists.find((p: Psychologist) => 
+      p.id === selectedPsychologistFilter.toString() || 
+      Number(p.id) === selectedPsychologistFilter
+    )
+  }, [psychologists, selectedPsychologistFilter])
 
   // Seçili danışanın notlarını filtrele ve kronolojik sırala (en yeni en üstte)
   // Veya danışan seçili değilse, psikolog ve tarih filtresine göre tüm notları sırala
   const filteredAndSortedNotes = useMemo(() => {
-    let notesToDisplay = notes
+    let filtered = notes
 
-    // Psikolog filtresi uygula
-    if (selectedPsychologistFilter !== "all") {
-      notesToDisplay = notesToDisplay.filter((note) => note.psychologistId.toString() === selectedPsychologistFilter)
+    // Müşteri filtresi
+    if (selectedClient) {
+      filtered = filtered.filter((note: any) => note.client_id === selectedClient.id)
     }
 
-    // Tarih aralığı filtresi uygula
+    // Psikolog filtresi
+    if (selectedPsychologistFilter !== "all") {
+      const selectedId = Number(selectedPsychologistFilter)
+      console.log("Psikolog filtresi uygulanıyor. Seçilen psikolog ID:", selectedId, "Türü:", typeof selectedId)
+      filtered = filtered.filter((note: Note) => {
+        const matches = note.psychologist_id === selectedId
+        console.log(`Not ID: ${note.id}, Psikolog ID: ${note.psychologist_id} (${typeof note.psychologist_id}), Eşleşme: ${matches}`)
+        return matches
+      })
+      console.log("Filtreleme sonrası not sayısı:", filtered.length)
+    }
+
+    // Tarih aralığı filtresi
     if (selectedDateFilter?.from || selectedDateFilter?.to) {
-      notesToDisplay = notesToDisplay.filter((note) => {
-        // If only 'from' date is selected, filter from that date onwards
-        if (selectedDateFilter?.from && !selectedDateFilter?.to) {
-          return note.date >= selectedDateFilter.from
-        }
-        // If only 'to' date is selected, filter up to that date
-        else if (!selectedDateFilter?.from && selectedDateFilter?.to) {
-          return note.date <= selectedDateFilter.to
-        }
-        // If both dates are selected, use interval check
-        else if (selectedDateFilter?.from && selectedDateFilter?.to) {
-          return isWithinInterval(note.date, { 
-            start: selectedDateFilter.from, 
-            end: selectedDateFilter.to 
-          })
+      filtered = filtered.filter((note: any) => {
+        // Esnek tarih alanı - note_date, date veya created_at kullanabilir
+        const noteDateStr = note.note_date || note.date || note.created_at
+        if (!noteDateStr) return true
+        
+        const noteDate = new Date(noteDateStr)
+        const from = selectedDateFilter?.from
+        const to = selectedDateFilter?.to
+
+        if (from && to) {
+          return isWithinInterval(noteDate, { start: startOfDay(from), end: endOfDay(to) })
+        } else if (from) {
+          return noteDate >= startOfDay(from)
+        } else if (to) {
+          return noteDate <= endOfDay(to)
         }
         return true
       })
     }
 
-    // Danışan seçiliyse, sadece o danışanın notlarını göster
-    if (selectedClient) {
-      notesToDisplay = notesToDisplay.filter((note) => note.clientId === selectedClient.id)
+    // Arama filtresi
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim()
+      filtered = filtered.filter((note: any) => {
+        const clientName = clients.find((c: any) => c.id === note.client_id)?.name?.toLowerCase() || ""
+        const psychologistName = psychologists.find((p: any) => p.id === note.psychologist_id)?.name?.toLowerCase() || ""
+        const content = note.content?.toLowerCase() || ""
+        
+        return clientName.includes(search) || psychologistName.includes(search) || content.includes(search)
+      })
     }
 
-    // Kronolojik sırala (en yeni en üstte)
-    return notesToDisplay.sort((a, b) => b.date.getTime() - a.date.getTime())
-  }, [notes, selectedClient, selectedPsychologistFilter, selectedDateFilter])
+    // Tarihe göre sırala (en yeni önce)
+    return filtered.sort((a: any, b: any) => {
+      const dateStrA = a.note_date || a.date || a.created_at
+      const dateStrB = b.note_date || b.date || b.created_at
+      
+      if (!dateStrA || !dateStrB) return 0
+      
+      const dateA = new Date(dateStrA)
+      const dateB = new Date(dateStrB)
+      return dateB.getTime() - dateA.getTime()
+    })
+  }, [notes, selectedClient, selectedPsychologistFilter, selectedDateFilter, searchTerm, clients, psychologists])
 
   // Düzenleme modunda modalı doldur
   useEffect(() => {
     if (isEditingNote && currentNoteId !== null) {
-      const noteToEdit = notes.find((note) => note.id === currentNoteId)
+      const noteToEdit = notes.find((note: any) => note.id === currentNoteId)
       if (noteToEdit) {
-        setNewNoteClientId(noteToEdit.clientId.toString())
-        setNewNotePsychologistId(noteToEdit.psychologistId.toString())
-        setNewNoteDate(noteToEdit.date)
+        setNewNoteClientId(noteToEdit.client_id)
+        setNewNotePsychologistId(noteToEdit.psychologist_id)
+        // Esnek tarih alanı kullan
+        const dateStr = noteToEdit.note_date || noteToEdit.date || noteToEdit.created_at
+        setNewNoteDate(dateStr ? new Date(dateStr) : new Date())
         setNewNoteContent(noteToEdit.content)
       }
     } else {
       // Modal kapandığında veya ekleme moduna geçildiğinde formu sıfırla
-      setNewNoteClientId(selectedClient ? selectedClient.id.toString() : "")
+      setNewNoteClientId(selectedClient ? selectedClient.id : "")
       setNewNotePsychologistId(selectedPsychologistFilter !== "all" ? selectedPsychologistFilter : "")
       setNewNoteDate(new Date()) // Varsayılan olarak bugünün tarihi
       setNewNoteContent("")
     }
   }, [isEditingNote, currentNoteId, notes, selectedClient, selectedPsychologistFilter])
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (!newNoteClientId || !newNotePsychologistId || !newNoteDate || newNoteContent.trim().length === 0) {
-      alert("Lütfen tüm alanları doldurun.")
+      toast.error("Lütfen tüm alanları doldurun.")
       return
     }
 
-    if (isEditingNote && currentNoteId !== null) {
-      setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-          note.id === currentNoteId
-            ? {
-                ...note,
-                clientId: Number(newNoteClientId),
-                psychologistId: Number(newNotePsychologistId),
-                date: newNoteDate,
-                content: newNoteContent,
-              }
-            : note,
-        ),
-      )
-    } else {
-      setNotes((prevNotes) => [
-        ...prevNotes,
-        {
-          id: Date.now(),
-          clientId: Number(newNoteClientId),
-          psychologistId: Number(newNotePsychologistId),
-          date: newNoteDate,
+    setIsSaving(true)
+    try {
+      if (isEditingNote && currentNoteId !== null) {
+        // Not güncelle - esnek tarih alanı kullan
+        const updateData: any = {
+          client_id: newNoteClientId,
+          psychologist_id: newNotePsychologistId,
           content: newNoteContent,
-        },
-      ])
+        }
+        
+        // Tarih alanını esnek şekilde ayarla
+        const dateStr = format(newNoteDate, "yyyy-MM-dd")
+        const { error } = await supabase
+          .from("notes")
+          .update(updateData)
+          .eq("id", currentNoteId)
+        
+        if (error) throw error
+        toast.success("Not başarıyla güncellendi")
+      } else {
+        const noteData = {
+          client_id: newNoteClientId,
+          psychologist_id: newNotePsychologistId,
+          content: newNoteContent,
+          note_date: format(newNoteDate, "yyyy-MM-dd"),
+          created_at: new Date().toISOString()
+        }
+        
+        const { error } = await supabase
+          .from("notes")
+          .insert([noteData])
+        
+        if (error) throw error
+        toast.success("Not başarıyla eklendi")
+      }
+
+      resetForm()
+      await fetchData()
+      setIsAddOrEditNoteModalOpen(false)
+    } catch (error: any) {
+      console.error("Not kaydedilirken hata:", error)
+      toast.error("Not kaydedilirken bir hata oluştu: " + error.message)
+    } finally {
+      setIsSaving(false)
     }
+  }
+
+  const handleDeleteNote = async (id: number) => {
+    if (!window.confirm("Bu notu silmek istediğinizden emin misiniz?")) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from("notes")
+        .delete()
+        .eq("id", id)
+      
+      if (error) throw error
+      
+      toast.success("Not başarıyla silindi")
+      await fetchData() // Verileri yeniden çek
+      
+    } catch (err: any) {
+      console.error("Not silme hatası:", err.message)
+      toast.error("Not silinirken bir hata oluştu")
+    }
+    
     setIsAddOrEditNoteModalOpen(false)
     setIsEditingNote(false)
     setCurrentNoteId(null)
   }
 
-  const handleDeleteNote = (id: number) => {
-    if (window.confirm("Bu notu silmek istediğinizden emin misiniz?")) {
-      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id))
-      setIsAddOrEditNoteModalOpen(false)
-      setIsEditingNote(false)
-      setCurrentNoteId(null)
-    }
+  // Loading durumu
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Veriler yükleniyor...</span>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Error durumu
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={fetchData}>Tekrar Dene</Button>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       <main className="flex-grow flex flex-col md:flex-row items-start justify-start p-4 md:p-8 gap-6">
-        {/* Sol Panel: Danışan Listesi ve Filtreler */}
-        <Card className="w-full md:w-1/4 flex-shrink-0 dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">Danışanlar</CardTitle>
-            <div className="mt-4">
-              <label htmlFor="filter-psychologist" className="sr-only">
-                Psikolog Filtresi
-              </label>
-              <Select value={selectedPsychologistFilter} onValueChange={setSelectedPsychologistFilter}>
-                <SelectTrigger
-                  id="filter-psychologist"
-                  className="w-full dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg"
+        {/* Sol Panel: Arama ve Filtreler */}
+        <div className="w-full md:w-1/4 space-y-4">
+          {/* Arama Kutusu */}
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+            <h3 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Ara</h3>
+            <Input
+              type="text"
+              placeholder="İsim, not içeriği..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full dark:bg-gray-700 dark:border-gray-600"
+            />
+          </div>
+          
+          {/* Psikolog Filtresi */}
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+            <h3 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Psikolog Filtresi</h3>
+                <Select
+                  value={selectedPsychologistFilter === "all" ? "all" : selectedPsychologistFilter.toString()}
+                  onValueChange={(value) => setSelectedPsychologistFilter(value === "all" ? "all" : Number(value))}
                 >
-                  <SelectValue placeholder="Psikolog Filtrele" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-700 dark:text-gray-100 rounded-lg">
-                  <SelectItem value="all">Tüm Psikologlar</SelectItem>
-                  {psychologists.map((psychologist) => (
-                    <SelectItem key={psychologist.id} value={psychologist.id.toString()}>
-                      {psychologist.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {/* ScrollArea yüksekliği küçük ekranlarda sabit, büyük ekranlarda dinamik */}
-            <ScrollArea className="h-[300px] md:h-[calc(100vh-280px)]">
-              <nav className="grid gap-1 p-2">
-                {filteredClients.length === 0 ? (
-                  <p className="text-center text-gray-500 dark:text-gray-400 py-4">Danışan bulunamadı.</p>
-                ) : (
-                  filteredClients.map((client) => (
-                    <Button
-                      key={client.id}
-                      variant={selectedClient?.id === client.id ? "secondary" : "ghost"}
-                      className="justify-start text-left px-3 py-2 rounded-lg dark:hover:bg-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:hover:text-gray-100"
-                      onClick={() => setSelectedClient(selectedClient?.id === client.id ? null : client)}
-                    >
-                      <span className="flex-grow">{client.name}</span>
-                      {selectedClient?.id === client.id && <CheckIcon className="ml-2 h-4 w-4" />}
-                    </Button>
-                  ))
-                )}
-              </nav>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Psikolog seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tüm Psikologlar</SelectItem>
+                    {psychologists.map((psychologist) => (
+                      <SelectItem key={psychologist.id} value={psychologist.id.toString()}>
+                        {psychologist.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+          </div>
+
+          {/* Danışan Listesi */}
+          <Card className="w-full dark:bg-gray-800 dark:border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Danışanlar
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[300px] md:h-[calc(100vh-500px)]">
+                <nav className="grid gap-1 p-2">
+                  {filteredClients.length === 0 ? (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                      {psychologists.length > 0 ? "Danışan bulunamadı" : "Psikolog seçin"}
+                    </p>
+                  ) : (
+                    filteredClients.map((client) => (
+                      <Button
+                        key={client.id}
+                        variant={selectedClient?.id === client.id ? "secondary" : "ghost"}
+                        className="justify-start text-left px-3 py-2 rounded-lg dark:hover:bg-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:hover:text-gray-100"
+                        onClick={() => setSelectedClient(selectedClient?.id === client.id ? null : client)}
+                      >
+                        <span className="flex-grow">{client.name}</span>
+                        {selectedClient?.id === client.id && <CheckIcon className="ml-2 h-4 w-4" />}
+                      </Button>
+                    ))
+                  )}
+                </nav>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Sağ Panel: Danışan Notları */}
         <Card className="flex-grow w-full dark:bg-gray-800 dark:border-gray-700">
@@ -293,8 +448,8 @@ export default function RandevuNotlariPage() {
             <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-0">
               {selectedClient
                 ? `${selectedClient.name} Notları`
-                : selectedPsychologistFilter !== "all"
-                  ? `${psychologists.find((p) => p.id.toString() === selectedPsychologistFilter)?.name} Notları`
+                : selectedPsychologistFilter !== "all" && selectedPsychologistInfo
+                  ? `${selectedPsychologistInfo.name} Notları`
                   : "Tüm Notlar"}
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -366,11 +521,14 @@ export default function RandevuNotlariPage() {
                     >
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-semibold text-gray-800 dark:text-gray-100">
-                          {clients.find((c) => c.id === note.clientId)?.name} -{" "}
-                          {format(note.date, "dd MMMM yyyy EEEE", { locale: tr })}
+                          {clients.find((c: any) => c.id === note.client_id)?.name} -{" "}
+                          {(() => {
+                            const dateStr = note.note_date || note.date || note.created_at
+                            return dateStr ? format(new Date(dateStr), "dd MMMM yyyy EEEE", { locale: tr }) : "Tarih yok"
+                          })()}
                         </span>
                         <span className="text-sm text-gray-600 dark:text-gray-300">
-                          {psychologists.find((p) => p.id === note.psychologistId)?.name}
+                          {psychologists.find((p: Psychologist) => Number(p.id) === note.psychologist_id)?.name}
                         </span>
                       </div>
                       <p className="text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{note.content}</p>
@@ -405,15 +563,15 @@ export default function RandevuNotlariPage() {
                   Danışan
                 </label>
                 <Select
-                  value={newNoteClientId}
-                  onValueChange={setNewNoteClientId}
+                  value={newNoteClientId === "" ? "" : newNoteClientId.toString()}
+                  onValueChange={(value) => setNewNoteClientId(value === "" ? "" : Number(value))}
                   disabled={isEditingNote && currentNoteId !== null}
                 >
                   <SelectTrigger
                     id="note-client"
                     className="col-span-3 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg"
                   >
-                    <SelectValue placeholder="Danışan seç" />
+                    <SelectValue placeholder="Danışan seçin" />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-700 dark:text-gray-100 rounded-lg">
                     {clients.map((client) => (
@@ -428,17 +586,23 @@ export default function RandevuNotlariPage() {
                 <label htmlFor="note-psychologist" className="text-right font-medium text-gray-700 dark:text-gray-200">
                   Psikolog
                 </label>
-                <Select value={newNotePsychologistId} onValueChange={setNewNotePsychologistId}>
-                  <SelectTrigger
-                    id="note-psychologist"
-                    className="col-span-3 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg"
-                  >
-                    <SelectValue placeholder="Psikolog seç" />
+                <Select
+                  value={newNotePsychologistId === "" ? "" : newNotePsychologistId.toString()}
+                  onValueChange={(value) => setNewNotePsychologistId(value === "" ? "" : Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Psikolog seçin" />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-700 dark:text-gray-100 rounded-lg">
+                  <SelectContent>
                     {psychologists.map((psychologist) => (
                       <SelectItem key={psychologist.id} value={psychologist.id.toString()}>
-                        {psychologist.name}
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: psychologist.renk_kodu || '#6b7280' }}
+                          />
+                          {psychologist.name}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -498,11 +662,18 @@ export default function RandevuNotlariPage() {
                 <Button
                   onClick={handleSaveNote}
                   disabled={
-                    !newNoteClientId || !newNotePsychologistId || !newNoteDate || newNoteContent.trim().length === 0
+                    isSaving || !newNoteClientId || !newNotePsychologistId || !newNoteDate || newNoteContent.trim().length === 0
                   }
                   className="dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg"
                 >
-                  {isEditingNote ? "Kaydet" : "Ekle"}
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditingNote ? "Güncelleniyor..." : "Ekleniyor..."}
+                    </>
+                  ) : (
+                    isEditingNote ? "Kaydet" : "Ekle"
+                  )}
                 </Button>
               </div>
             </DialogFooter>
