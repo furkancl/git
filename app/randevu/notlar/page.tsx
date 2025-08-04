@@ -68,6 +68,10 @@ export default function RandevuNotlariPage() {
   const [newNoteContent, setNewNoteContent] = useState("")
   const [searchTerm, setSearchTerm] = useState<string>("")
 
+  // Silme onay diyaloğu için yeni state'ler
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null)
+
   // Form sıfırlama fonksiyonu
   const resetForm = () => {
     setNewNoteClientId("")
@@ -87,6 +91,7 @@ export default function RandevuNotlariPage() {
       const { data: clientsData, error: clientsError } = await supabase
         .from("clients")
         .select("id, name, created_at")
+        .order('created_at', { ascending: false }) // En yeni kayıtlar üstte
       if (clientsError) throw clientsError
       setClients(clientsData || [])
 
@@ -135,6 +140,33 @@ export default function RandevuNotlariPage() {
       setLoading(false)
     }
   }, [])
+
+  // Realtime subscription for client changes
+  useEffect(() => {
+    // Set up the subscription
+    const clientSubscription = supabase
+      .channel('clients_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'clients' 
+        }, 
+        (payload) => {
+          // When any change happens to clients table, refetch the data
+          fetchData();
+        }
+      )
+      .subscribe()
+
+    // Initial data fetch
+    fetchData()
+
+    // Cleanup subscription on component unmount
+    return () => {
+      supabase.removeChannel(clientSubscription)
+    }
+  }, [fetchData])
 
   // Bileşen yüklendiğinde verileri çek
   useEffect(() => {
@@ -263,7 +295,10 @@ export default function RandevuNotlariPage() {
 
   const handleSaveNote = async () => {
     if (!newNoteClientId || !newNotePsychologistId || !newNoteDate || newNoteContent.trim().length === 0) {
-      toast.error("Lütfen tüm alanları doldurun.")
+      toast.error("Gerekli Alanlar Eksik!", {
+        description: "Lütfen not bilgilerinin tümünü doldurun.",
+        duration: 3000,
+      });
       return
     }
 
@@ -285,13 +320,20 @@ export default function RandevuNotlariPage() {
           .eq("id", currentNoteId)
         
         if (error) throw error
-        toast.success("Not başarıyla güncellendi")
+
+        // Toast mesajı için güvenli client name alma
+        const clientName = clients.find(c => c.id === newNoteClientId)?.name;
+        toast.success("Not Başarıyla Güncellendi!", {
+          description: clientName
+            ? `${clientName} için not güncellendi.`
+            : "Not başarıyla güncellendi.",
+        });
       } else {
         const noteData = {
           client_id: newNoteClientId,
           psychologist_id: newNotePsychologistId,
           content: newNoteContent,
-          note_date: format(newNoteDate, "yyyy-MM-dd"),
+          date: format(newNoteDate, "yyyy-MM-dd"),
           created_at: new Date().toISOString()
         }
         
@@ -300,7 +342,14 @@ export default function RandevuNotlariPage() {
           .insert([noteData])
         
         if (error) throw error
-        toast.success("Not başarıyla eklendi")
+
+        // Toast mesajı için güvenli client name alma
+        const clientName = clients.find(c => c.id === newNoteClientId)?.name;
+        toast.success("Yeni Not Eklendi!", {
+          description: clientName
+            ? `${clientName} için yeni bir not oluşturuldu.`
+            : "Not başarıyla oluşturuldu.",
+        });
       }
 
       resetForm()
@@ -308,36 +357,56 @@ export default function RandevuNotlariPage() {
       setIsAddOrEditNoteModalOpen(false)
     } catch (error: any) {
       console.error("Not kaydedilirken hata:", error)
-      toast.error("Not kaydedilirken bir hata oluştu: " + error.message)
+      toast.error("Hata!", { description: error.message })
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleDeleteNote = async (id: number) => {
-    if (!window.confirm("Bu notu silmek istediğinizden emin misiniz?")) {
-      return
+  // Silme onayı için fonksiyon
+  const confirmDeleteNote = (note: Note) => {
+    setNoteToDelete(note);
+    setShowDeleteConfirm(true);
+  };
+
+  // Gelişmiş silme fonksiyonu
+  const handleDeleteNote = async () => {
+    if (!noteToDelete) {
+      toast.error("Silinecek not bulunamadı");
+      setShowDeleteConfirm(false);
+      return;
     }
 
     try {
       const { error } = await supabase
         .from("notes")
         .delete()
-        .eq("id", id)
+        .eq("id", noteToDelete.id)
       
       if (error) throw error
+
+      // Update local state
+      setNotes(prev => prev.filter(n => n.id !== noteToDelete.id));
       
-      toast.success("Not başarıyla silindi")
-      await fetchData() // Verileri yeniden çek
+      // Close the dialog and reset state
+      setShowDeleteConfirm(false);
+      setNoteToDelete(null);
+      setIsAddOrEditNoteModalOpen(false);
+      setIsEditingNote(false);
+      setCurrentNoteId(null);
+      
+      // Show success message with client name
+      const clientName = clients.find(c => c.id === noteToDelete.client_id)?.name;
+      toast.success("Not Başarıyla Silindi!", {
+        description: clientName
+          ? `${clientName} için not başarıyla silindi.`
+          : "Not başarıyla silindi.",
+      });
       
     } catch (err: any) {
       console.error("Not silme hatası:", err.message)
-      toast.error("Not silinirken bir hata oluştu")
+      toast.error("Not silinirken bir hata oluştu");
     }
-    
-    setIsAddOrEditNoteModalOpen(false)
-    setIsEditingNote(false)
-    setCurrentNoteId(null)
   }
 
   // Loading durumu
@@ -519,19 +588,23 @@ export default function RandevuNotlariPage() {
                         setIsAddOrEditNoteModalOpen(true)
                       }}
                     >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-gray-800 dark:text-gray-100">
-                          {clients.find((c: any) => c.id === note.client_id)?.name} -{" "}
-                          {(() => {
-                            const dateStr = note.note_date || note.date || note.created_at
-                            return dateStr ? format(new Date(dateStr), "dd MMMM yyyy EEEE", { locale: tr }) : "Tarih yok"
-                          })()}
-                        </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-300">
-                          {psychologists.find((p: Psychologist) => Number(p.id) === note.psychologist_id)?.name}
-                        </span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-2 mb-2">
+                        <div className="font-semibold text-gray-800 dark:text-gray-100">
+                          {clients.find((c: any) => c.id === note.client_id)?.name || 'Bilinmeyen Danışan'}
+                        </div>
+                        <div className="flex flex-col sm:items-end gap-1">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                            {psychologists.find((p: Psychologist) => Number(p.id) === note.psychologist_id)?.name || 'Bilinmeyen Psikolog'}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {(() => {
+                              const dateStr = note.note_date || note.date || note.created_at
+                              return dateStr ? format(new Date(dateStr), "dd MMMM yyyy EEEE", { locale: tr }) : "Tarih yok"
+                            })()}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{note.content}</p>
+                      <p className="text-gray-700 dark:text-gray-200 whitespace-pre-wrap mt-2">{note.content}</p>
                     </div>
                   ))}
                 </div>
@@ -551,9 +624,9 @@ export default function RandevuNotlariPage() {
             }
           }}
         >
-          <DialogContent className="dark:bg-gray-800 rounded-xl shadow-lg">
+          <DialogContent className="backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 border-0 shadow-2xl rounded-3xl max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="dark:text-gray-100">
+              <DialogTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">
                 {isEditingNote ? "Notu Düzenle" : "Yeni Not Ekle"}
               </DialogTitle>
             </DialogHeader>
@@ -586,27 +659,33 @@ export default function RandevuNotlariPage() {
                 <label htmlFor="note-psychologist" className="text-right font-medium text-gray-700 dark:text-gray-200">
                   Psikolog
                 </label>
-                <Select
-                  value={newNotePsychologistId === "" ? "" : newNotePsychologistId.toString()}
-                  onValueChange={(value) => setNewNotePsychologistId(value === "" ? "" : Number(value))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Psikolog seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {psychologists.map((psychologist) => (
-                      <SelectItem key={psychologist.id} value={psychologist.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: psychologist.renk_kodu || '#6b7280' }}
-                          />
-                          {psychologist.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="col-span-3">
+                  <Select
+                    value={newNotePsychologistId === "" ? "" : newNotePsychologistId.toString()}
+                    onValueChange={(value) => setNewNotePsychologistId(value === "" ? "" : Number(value))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Psikolog seçin" />
+                    </SelectTrigger>
+                    <SelectContent className="min-w-[300px]">
+                      {psychologists.map((psychologist) => (
+                        <SelectItem 
+                          key={psychologist.id} 
+                          value={psychologist.id.toString()}
+                          className="py-2 px-3"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <div 
+                              className="w-3 h-3 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: psychologist.renk_kodu || '#6b7280' }}
+                            />
+                            <span className="truncate">{psychologist.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <label htmlFor="note-date" className="text-right font-medium text-gray-700 dark:text-gray-200">
@@ -655,7 +734,22 @@ export default function RandevuNotlariPage() {
               </Button>
               <div className="flex gap-2">
                 {isEditingNote && (
-                  <Button variant="destructive" onClick={() => handleDeleteNote(currentNoteId!)} className="rounded-lg">
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => {
+                      if (currentNoteId !== null) {
+                        const noteToDeleteObj = notes.find(n => n.id === currentNoteId);
+                        if (noteToDeleteObj) {
+                          confirmDeleteNote(noteToDeleteObj);
+                        } else {
+                          toast.error("Lütfen silinecek bir not seçin");
+                        }
+                      } else {
+                        toast.error("Lütfen silinecek bir not seçin");
+                      }
+                    }} 
+                    className="rounded-lg"
+                  >
                     Sil
                   </Button>
                 )}
@@ -676,6 +770,54 @@ export default function RandevuNotlariPage() {
                   )}
                 </Button>
               </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Silme Onay Diyaloğu */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 border-0 shadow-2xl rounded-3xl max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                Notu Sil
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-gray-700 dark:text-gray-200">Bu notu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+              {noteToDelete && (
+                <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-700 rounded-md">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {clients.find(c => c.id === noteToDelete.client_id)?.name || 'Bilinmeyen Danışan'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                    {(() => {
+                      const dateStr = noteToDelete.note_date || noteToDelete.date || noteToDelete.created_at
+                      return dateStr ? format(new Date(dateStr), "dd MMMM yyyy", { locale: tr }) : "Tarih yok"
+                    })()}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                    {noteToDelete.content.length > 100 
+                      ? `${noteToDelete.content.substring(0, 100)}...` 
+                      : noteToDelete.content}
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                İptal
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleDeleteNote}
+                className="bg-red-600 hover:bg-red-700 rounded-lg"
+              >
+                Sil
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

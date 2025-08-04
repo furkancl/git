@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/header";
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,8 @@ export default function PsychologistsPage() {
   const [error, setError] = useState<string | null>(null); // Hata durumu
   const [isSaving, setIsSaving] = useState(false); // Kaydetme sırasında yükleme
   const [isDeleting, setIsDeleting] = useState(false); // Silme sırasında yükleme
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [psychologistToDelete, setPsychologistToDelete] = useState<Psychologist | null>(null);
 
   // Form state - sadece name kaldı
   const [formName, setFormName] = useState("");
@@ -181,7 +184,10 @@ export default function PsychologistsPage() {
   // Ekle/düzenle işlemi
   const handleSave = async () => {
     if (!formName.trim()) { // Sadece name kontrolü
-      alert("Lütfen Ad Soyad alanını doldurun.");
+      toast.error("Gerekli Alanlar Eksik!", {
+        description: "Lütfen Ad Soyad alanını doldurun.",
+        duration: 3000,
+      });
       return;
     }
 
@@ -202,7 +208,11 @@ export default function PsychologistsPage() {
           prev.map((p) => (p.id === selectedPsychologist.id ? (data as Psychologist) : p))
         );
         setSelectedPsychologist(data as Psychologist); // Seçili psikoloğu güncel data ile tazele
-        alert("Psikolog başarıyla güncellendi!");
+        
+        toast.success("Psikolog Başarıyla Güncellendi!", {
+          description: `${formName} bilgileri güncellendi.`,
+          duration: 3000,
+        });
       } else {
         // Yeni psikolog ekleme - sadece name ekleniyor
         const { data, error } = await supabase
@@ -213,21 +223,36 @@ export default function PsychologistsPage() {
         if (error) throw error;
 
         setPsychologists((prev) => [...prev, (data as Psychologist)]);
-        alert("Psikolog başarıyla eklendi!");
+        
+        toast.success("Yeni Psikolog Eklendi!", {
+          description: `${formName} sisteme başarıyla eklendi.`,
+          duration: 3000,
+        });
       }
       setIsAddModalOpen(false);
       setIsEditing(false);
     } catch (err: any) {
       console.error("Kaydetme hatası:", err.message);
-      alert("Kaydetme sırasında bir hata oluştu: " + err.message);
+      toast.error("Hata!", { 
+        description: "Kaydetme sırasında bir hata oluştu: " + err.message,
+        duration: 5000,
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
+  // Silme onaylama işlemi
+  const confirmDeletePsychologist = (psychologist: Psychologist) => {
+    setPsychologistToDelete(psychologist);
+    setShowDeleteConfirm(true);
+  };
+
   // Silme işlemi
-  const handleDelete = async (id: string) => { // id tipi string oldu
-    if (!window.confirm("Bu psikoloğu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+  const handleDeletePsychologist = async () => {
+    if (!psychologistToDelete) {
+      toast.error("Silinecek psikolog bulunamadı");
+      setShowDeleteConfirm(false);
       return;
     }
 
@@ -236,18 +261,32 @@ export default function PsychologistsPage() {
       const { error } = await supabase
         .from("psychologists")
         .delete()
-        .eq("id", id);
+        .eq("id", psychologistToDelete.id);
       if (error) throw error;
 
-      setPsychologists((prev) => prev.filter((p) => p.id !== id));
+      // Update local state
+      setPsychologists((prev) => prev.filter((p) => p.id !== psychologistToDelete.id));
+      
       // Seçili psikolog silinirse seçimi sıfırla
-      if (selectedPsychologist?.id === id) {
+      if (selectedPsychologist?.id === psychologistToDelete.id) {
         setSelectedPsychologist(null);
       }
-      alert("Psikolog başarıyla silindi!");
+      
+      // Close the dialog and reset state
+      setShowDeleteConfirm(false);
+      setPsychologistToDelete(null);
+      
+      // Show success message
+      toast.success("Psikolog Başarıyla Silindi!", {
+        description: `${psychologistToDelete.name} sistemden kaldırıldı.`,
+        duration: 3000,
+      });
     } catch (err: any) {
       console.error("Silme hatası:", err.message);
-      alert("Silme sırasında bir hata oluştu: " + err.message);
+      toast.error("Hata!", { 
+        description: "Silme sırasında bir hata oluştu: " + err.message,
+        duration: 5000,
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -425,7 +464,7 @@ export default function PsychologistsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDelete(selectedPsychologist.id)}
+                          onClick={() => confirmDeletePsychologist(selectedPsychologist)}
                           className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 rounded-xl"
                           disabled={isDeleting} // Silme sırasında butonu devre dışı bırak
                         >
@@ -655,6 +694,46 @@ export default function PsychologistsPage() {
               >
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {isEditing ? (isSaving ? "Kaydediliyor..." : "Kaydet") : (isSaving ? "Ekleniyor..." : "Ekle")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Silme Onay Diyaloğu */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 border-0 shadow-2xl rounded-3xl max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                Psikoloğu Sil
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-gray-700 dark:text-gray-200">Bu psikoloğu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+              {psychologistToDelete && (
+                <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-700 rounded-md">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {psychologistToDelete.name}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                    Kayıt Tarihi: {new Date(psychologistToDelete.created_at || '').toLocaleDateString("tr-TR")}
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                İptal
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleDeletePsychologist}
+                className="bg-red-600 hover:bg-red-700 rounded-lg"
+              >
+                Sil
               </Button>
             </DialogFooter>
           </DialogContent>
