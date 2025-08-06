@@ -1,7 +1,7 @@
 "use client"
 
 import { Header } from "@/components/header"
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, Fragment } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -64,7 +64,7 @@ for (const h of hours) {
   }
 }
 
-const SLOT_HEIGHT_PX = 24
+const SLOT_HEIGHT_PX = 23 // Reduced from 24 to make appointments more compact
 
 // psychologistColors ve getPsychologistColorClasses fonksiyonları artık burada sabit kodlanmayacak.
 // Renkler doğrudan psikolog verisi ile birlikte SupaBase'den gelecek.
@@ -92,10 +92,23 @@ export default function RandevuPlanlamaPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null)
 
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
+
   const currentWeekDays = useMemo(() => {
-    const start = startOfWeek(new Date(), { weekStartsOn: 1 })
-    return days.map((_, i) => addDays(start, i))
-  }, [])
+    return days.map((_, i) => addDays(currentWeekStart, i))
+  }, [currentWeekStart])
+
+  const currentMonth = useMemo(() => {
+    return format(currentWeekStart, 'MMMM', { locale: tr })
+  }, [currentWeekStart])
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentWeekStart(prev => {
+      return direction === 'prev' 
+        ? addDays(prev, -7)
+        : addDays(prev, 7)
+    })
+  }
 
   // Supabase'den verileri çekme
   useEffect(() => {
@@ -329,8 +342,8 @@ export default function RandevuPlanlamaPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <Header />
       <main className="flex-grow flex flex-col items-center justify-start p-6 md:p-8">
-        <div className="w-full max-w-6xl mb-8">
-          <div className="backdrop-blur-xl bg-white/30 dark:bg-slate-800/30 border border-white/20 dark:border-slate-700/30 rounded-3xl p-8 shadow-2xl">
+        <div className="w-full max-w-6xl mb-4">
+          <div className="backdrop-blur-xl bg-white/30 dark:bg-slate-800/30 border border-white/20 dark:border-slate-700/30 rounded-3xl p-6 shadow-2xl">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-200 bg-clip-text text-transparent mb-2">
@@ -354,18 +367,44 @@ export default function RandevuPlanlamaPage() {
           </div>
         </div>
 
-        {/* Haftalık Randevu Tablosu */}
-        <div className="overflow-x-auto w-full max-w-6xl backdrop-blur-xl bg-white/40 dark:bg-slate-800/40 border border-white/30 dark:border-slate-700/30 rounded-3xl shadow-2xl">
-          <table className="min-w-full">
-            <colgroup>
-              <col style={{ width: "60px" }} />
-              {days.map((_, i) => (
-                <col key={i} style={{ width: "120px", minWidth: "120px", maxWidth: "120px" }} />
-              ))}
-            </colgroup>
-            <thead>
+        <div className="text-center text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">
+          {currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)}
+        </div>
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="overflow-hidden rounded-3xl shadow-2xl bg-white/40 dark:bg-slate-800/40 border border-white/30 dark:border-slate-700/30">
+            <table className="w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '70px' }} />
+                {days.map((_, i) => (
+                  <col key={i} style={{ width: '14.2857%' }} />
+                ))}
+              </colgroup>
+              <thead>
               <tr>
-                <th className="sticky top-0 left-0 z-20 backdrop-blur-sm bg-white/60 dark:bg-slate-800/60 border-b border-r border-white/30 dark:border-slate-600/30 h-12 w-15 rounded-tl-3xl" />
+                <th className="sticky top-0 left-0 z-20 backdrop-blur-sm bg-white/60 dark:bg-slate-800/60 border-b border-r border-white/30 dark:border-slate-600/30 h-12 w-15 rounded-tl-3xl">
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className="flex items-center space-x-1">
+                      <button 
+                        onClick={() => navigateWeek('prev')}
+                        className="p-1 rounded-full hover:bg-white/20 dark:hover:bg-slate-700/50 transition-colors"
+                        aria-label="Önceki hafta"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={() => navigateWeek('next')}
+                        className="p-1 rounded-full hover:bg-white/20 dark:hover:bg-slate-700/50 transition-colors"
+                        aria-label="Sonraki hafta"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </th>
                 {currentWeekDays.map((date, i) => (
                   <th
                     key={i}
@@ -388,12 +427,34 @@ export default function RandevuPlanlamaPage() {
                 const isMajorHour = slot.minute === 0
 
                 return (
-                  <tr key={slotIdx}>
-                    <td
-                      className={`sticky left-0 z-10 bg-gray-50 border-b border-r border-gray-100 h-6 text-xs text-gray-500 font-semibold text-center dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 ${isMajorHour ? "border-t border-gray-200 dark:border-gray-600" : ""}`}
-                      style={{ width: 60, minWidth: 60, maxWidth: 60 }}
+                  <Fragment key={slotIdx}>
+                    {slot.minute === 0 && (
+                      <tr key={`${slot.hour}-separator`} className="h-px">
+                        <td colSpan={8} className="p-0">
+                          <div className="h-px bg-gray-200 dark:bg-gray-600 w-full"></div>
+                        </td>
+                      </tr>
+                    )}
+                    <tr key={slotIdx}>
+                      <td
+                      className={`sticky left-0 z-10 ${
+                        isMajorHour 
+                          ? 'bg-gray-50 dark:bg-gray-700 border-t border-b border-r border-gray-200 dark:border-gray-600 h-8' 
+                          : 'bg-gray-50/80 dark:bg-gray-700/80 border-b border-r border-gray-100 dark:border-gray-600/50 h-6'
+                      }`}
+                      style={{ width: 70, minWidth: 70, maxWidth: 70 }}
                     >
-                      {displayTime && `${slot.hour}:${slot.minute.toString().padStart(2, "0")}`}
+                      {displayTime && (
+                        <div className={`flex items-center h-full ${
+                          isMajorHour 
+                            ? 'text-sm font-bold text-gray-700 dark:text-gray-200' 
+                            : 'text-xs font-medium text-gray-500 dark:text-gray-400'
+                        }`}>
+                          <span className="w-full text-center">
+                            {slot.hour}:{slot.minute.toString().padStart(2, '0')}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     {currentWeekDays.map((currentDayDate, dayIdx) => {
                       const currentSlotStartInMinutes = slot.hour * 60 + slot.minute
@@ -456,7 +517,7 @@ export default function RandevuPlanlamaPage() {
                           )}
                           onDragOver={(e) => draggedId && e.preventDefault()}
                           onDrop={() => handleDrop(currentDayDate, slot.hour, slot.minute)}
-                          style={{ width: 120, minWidth: 120, maxWidth: 120 }}
+                          style={{ width: '100%', minWidth: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
                           onClick={() => {
                             if (clickableAppointment) {
                               setSelectedAppointment(clickableAppointment)
@@ -492,7 +553,10 @@ export default function RandevuPlanlamaPage() {
                             // Psikolog bilgisi zaten 'appt.psychologists' içinde mevcut
                             const psychologist = appt.psychologists;
 
-                            const apptHeight = (appt.duration / 15) * SLOT_HEIGHT_PX
+                            // Adjust height calculation to better handle 90-minute appointments
+                            const baseHeight = (appt.duration / 15) * SLOT_HEIGHT_PX;
+                            // Add extra height for 90-minute appointments to make them more visible
+                            const apptHeight = appt.duration === 90 ? baseHeight + (SLOT_HEIGHT_PX * 0.5) : baseHeight;
                             const offset = apptIndex * 15
                             const currentZIndex = appt.id === hoveredAppointmentId ? 999 : 100 + apptIndex
                             // Renk kodunu direkt psikolog objesinden alıyoruz
@@ -502,22 +566,40 @@ export default function RandevuPlanlamaPage() {
                             return (
                               <div
                                 key={appt.id}
-                                className={`absolute rounded-2xl py-2 text-xs font-medium cursor-pointer flex justify-center transition-all duration-300 select-none flex-col px-2 backdrop-blur-sm border border-white/30 shadow-xl items-stretch gap-y-1 ${
+                                className={`absolute rounded-2xl py-2 text-xs font-medium flex justify-center transition-all duration-300 select-none flex-col px-2 backdrop-blur-sm border border-white/30 shadow-xl items-stretch gap-y-1 ${
                                   hoveredAppointmentId === appt.id ? 'shadow-2xl scale-105 z-50' : 'hover:shadow-2xl hover:scale-105'
                                 }`}
                                 style={{
-                                  top: 0,
+                                  top: 8,
                                   height: `${apptHeight}px`,
-                                  width: `calc(100% - ${offset}px)`,
+                                  width: `calc(95% - ${offset}px)`,
                                   left: `${offset}px`,
                                   zIndex: currentZIndex,
                                   overflow: "hidden",
-                                  backgroundColor: backgroundColor, // Renk direkt buraya atanıyor
-                                  color: '#FFFFFF', // Randevu metin rengini okunurluk için beyaz yapıyoruz
-                                  borderColor: backgroundColor, // Kenarlık rengini de arka plan rengiyle aynı yapabiliriz
-                                }}
+                                  backgroundColor: `${backgroundColor}cc`,
+                                  color: '#FFFFFF',
+                                  borderColor: backgroundColor,
+                                  cursor: 'pointer',
+                                  userSelect: 'none',
+                                  WebkitUserSelect: 'none',
+                                  msUserSelect: 'none',
+                                  WebkitTouchCallout: 'none',
+                                  KhtmlUserSelect: 'none',
+                                  MozUserSelect: 'none',
+                                  msTouchAction: 'none',
+                                  touchAction: 'none',
+                                  WebkitUserDrag: 'element',
+                                  opacity: hoveredAppointmentId === appt.id ? 1.1 : 0.85
+                                } as React.CSSProperties & { WebkitUserDrag: string }}
                                 draggable
-                                onDragStart={() => handleDragStart(appt.id)}
+                                onDragStart={(e) => {
+                                  handleDragStart(appt.id);
+                                  // Prevent default drag image
+                                  const img = new Image();
+                                  img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                                  e.dataTransfer.setDragImage(img, 0, 0);
+                                  e.dataTransfer.effectAllowed = 'move';
+                                }}
                                 onDragEnd={() => setDraggedId(null)}
                                 onMouseEnter={() => setHoveredAppointmentId(appt.id)}
                                 onMouseLeave={() => setHoveredAppointmentId(null)}
@@ -545,11 +627,13 @@ export default function RandevuPlanlamaPage() {
                         </td>
                       )
                     })}
-                  </tr>
+                    </tr>
+                  </Fragment>
                 )
               })}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Randevu Detay Modal */}
